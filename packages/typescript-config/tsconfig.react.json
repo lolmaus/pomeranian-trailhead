@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.browser.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "types": ["vite/client", "react", "react-dom"]
+  }
+}
