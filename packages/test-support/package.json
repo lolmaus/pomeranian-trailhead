@@ -1,0 +1,25 @@
+{
+  "name": "@repo/test-support",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./config": "./src/config.mts"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "typecheck": "tsc --noEmit --project tsconfig.node.json"
+  },
+  "dependencies": {
+    "@playwright/test": "1.64.1"
+  },
+  "devDependencies": {
+    "@repo/oxlint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "26.6.5",
+    "oxlint": "1.89.0",
+    "typescript": "7.0.2"
+  }
+}
