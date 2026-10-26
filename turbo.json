@@ -4,6 +4,7 @@
     ".nvmrc",
     "packages/oxlint-config/**",
     "packages/typescript-config/**",
+    "!**/.turbo/**",
     "oxlint.config.mts",
     "oxfmt.config.mts",
     "tsconfig*.json",
