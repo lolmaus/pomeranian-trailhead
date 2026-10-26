@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "turbo run test",
+    "test:fresh": "turbo run test --force",
+    "test:install": "pnpm --filter @repo/test-support exec playwright install chromium",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run format && pnpm run test",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint lint:root",

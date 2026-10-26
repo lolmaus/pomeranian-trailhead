@@ -1,7 +1,22 @@
 {
   "$schema": "https://turborepo.com/schema.json",
-  "globalDependencies": [".nvmrc", "packages/oxlint-config/**", "packages/typescript-config/**"],
+  "globalDependencies": [
+    ".nvmrc",
+    "packages/oxlint-config/**",
+    "packages/typescript-config/**",
+    "oxlint.config.mts",
+    "oxfmt.config.mts",
+    "tsconfig*.json",
+    "lib/**",
+    ".github/workflows/ci.yml"
+  ],
   "tasks": {
+    "test": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": [],
+      "passThroughEnv": ["CI", "PLAYWRIGHT_*", "PWDEBUG", "DISPLAY"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
