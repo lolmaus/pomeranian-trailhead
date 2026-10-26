@@ -11,3 +11,5 @@ test-results/
 .trailhead/work-state.json
 .trailhead/isolation-answer.json
 .trailhead/label-guard-ack
+.trailhead/active-map
+.trailhead/uat-backfill
