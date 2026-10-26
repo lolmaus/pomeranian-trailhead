@@ -1,0 +1,141 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { delimiter, dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { expect, test as base } from "@playwright/test";
+
+const repo = fileURLToPath(new URL("../../../", import.meta.url));
+const ci = join(repo, "lib/ci.mts");
+const names = ["support", "feature", "consumer", "unrelated"];
+
+function command(cwd: string, executable: string, args: string[], env = process.env) {
+  const result = spawnSync(executable, args, {
+    cwd,
+    env,
+    encoding: "utf8",
+    timeout: 30_000,
+    maxBuffer: 8 * 1024 * 1024,
+  });
+  if (result.status !== 0) {
+    throw new Error(
+      `${executable} ${args.join(" ")} failed: ${result.error?.message ?? ""}\n${result.stdout}\n${result.stderr}`,
+    );
+  }
+  return result;
+}
+
+function write(root: string, path: string, content: string) {
+  mkdirSync(dirname(join(root, path)), { recursive: true });
+  writeFileSync(join(root, path), content);
+}
+
+function commit(root: string) {
+  command(root, "git", ["add", "--all"]);
+  command(root, "git", [
+    "-c",
+    "user.name=Harness",
+    "-c",
+    "user.email=harness@example.invalid",
+    "-c",
+    "core.hooksPath=/dev/null",
+    "commit",
+    "-m",
+    "fixture",
+  ]);
+  return command(root, "git", ["rev-parse", "HEAD"]).stdout.trim();
+}
+
+const test = base.extend<{ workspace: { root: string; baseSha: string } }>({
+  workspace: async ({}, use) => {
+    const root = mkdtempSync(join(tmpdir(), "pomeranian-ci-"));
+    try {
+      command(root, "git", ["init", "--initial-branch=main"]);
+      write(
+        root,
+        "package.json",
+        JSON.stringify({
+          name: "selection-fixture",
+          private: true,
+          packageManager: "pnpm@12.15.0",
+        }),
+      );
+      write(root, ".gitignore", "node_modules/\n.turbo/\n");
+      write(root, "pnpm-workspace.yaml", "packages:\n  - packages/*\n");
+      write(root, "turbo.json", readFileSync(join(repo, "turbo.json"), "utf8"));
+      write(root, "lib/ci.mts", readFileSync(ci, "utf8"));
+      let lock = "lockfileVersion: '9.0'\nimporters:\n  .: {}\n";
+      for (const name of names) {
+        const dependency =
+          name === "feature" ? "support" : name === "consumer" ? "feature" : undefined;
+        write(
+          root,
+          `packages/${name}/package.json`,
+          JSON.stringify({
+            name: `@fixture/${name}`,
+            version: "0.0.0",
+            private: true,
+            scripts: { lint: 'node -e "0"', typecheck: 'node -e "0"', test: 'node -e "0"' },
+            ...(dependency
+              ? { devDependencies: { [`@fixture/${dependency}`]: "workspace:*" } }
+              : {}),
+          }),
+        );
+        write(root, `packages/${name}/index.mts`, "export const value = 1;\n");
+        lock += dependency
+          ? `  packages/${name}:\n    devDependencies:\n      '@fixture/${dependency}':\n        specifier: workspace:*\n        version: link:../${dependency}\n`
+          : `  packages/${name}: {}\n`;
+      }
+      write(root, "packages/typescript-config/tsconfig.base.json", "{}\n");
+      write(
+        root,
+        "packages/typescript-config/package.json",
+        JSON.stringify({ name: "@fixture/typescript-config", private: true }),
+      );
+      lock += "  packages/typescript-config: {}\n";
+      write(root, "pnpm-lock.yaml", lock);
+      // pnpm 12 records its own package-manager lock section on first invocation.
+      // Normalize that before the baseline so it is not an unrelated root change.
+      command(root, "pnpm", ["exec", "turbo", "--version"], {
+        ...process.env,
+        PATH: `${join(repo, "node_modules/.bin")}${delimiter}${process.env["PATH"] ?? ""}`,
+      });
+      await use({ root, baseSha: commit(root) });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  },
+});
+
+interface DryRun {
+  tasks: { taskId: string; command: string; hash: string; inputs: Record<string, string> }[];
+}
+
+function selected(root: string, baseSha: string, headSha: string) {
+  const result = command(root, process.execPath, [join(root, "lib/ci.mts"), "--dry=json"], {
+    ...process.env,
+    PATH: `${join(repo, "node_modules/.bin")}${delimiter}${process.env["PATH"] ?? ""}`,
+    CI_BASE_SHA: baseSha,
+    CI_HEAD_SHA: headSha,
+    TURBO_TELEMETRY_DISABLED: "1",
+  });
+  const report = JSON.parse(result.stdout) as DryRun;
+  return {
+    report,
+    stderr: result.stderr,
+    packages: [
+      ...new Set(
+        report.tasks
+          .filter((task) => task.command !== "<NONEXISTENT>" && task.taskId.endsWith("#test"))
+          .map((task) => task.taskId.split("#")[0]),
+      ),
+    ].sort(),
+  };
+}
+
+test("package changes select dependents without unrelated packages", async ({ workspace }) => {
+  write(workspace.root, "packages/feature/index.mts", "export const value = 2;\n");
+  const head = commit(workspace.root);
+  const selection = selected(workspace.root, workspace.baseSha, head);
+  expect(selection.packages, selection.stderr).toEqual(["@fixture/consumer", "@fixture/feature"]);
+});
