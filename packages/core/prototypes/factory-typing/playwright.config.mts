@@ -1,7 +1,11 @@
 import { defineConfig } from "@playwright/test";
 export default defineConfig({
   testDir: ".",
-  testMatch: ["examples.spec.mts", "constructor-counterexamples.spec.mts"],
+  testMatch: [
+    "examples.spec.mts",
+    "constructor-counterexamples.spec.mts",
+    "rule-counterexamples.spec.mts",
+  ],
   workers: 1,
   outputDir: "./results",
   reporter: [["list"]],

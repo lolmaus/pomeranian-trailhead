@@ -17,6 +17,8 @@ for (const file of [
   "counterexamples.mts",
   "constructor-counterexamples.mts",
   "constructor-counterexamples.spec.mts",
+  "rule-counterexamples.mts",
+  "rule-counterexamples.spec.mts",
   "examples.spec.mts",
   "tsconfig.json",
   "playwright.config.mts",

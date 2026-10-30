@@ -23,13 +23,14 @@ Verified with TypeScript 7.0.2, Oxlint 1.89.0, and Playwright 1.64.1:
 
 - Accepted authoring modules and a separate generic/private-state/app-subclass
   fixture pass the source rule and strict compiler.
-- Eighteen source mutations are rejected with their intended diagnostics, including
+- Twenty-seven source mutations are rejected with their intended diagnostics, including
   omitted metadata/parameters/checks, constructor/factory overrides, suppressions,
-  unvalidated ancestors, and constructor specialization.
-- Both earlier counterexample modules are rejected by the source rule. An unrelated
+  unvalidated ancestors, constructor specialization, widened fixture classes, factory extraction, inner
+  diagnostic suppressions, index signatures, and exported alias forms.
+- All three counterexample modules are rejected by the source rule. An unrelated
   inherited numeric default produces the actual `TS2416` compiler diagnostic.
-- Thirteen Chromium checks pass: twelve demonstrate working behavior, while one
-  confirms four underlying TypeScript constructor hazards. Those unsafe classes
+- Fourteen Chromium checks pass: twelve demonstrate working behavior, while two
+  confirm underlying TypeScript constructor, fixture-widening, and parameter-map hazards. Those unsafe classes
   are deliberately excluded from accepted authoring sources and rejected separately.
 
 ## Selected library-author contract
@@ -75,14 +76,21 @@ prohibition** supplies that part of the selected contract.
 `authoring-plugin.mjs` is a throwaway Oxlint source rule, using the installed parser.
 `authoring.oxlint.json` enables it; `authoring-checks.mjs` exercises actual lint and
 compiler processes. The approved examples in `probe.mts` and `contracts.mts` are
-always checked by the runner. The temporary regression fixture is checked too.
+always checked by the runner, along with the accepted consumer module
+`examples.spec.mts`. The temporary regression fixture is checked too.
 
 This bounded rule uses top-level named class declarations, direct inheritance from
 checked class declarations, and canonical imports of the helper/symbol. Imports of
 ancestors are limited to the two checked prototype modules (`./probe.mts` and
 `./contracts.mts`). Constructor aliases, class expressions, nested declarations,
 mixins, and constructor-instantiation expressions are rejected rather than guessed.
-Required metadata/checks cannot suppress compiler diagnostics. Like any lint rule,
+Required metadata/checks cannot suppress compiler diagnostics, including comments
+inside the declaration/assertion. Parameter maps use plain property signatures;
+index signatures are excluded. Factory receivers and rootFixture arguments must
+be direct checked class identifiers; constructor-valued aliases and extracted
+factory/helper values are rejected. The checked class modules use inline
+class/function/type exports; exported variables, export lists, default exports,
+and namespace merging are excluded to keep imported class identities traceable. Like any lint rule,
 its guarantee assumes running the required rule with its checked configuration;
 changing/disabling the checking pipeline is outside that guarantee. It is not a
 repository-wide or published library-author tool. Production packaging must carry
@@ -156,6 +164,10 @@ behavior without settling the production operation API.
   TypeScript/helper alone but rejected by the selected source rule. The browser
   test independently confirms four runtime failures.
 - `examples.spec.mts`: twelve browser examples for accepted behavior.
+- `rule-counterexamples.mts` and its spec: retained review regressions for a
+  widened self-incompatible fixture class and an index-signature/inner-suppression
+  combination. Both pass TypeScript alone, fail the source rule, and demonstrate
+  runtime failures or false types when run without that rule.
 - `authoring-plugin.mjs`, `authoring.oxlint.json`, `authoring-checks.mjs`: required
   source enforcement plus parser/compiler regression checks, confined to this proof.
 

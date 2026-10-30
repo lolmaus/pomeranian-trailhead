@@ -17,7 +17,7 @@ export function checkAuthoring(repo, scratch) {
     assert.equal(report.number_of_files, files.length, "All requested sources must be checked");
     return { status: result.status, diagnostics: report.diagnostics };
   };
-  const accepted = lint(["probe.mts", "contracts.mts"]);
+  const accepted = lint(["probe.mts", "contracts.mts", "examples.spec.mts"]);
   assert.equal(accepted.status, 0, JSON.stringify(accepted.diagnostics));
   assert.equal(accepted.diagnostics.length, 0);
 
@@ -109,6 +109,49 @@ class Bound extends Widget<App, number> { #count = 0; increment() { return ++thi
       good + "\nconst specialized = Widget<App, number>;",
       "constructor instantiation",
     ],
+    [
+      "widened root fixture class",
+      good.replace("LibraryButton, App,", "LibraryButton, App, Menu, rootFixture,") +
+        "\nconst invalidRoot: Parameters<typeof rootFixture>[0] = Menu; rootFixture(invalidRoot);",
+      "direct checked class",
+    ],
+    [
+      "aliased create receiver",
+      good + "\nconst Constructor = Widget; Constructor.create(null);",
+      "direct checked class",
+    ],
+    ["factory extraction", good + "\nconst create = Widget.create;", "direct checked class"],
+    [
+      "fixture helper alias",
+      good.replace("LibraryButton, App,", "LibraryButton, App, rootFixture,") +
+        "\nconst fixture = rootFixture;",
+      "Call rootFixture directly",
+    ],
+    [
+      "inner assertion suppression",
+      good.replace(check, "checkLibrary<Widget>()(\n// @ts-ignore\nWidget\n);"),
+      "Do not suppress",
+    ],
+    [
+      "parameter index signature",
+      good.replace("parameters: {", "parameters: { [key: string]: unknown;"),
+      "every generic parameter",
+    ],
+    [
+      "exported conditional alias",
+      good + "\nexport const Alias = true ? Widget : Widget;",
+      "inline class/function/type exports",
+    ],
+    [
+      "export list alias",
+      good + "\nexport { Widget as Alias };",
+      "inline class/function/type exports",
+    ],
+    [
+      "namespace merging",
+      good + "\nnamespace Widget { export type Value = string; }",
+      "inline class/function/type exports",
+    ],
   ];
   try {
     writeFileSync(fixture, good);
@@ -142,6 +185,14 @@ class Bound extends Widget<App, number> { #count = 0; increment() { return ++thi
     const generics = lint(["counterexamples.mts"]);
     assert.equal(generics.status, 1);
     assert.ok(generics.diagnostics.some((item) => item.message.includes("declare their own")));
+    const regressions = lint(["rule-counterexamples.mts"]);
+    assert.equal(regressions.status, 1);
+    for (const message of ["direct checked class", "Do not suppress", "every generic parameter"]) {
+      assert.ok(
+        regressions.diagnostics.some((item) => item.message.includes(message)),
+        `Missing reviewed-regression diagnostic: ${message}`,
+      );
+    }
     const incompatible = good
       .replace("class Widget<", "import { ValueButton } from './contracts.mts'; class Widget<")
       .replace("V = string", "V = number")
@@ -167,7 +218,7 @@ class Bound extends Widget<App, number> { #count = 0; increment() { return ++thi
       "Require the actual inherited-property compatibility diagnostic",
     );
     console.log(
-      `Authoring checks passed: valid sources, ${cases.length} mutations, both counterexample modules, and incompatible-default compiler rejection.`,
+      `Authoring checks passed: valid sources, ${cases.length} mutations, three counterexample modules, and incompatible-default compiler rejection.`,
     );
   } finally {
     rmSync(fixture, { force: true });

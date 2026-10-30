@@ -37,16 +37,50 @@ export const authoringRule = {
         "Do not suppress TypeScript diagnostics on required metadata or conformance assertions.",
       instantiation:
         "Bind generic parameters through a concrete subclass; constructor instantiation is outside this proof.",
+      directClass:
+        "Use a direct checked class identifier for create/rootFixture; constructor aliases erase constraints.",
+      directHelper:
+        "Call rootFixture directly; helper aliases and namespace imports are outside this proof.",
+      moduleFormat:
+        "Use inline class/function/type exports; exported variables, export lists, and namespaces are outside this proof.",
     },
   },
   create(context) {
     const framework = context.options[0]?.framework === true;
     const program = context.sourceCode.ast;
     const report = (node, messageId) => context.report({ node, messageId });
+    const declarations = program.body.map((item) =>
+      item.type === "ExportNamedDeclaration" ? item.declaration : item,
+    );
+    const importsFromCore = program.body.filter(
+      (item) =>
+        item.type === "ImportDeclaration" &&
+        ["./probe.mts", "./contracts.mts"].includes(item.source.value),
+    );
+    const bases = declarations
+      .filter((item) => item?.type === "ClassDeclaration")
+      .map((item) => item.id?.name);
+    bases.push(
+      ...importsFromCore
+        .flatMap((item) => item.specifiers)
+        .filter((item) => item.type === "ImportSpecifier")
+        .map((item) => item.local.name),
+    );
+    const fixtureNames = importsFromCore
+      .flatMap((item) => item.specifiers)
+      .filter((item) => item.type === "ImportSpecifier" && item.imported.name === "rootFixture")
+      .map((item) => item.local.name);
+    if (framework) fixtureNames.push("rootFixture");
+    const directClass = (node) => node?.type === "Identifier" && bases.includes(node.name);
     const suppressed = (node) =>
-      context.sourceCode
-        .getCommentsBefore(node)
-        .some((comment) => /@ts-(?:ignore|expect-error|nocheck)/u.test(comment.value));
+      [
+        ...context.sourceCode.getCommentsBefore(node),
+        ...context.sourceCode
+          .getAllComments()
+          .filter(
+            (comment) => comment.range[0] >= node.range[0] && comment.range[1] <= node.range[1],
+          ),
+      ].some((comment) => /@ts-(?:ignore|expect-error|nocheck)/u.test(comment.value));
 
     function visit(node) {
       if (
@@ -60,22 +94,6 @@ export const authoringRule = {
       const statement = node.parent.type === "ExportNamedDeclaration" ? node.parent : node;
       if (statement.parent.type !== "Program") report(node, "topLevel");
       if (suppressed(statement)) report(statement, "suppression");
-      const declarations = program.body.map((item) =>
-        item.type === "ExportNamedDeclaration" ? item.declaration : item,
-      );
-      const bases = declarations
-        .filter((item) => item?.type === "ClassDeclaration")
-        .map((item) => item.id?.name);
-      bases.push(
-        ...program.body
-          .filter(
-            (item) =>
-              item.type === "ImportDeclaration" &&
-              ["./probe.mts", "./contracts.mts"].includes(item.source.value),
-          )
-          .flatMap((item) => item.specifiers)
-          .map((item) => item.local.name),
-      );
       if (node.superClass && !bases.includes(node.superClass.name))
         report(node.superClass, "ancestor");
       const trusted = framework && ["PageObject", "DomPageObject"].includes(node.id.name);
@@ -118,6 +136,7 @@ export const authoringRule = {
           metadata?.type !== "TSTypeLiteral" ||
           !bareType(annotation(instance), node.id.name) ||
           vector?.type !== "TSTypeLiteral" ||
+          !vector.members.every((item) => item.type === "TSPropertySignature" && !item.computed) ||
           !names.every((name) => covered?.some((type) => bareType(type, name)))
         )
           report(field, "parameters");
@@ -153,6 +172,55 @@ export const authoringRule = {
       },
       ClassDeclaration: visit,
       ClassExpression: visit,
+      CallExpression(node) {
+        if (
+          node.callee.type === "Identifier" &&
+          fixtureNames.includes(node.callee.name) &&
+          !directClass(node.arguments[0])
+        )
+          report(node, "directClass");
+      },
+      VariableDeclarator(node) {
+        if (directClass(node.init)) report(node, "directClass");
+      },
+      MemberExpression(node) {
+        if (
+          (node.property.name ?? node.property.value) === "create" &&
+          (!directClass(node.object) ||
+            node.parent.type !== "CallExpression" ||
+            node.parent.callee !== node)
+        ) {
+          report(node, "directClass");
+        }
+      },
+      Identifier(node) {
+        if (!fixtureNames.includes(node.name)) return;
+        if (["ImportSpecifier", "FunctionDeclaration", "TSTypeQuery"].includes(node.parent.type))
+          return;
+        if (node.parent.type === "CallExpression" && node.parent.callee === node) return;
+        report(node, "directHelper");
+      },
+      ImportNamespaceSpecifier(node) {
+        if (importsFromCore.includes(node.parent)) report(node, "directHelper");
+      },
+      ExportNamedDeclaration(node) {
+        if (
+          !node.declaration ||
+          (node.declaration.type === "VariableDeclaration" &&
+            !(
+              framework &&
+              node.declaration.declarations.every((item) => item.id.name === "defaultInstanceType")
+            ))
+        ) {
+          report(node, "moduleFormat");
+        }
+      },
+      ExportDefaultDeclaration(node) {
+        report(node, "moduleFormat");
+      },
+      TSModuleDeclaration(node) {
+        report(node, "moduleFormat");
+      },
       TSInstantiationExpression(node) {
         report(node, "instantiation");
       },
