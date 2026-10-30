@@ -8,6 +8,39 @@ const bareType = (node, name) =>
 const annotation = (node) => node?.typeAnnotation?.typeAnnotation;
 const member = (node, name) => node?.members?.find((item) => item.key?.name === name);
 
+// This proof has two closed class modules. Validate their actual class exports
+// against this inventory before treating an imported binding as a constructor.
+const classExports = {
+  "./probe.mts": [
+    "PageObject",
+    "DomPageObject",
+    "Element",
+    "Item",
+    "Menu",
+    "Settings",
+    "App",
+    "PlainItem",
+    "Toolbar",
+    "CompactToolbar",
+    "ConfirmationDialog",
+    "LibraryButton",
+    "AppButton",
+    "StandaloneButton",
+    "FlexibleButton",
+  ],
+  "./contracts.mts": [
+    "Styled",
+    "Restricted",
+    "ValueButton",
+    "AppValueButton",
+    "NullValueButton",
+    "Counter",
+    "HtmlApp",
+    "GroupApp",
+    "LiteralValue",
+  ],
+};
+
 export const authoringRule = {
   meta: {
     type: "problem",
@@ -43,35 +76,41 @@ export const authoringRule = {
         "Call rootFixture directly; helper aliases and namespace imports are outside this proof.",
       moduleFormat:
         "Use inline class/function/type exports; exported variables, export lists, and namespaces are outside this proof.",
+      inventory:
+        "Update the checked class-export inventory to match this module's actual class declarations.",
     },
   },
   create(context) {
     const framework = context.options[0]?.framework === true;
     const program = context.sourceCode.ast;
     const report = (node, messageId) => context.report({ node, messageId });
-    const declarations = program.body.map((item) =>
-      item.type === "ExportNamedDeclaration" ? item.declaration : item,
-    );
     const importsFromCore = program.body.filter(
       (item) =>
         item.type === "ImportDeclaration" &&
         ["./probe.mts", "./contracts.mts"].includes(item.source.value),
-    );
-    const bases = declarations
-      .filter((item) => item?.type === "ClassDeclaration")
-      .map((item) => item.id?.name);
-    bases.push(
-      ...importsFromCore
-        .flatMap((item) => item.specifiers)
-        .filter((item) => item.type === "ImportSpecifier")
-        .map((item) => item.local.name),
     );
     const fixtureNames = importsFromCore
       .flatMap((item) => item.specifiers)
       .filter((item) => item.type === "ImportSpecifier" && item.imported.name === "rootFixture")
       .map((item) => item.local.name);
     if (framework) fixtureNames.push("rootFixture");
-    const directClass = (node) => node?.type === "Identifier" && bases.includes(node.name);
+    const definition = (node) => {
+      if (node?.type !== "Identifier") return undefined;
+      for (let scope = context.sourceCode.getScope(node); scope; scope = scope.upper) {
+        const variable = scope.set.get(node.name);
+        if (variable) return variable.defs[0];
+      }
+      return undefined;
+    };
+    const directClass = (node) => {
+      const def = definition(node);
+      if (def?.type === "ClassName") return def.node.type === "ClassDeclaration";
+      return (
+        def?.type === "ImportBinding" &&
+        def.node.type === "ImportSpecifier" &&
+        classExports[def.parent.source.value]?.includes(def.node.imported.name)
+      );
+    };
     const suppressed = (node) =>
       [
         ...context.sourceCode.getCommentsBefore(node),
@@ -94,8 +133,7 @@ export const authoringRule = {
       const statement = node.parent.type === "ExportNamedDeclaration" ? node.parent : node;
       if (statement.parent.type !== "Program") report(node, "topLevel");
       if (suppressed(statement)) report(statement, "suppression");
-      if (node.superClass && !bases.includes(node.superClass.name))
-        report(node.superClass, "ancestor");
+      if (node.superClass && !directClass(node.superClass)) report(node.superClass, "ancestor");
       const trusted = framework && ["PageObject", "DomPageObject"].includes(node.id.name);
       for (const item of node.body.body) {
         if (item.kind === "constructor" && !trusted) report(item, "constructor");
@@ -166,6 +204,23 @@ export const authoringRule = {
     }
     return {
       Program(node) {
+        const moduleName = "./" + context.filename.replaceAll("\\", "/").split("/").at(-1);
+        const inventory = classExports[moduleName];
+        if (inventory) {
+          const actual = program.body
+            .filter(
+              (item) =>
+                item.type === "ExportNamedDeclaration" &&
+                item.declaration?.type === "ClassDeclaration",
+            )
+            .map((item) => item.declaration.id.name);
+          if (
+            actual.length !== inventory.length ||
+            actual.some((name) => !inventory.includes(name))
+          ) {
+            report(node, "inventory");
+          }
+        }
         for (const comment of context.sourceCode.getAllComments()) {
           if (/@ts-nocheck/u.test(comment.value)) report(node, "suppression");
         }

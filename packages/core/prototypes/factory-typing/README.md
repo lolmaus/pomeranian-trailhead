@@ -23,7 +23,7 @@ Verified with TypeScript 7.0.2, Oxlint 1.89.0, and Playwright 1.64.1:
 
 - Accepted authoring modules and a separate generic/private-state/app-subclass
   fixture pass the source rule and strict compiler.
-- Twenty-seven source mutations are rejected with their intended diagnostics, including
+- Twenty-nine source mutations are rejected with their intended diagnostics, including
   omitted metadata/parameters/checks, constructor/factory overrides, suppressions,
   unvalidated ancestors, constructor specialization, widened fixture classes, factory extraction, inner
   diagnostic suppressions, index signatures, and exported alias forms.
@@ -87,10 +87,15 @@ mixins, and constructor-instantiation expressions are rejected rather than guess
 Required metadata/checks cannot suppress compiler diagnostics, including comments
 inside the declaration/assertion. Parameter maps use plain property signatures;
 index signatures are excluded. Factory receivers and rootFixture arguments must
-be direct checked class identifiers; constructor-valued aliases and extracted
+be direct checked class identifiers resolved through their lexical bindings; constructor-valued aliases and extracted
 factory/helper values are rejected. The checked class modules use inline
 class/function/type exports; exported variables, export lists, default exports,
-and namespace merging are excluded to keep imported class identities traceable. Like any lint rule,
+and namespace merging are excluded to keep imported class identities traceable.
+The two closed class modules have a checked class-export inventory in the source
+plugin; their actual inline class exports must match it. Update that inventory
+when changing those prototype modules. Imported helpers/types cannot masquerade
+as class exports, and shadowing a class name does not authorize a parameter
+or variable binding. Like any lint rule,
 its guarantee assumes running the required rule with its checked configuration;
 changing/disabling the checking pipeline is outside that guarantee. It is not a
 repository-wide or published library-author tool. Production packaging must carry

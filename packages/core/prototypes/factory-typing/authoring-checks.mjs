@@ -152,6 +152,18 @@ class Bound extends Widget<App, number> { #count = 0; increment() { return ++thi
       good + "\nnamespace Widget { export type Value = string; }",
       "inline class/function/type exports",
     ],
+    [
+      "shadowed fixture class",
+      good.replace("LibraryButton, App,", "LibraryButton, App, rootFixture,") +
+        "\nfunction makeFixture(App: Parameters<typeof rootFixture>[0]) { return rootFixture(App); }",
+      "direct checked class",
+    ],
+    [
+      "helper used as constructor",
+      good.replace("LibraryButton, App,", "LibraryButton, App, rootFixture,") +
+        "\nrootFixture(checkLibrary);",
+      "direct checked class",
+    ],
   ];
   try {
     writeFileSync(fixture, good);

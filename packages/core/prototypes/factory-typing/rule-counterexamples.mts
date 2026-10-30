@@ -15,6 +15,12 @@ class RequiresApp extends Element<App> {
 const invalidRoot: Parameters<typeof rootFixture>[0] = RequiresApp;
 export const invalidFixture = rootFixture(invalidRoot);
 
+// The imported class name must not authorize a different, shadowing binding.
+function makeFixture(App: Parameters<typeof rootFixture>[0]) {
+  return rootFixture(App);
+}
+export const shadowedInvalidFixture = makeFixture(RequiresApp);
+
 class WrongVector<Value = string> extends LibraryButton<null> {
   declare readonly [defaultInstanceType]: {
     instance: WrongVector;
