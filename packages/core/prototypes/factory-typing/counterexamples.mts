@@ -1,5 +1,6 @@
 // These functions are deliberately NEVER EXECUTED. A green compile establishes
 // that the candidate still accepts unsound calls. They are evidence, not usage.
+import { ValueButton as ImportedValueButton } from "./contracts.mts";
 import type { Page } from "@playwright/test";
 import { Element, LibraryButton, checkLibrary, type UnboundRoot, App } from "./probe.mts";
 type Equal<A, B> =
@@ -47,3 +48,20 @@ export function unresolved(page: Page, app: App) {
 checkLibrary<UndeclaredValue>()(UndeclaredValue);
 // @ts-expect-error A required custom constructor state violates shared construction.
 checkLibrary<RequiredState>()(RequiredState);
+
+class NarrowDefault<R extends UnboundRoot = App> extends LibraryButton<R> {}
+// @ts-expect-error The conformance check rejects a stale default declaration.
+checkLibrary<NarrowDefault>()(NarrowDefault);
+
+// Replacing string with an unrelated number default is NOT supported by this
+// covariant metadata representation. Preserve the actual diagnostic as evidence.
+export class NumericDefault<
+  R extends UnboundRoot = UnboundRoot,
+  Value = number,
+> extends ImportedValueButton<R, Value> {
+  // @ts-expect-error A numeric default instance is not a subtype of the inherited string default.
+  declare readonly [defaultInstanceType]: {
+    instance: NumericDefault;
+    parameters: { root: R; value: Value };
+  };
+}

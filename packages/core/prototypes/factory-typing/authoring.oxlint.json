@@ -1,0 +1,12 @@
+{
+  "plugins": [],
+  "categories": { "correctness": "off" },
+  "jsPlugins": ["./authoring-plugin.mjs"],
+  "rules": { "factory-authoring/contract": "error" },
+  "overrides": [
+    {
+      "files": ["probe.mts"],
+      "rules": { "factory-authoring/contract": ["error", { "framework": true }] }
+    }
+  ]
+}

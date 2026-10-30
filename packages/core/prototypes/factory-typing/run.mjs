@@ -4,6 +4,7 @@ import { cpSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkAuthoring } from "./authoring-checks.mjs";
 
 const source = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(source, "../../../..");
@@ -19,10 +20,18 @@ for (const file of [
   "examples.spec.mts",
   "tsconfig.json",
   "playwright.config.mts",
+  "authoring-plugin.mjs",
+  "authoring.oxlint.json",
 ]) {
   cpSync(join(source, file), join(scratch, file));
 }
 symlinkSync(dependencies, join(scratch, "node_modules"), "dir");
+try {
+  checkAuthoring(repo, scratch);
+} catch (error) {
+  console.error(`Authoring proof failed; scratch files: ${scratch}`);
+  throw error;
+}
 
 function run(command, args) {
   const result = spawnSync(command, args, { cwd: scratch, stdio: "inherit" });

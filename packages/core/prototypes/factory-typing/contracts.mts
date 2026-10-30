@@ -17,9 +17,9 @@ type Check<T extends true> = T;
 // Same API/defaults, runtime subclass identity is retained. There is no nominal
 // distinction in TypeScript without new private state or a distinct type shape.
 export class Styled<R extends UnboundRoot = UnboundRoot> extends LibraryButton<R> {
+  declare readonly [defaultInstanceType]: { instance: Styled; parameters: { root: R } };
   override defaultTarget = "button.styled";
 }
-export class NarrowDefault<R extends UnboundRoot = App> extends LibraryButton<R> {}
 export class Restricted<R extends App = App> extends LibraryButton<R> {
   declare readonly [defaultInstanceType]: { instance: Restricted; parameters: { root: R } };
 }
@@ -63,8 +63,6 @@ export class GroupApp extends PageObject<GroupApp> {
 export function assertions(page: Page, app: App) {
   const styled = Styled.create(page);
   type StyledExact = Check<Equal<typeof styled, Styled>>;
-  // @ts-expect-error The conformance check rejects a stale default declaration.
-  checkLibrary<NarrowDefault>()(NarrowDefault);
   const restricted = Restricted.create(app);
   type RestrictedExact = Check<Equal<typeof restricted, Restricted<App>>>;
   // @ts-expect-error Its default is App, so Page is incompatible.
@@ -115,16 +113,3 @@ export class LiteralValue<
   };
 }
 checkLibrary<LiteralValue>()(LiteralValue);
-
-// Replacing string with an unrelated number default is NOT supported by this
-// covariant metadata representation. Preserve the actual diagnostic as evidence.
-export class NumericDefault<
-  R extends UnboundRoot = UnboundRoot,
-  Value = number,
-> extends ValueButton<R, Value> {
-  // @ts-expect-error A numeric default instance is not a subtype of the inherited string default.
-  declare readonly [defaultInstanceType]: {
-    instance: NumericDefault;
-    parameters: { root: R; value: Value };
-  };
-}

@@ -225,9 +225,10 @@ export function libraryTypeExamples(page: Page, app: App) {
   void rootFixture(App);
 }
 
-// CANDIDATE LIBRARY-AUTHOR CHECK, required once per generic declaration.
+// LIBRARY-AUTHOR CHECK, required by the source rule for each generic declaration.
 // This verifies result/default conformance. Constructor compatibility is coarse:
-// TypeScript constructor bivariance leaves the counterexamples below unchecked.
+// TypeScript constructor bivariance leaves narrowed constructors unchecked here;
+// the required source rule rejects all author constructor overrides.
 // Expected is the bare instance type, so TypeScript applies its declared defaults.
 export function checkLibrary<Expected extends PageObject<UnboundRoot>>() {
   return <C extends Class>(
@@ -236,3 +237,8 @@ export function checkLibrary<Expected extends PageObject<UnboundRoot>>() {
       (C extends typeof PageObject<Expected["root"]> ? unknown : never),
   ): C => Class;
 }
+
+checkLibrary<PageObject>()(PageObject);
+checkLibrary<DomPageObject>()(DomPageObject);
+checkLibrary<Element>()(Element);
+checkLibrary<LibraryButton>()(LibraryButton);
