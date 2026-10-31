@@ -5,7 +5,10 @@
 /** Nullable root contract.
  * @since @pomeranian/proof-core@Unreleased
  */
-export type Root = { readonly id: string } | null;
+export type Root = {
+  /** Root identity. */
+  readonly id: string;
+} | null;
 
 /** Generic-root fixture; compare {@link "@pomeranian/proof-extension".Widget}.
  * @since @pomeranian/proof-core@1.2.3
@@ -32,11 +35,24 @@ export class Widget<R extends Root = Root> {
    * widget.map("value");
    * ```
    */
-  map<T>(value: T): { value: T; root?: R };
+  map<T>(value: T): {
+    /** Scalar value. */
+    value: T;
+    /** Optional root. */
+    root?: R;
+  };
   /** Sequence overload.
    * @since @pomeranian/proof-core@Unreleased
    */
-  map<T>(value: readonly T[], mode: "many"): { values: readonly T[]; root?: R };
+  map<T>(
+    value: readonly T[],
+    mode: "many",
+  ): {
+    /** Sequence values. */
+    values: readonly T[];
+    /** Optional root. */
+    root?: R;
+  };
   map<T>(value: T | readonly T[], mode?: "many"): object {
     return mode === "many" ? { values: value } : { value: this.transform(value) };
   }
