@@ -1,0 +1,6 @@
+// Synthetic TypeDoc diagnostic fixture, not a production API.
+export class Base<T> {
+  get value(): T { throw new Error("type-only fixture"); }
+  method(): T { throw new Error("type-only fixture"); }
+}
+export class Derived extends Base<string> {}

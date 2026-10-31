@@ -1,0 +1,46 @@
+{
+  "source": "https://github.com/lolmaus/pomeranian-trailhead/issues/13#issuecomment-6529086574",
+  "accepted": "https://github.com/lolmaus/pomeranian-trailhead/issues/13#issuecomment-6532733299",
+  "upstream": "https://github.com/TypeStrong/typedoc/issues/3148",
+  "sourceRevision": "c7e46a57ebcaabd1ea64d6bdbd95893f7a230d34",
+  "originalMinimalSha256": "810399927ba517d4aa5b07b256a3de6d09cdd5c04512b43f0fb1f27c50f9c8e1",
+  "prototypeSha256": "7baf1ce26e0cf1bb849f90a1cf6685274b11a4ff4ed789f507eee9c3c055f736",
+  "minimal": {
+    "typescript": "6.0.3",
+    "plugins": [],
+    "expected": "string",
+    "accessor": "T",
+    "method": "string",
+    "accessorFaithful": false,
+    "methodFaithful": true,
+    "warnings": 0,
+    "errors": 0
+  },
+  "knownConcreteRootFailures": [
+    {
+      "case": "AppButton.root inherited Root must substitute App",
+      "expected": "App",
+      "actual": "`Root`",
+      "pass": false
+    },
+    {
+      "case": "StandaloneButton.root inherited Root must substitute null",
+      "expected": "null",
+      "actual": "`Root`",
+      "pass": false
+    },
+    {
+      "case": "FlexibleButton.root inherited Root must substitute App | null",
+      "expected": "App | null",
+      "actual": "`Root`",
+      "pass": false
+    }
+  ],
+  "compilerExpectedRootTypes": {
+    "AppButton": "App",
+    "LibraryButton": "Root",
+    "StandaloneButton": "null",
+    "FlexibleButton": "App | null"
+  },
+  "originalHelperWarnings": ["Erased", "Default", "Class", "Context", "TargetArguments", "Equal"]
+}

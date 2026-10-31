@@ -16,3 +16,18 @@ test("the actual prototype library factory supports a neutral root", async ({ pa
   await expect(page.locator("output")).toHaveText("Approved");
 });
 // #endregion prototype
+
+type Equal<A, B> =
+  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
+type App = import("../../../packages/core/prototypes/factory-typing/probe.mts").App;
+type AppButton = import("../../../packages/core/prototypes/factory-typing/probe.mts").AppButton;
+type StandaloneButton =
+  import("../../../packages/core/prototypes/factory-typing/probe.mts").StandaloneButton;
+type FlexibleButton =
+  import("../../../packages/core/prototypes/factory-typing/probe.mts").FlexibleButton;
+const exactRoots: [
+  Equal<AppButton["root"], App>,
+  Equal<StandaloneButton["root"], null>,
+  Equal<FlexibleButton["root"], App | null>,
+] = [true, true, true];
+void exactRoots;
