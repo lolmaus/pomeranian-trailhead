@@ -1,3 +1,4 @@
+import { MarkdownRendererEvent, type MarkdownRenderer } from "typedoc-plugin-markdown";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -58,7 +59,7 @@ export async function reference(sources: Source[], output: string) {
     readme: "none",
     excludePrivate: true,
     excludeProtected: false,
-    disableSources: true,
+    disableSources: sources.every((source) => source.status === "fixture"),
     out: path.join(output, "reference"),
     docsRoot: path.join(output, "reference"),
     sidebar: { autoConfiguration: false },
@@ -155,13 +156,29 @@ export async function reference(sources: Source[], output: string) {
     }
     if (symbol) symbol.history.push(...history);
   }
+  for (const symbol of symbols) {
+    if (
+      !symbol.inherited &&
+      !["Module", "Namespace", "Constructor"].includes(symbol.kind) &&
+      !symbol.history.some((line) => line.startsWith("Available since"))
+    ) {
+      throw new Error(`Missing package-qualified availability: ${symbol.key}`);
+    }
+  }
+  const renderer = app.renderer as MarkdownRenderer;
+  renderer.on(MarkdownRendererEvent.END, () => {
+    for (const symbol of symbols) {
+      const model = project.getReflectionById(symbol.reflectionId);
+      if (!model || !renderer.router)
+        throw new Error(`Missing rendered symbol mapping: ${symbol.key}`);
+      symbol.html = renderer.router.getFullUrl(model).replace(/\.md(?=#|$)/, ".html");
+      if (!symbol.html) throw new Error(`Empty rendered symbol mapping: ${symbol.key}`);
+    }
+  });
   await app.generateOutputs(project);
   if (app.logger.hasErrors() || app.logger.hasWarnings())
     throw new Error("API rendering failed; see TypeDoc diagnostics");
   for (const symbol of symbols) {
-    const reflection = project.getReflectionById(symbol.reflectionId);
-    if (reflection && app.renderer.router)
-      symbol.html = app.renderer.router.getFullUrl(reflection).replace(/\.md(?=#|$)/, ".html");
     symbol.history = [...new Set(symbol.history)];
   }
   const reflection = app.serializer.projectToObject(project, normalizePath(docsRoot));
