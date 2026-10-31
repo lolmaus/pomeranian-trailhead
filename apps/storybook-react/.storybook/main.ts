@@ -6,6 +6,11 @@ const config: StorybookConfig = {
   stories: [
     "../../../packages/lib-ant-design/tests/**/*.stories.tsx",
     "../../../packages/test-support/tests/fixtures/**/*.stories.tsx",
+    {
+      directory: "../../../packages/test-support/tests/prefix",
+      files: "*.stories.tsx",
+      titlePrefix: "Configured prefix",
+    },
   ],
   viteFinal(config) {
     config.plugins ??= [];

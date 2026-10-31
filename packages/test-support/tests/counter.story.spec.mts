@@ -26,12 +26,14 @@ for (const scenario of ["first", "second"]) {
 test("real excluded helper fails discovery", async ({ page }) => {
   await expect(open(page, "Helper")).rejects.toThrow(/found 0.*excludeStories/s);
 });
-test("undiscovered file and title-prefix mismatch fail clearly", async ({ page }) => {
-  const hidden = typedStories<typeof import("./fixtures/undiscovered.tsx")>("Hidden/Counter", {
+test("undiscovered file fails clearly", async ({ page }) => {
+  const hidden = typedStories<typeof import("./fixtures/not-indexed.tsx")>("Hidden/Undiscovered", {
     baseURL: baseURL,
     ready: (p) => p.getByRole("button"),
   });
-  await expect(hidden(page, "Hidden")).rejects.toThrow(/Hidden\/Counter.*found 0.*title prefixes/s);
+  await expect(hidden(page, "Hidden")).rejects.toThrow(
+    /Hidden\/Undiscovered.*found 0.*title prefixes/s,
+  );
 });
 test("real throwing story and never-ready story report context", async ({ page }) => {
   const checked = typedStories<typeof import("./fixtures/counter.stories.tsx")>("HTML/Counter", {
@@ -93,4 +95,21 @@ test("same binding sees live IDs and removed discovery without an index cache", 
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("configured title prefix is verified against the real generated index", async ({ page }) => {
+  const response = await page.request.get(`${baseURL}/index.json`);
+  const index = (await response.json()) as {
+    entries: Record<string, { title: string; exportName: string }>;
+  };
+  expect(Object.values(index.entries)).toContainEqual(
+    expect.objectContaining({ title: "Configured prefix/Hidden/Counter", exportName: "Hidden" }),
+  );
+  const prefixed = typedStories<typeof import("./prefix/prefixed.stories.tsx")>("Hidden/Counter", {
+    baseURL,
+    ready: (p) => p.getByRole("button"),
+  });
+  await expect(prefixed(page, "Hidden")).rejects.toThrow(
+    /Hidden\/Counter.*found 0.*title prefixes/s,
+  );
 });
