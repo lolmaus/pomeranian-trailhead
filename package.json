@@ -23,7 +23,8 @@
     "docs:dev": "pnpm --filter @repo/docs dev",
     "docs:build": "turbo run build --filter @repo/docs",
     "docs:preview": "pnpm --filter @repo/docs preview",
-    "docs:check": "turbo run check --filter @repo/docs"
+    "docs:check": "turbo run check --filter @repo/docs",
+    "storybook": "pnpm --filter @repo/storybook-react dev"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.4",

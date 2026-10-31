@@ -1,0 +1,26 @@
+{
+  "name": "@repo/ant-design-fixtures",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "lint": "oxlint .",
+    "typecheck": "tsc -p tsconfig.stories.json && tsc -p tsconfig.tests.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@repo/oxlint-config": "workspace:*",
+    "@repo/test-support": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@storybook/react": "10.6.5",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "antd": "6.6.8",
+    "oxlint": "1.89.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
+  }
+}

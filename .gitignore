@@ -13,3 +13,6 @@ test-results/
 .trailhead/label-guard-ack
 .trailhead/active-map
 .trailhead/uat-backfill
+
+# Storybook diagnostics
+debug-storybook.log
