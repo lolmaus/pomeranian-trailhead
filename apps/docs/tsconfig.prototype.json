@@ -3,7 +3,7 @@
   "include": ["examples/prototype.spec.mts"],
   "compilerOptions": {
     "paths": {
-      "@playwright/test": ["./node_modules/@playwright/test"]
+      "@playwright/test": ["./node_modules/@playwright/test/index.d.ts"]
     }
   }
 }

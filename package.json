@@ -19,7 +19,11 @@
     "typecheck:root": "tsc --noEmit --project tsconfig.node.json",
     "format": "oxfmt --check .",
     "format:fix": "oxfmt --write .",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "docs:dev": "pnpm --filter @repo/docs dev",
+    "docs:build": "turbo run build --filter @repo/docs",
+    "docs:preview": "pnpm --filter @repo/docs preview",
+    "docs:check": "turbo run check --filter @repo/docs"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.4",

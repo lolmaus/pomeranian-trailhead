@@ -11,7 +11,7 @@
     "test:unit": "playwright test --config playwright.unit.config.mts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "typecheck": "node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json"
+    "typecheck": "node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.fixtures.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.prototype.json && node ../../packages/core/prototypes/factory-typing/run.mjs --types-only"
   },
   "dependencies": {
     "@repo/test-support": "workspace:*"

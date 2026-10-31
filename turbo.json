@@ -9,7 +9,8 @@
     "oxfmt.config.mts",
     "tsconfig*.json",
     "lib/**",
-    ".github/workflows/ci.yml"
+    ".github/workflows/ci.yml",
+    "packages/core/prototypes/factory-typing/**"
   ],
   "tasks": {
     "test": {
@@ -45,6 +46,23 @@
     },
     "//#typecheck:root": {
       "outputs": []
+    },
+    "@repo/docs#build": {
+      "dependsOn": ["^build"],
+      "outputs": [
+        ".generated/site/.vitepress/dist/**",
+        ".generated/api/**",
+        ".generated/content-model.json",
+        ".generated/ready.json",
+        ".generated/build.json"
+      ],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "@repo/docs#check": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": [],
+      "passThroughEnv": ["CI", "PLAYWRIGHT_*", "PWDEBUG", "DISPLAY"]
     }
   }
 }
