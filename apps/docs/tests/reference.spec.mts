@@ -21,6 +21,41 @@ const sources: Source[] = [
   },
 ];
 
+test("declaration keys survive unrelated entrypoint registration and retain real namespaces", async () => {
+  const output = await mkdtemp(path.join(tmpdir(), "pomeranian-stable-ownership-"));
+  try {
+    const alpha = path.join(output, "alpha.mts");
+    const beta = path.join(output, "beta.mts");
+    await writeFile(
+      alpha,
+      "/** Alpha value.\n * @since @pomeranian/alpha@Unreleased\n */\nexport const value = 42;\n/** Explicit namespace. */\nexport namespace Space {\n/** Nested value.\n * @since @pomeranian/alpha@Unreleased\n */\nexport const value = 7;\n}\n",
+    );
+    await writeFile(
+      beta,
+      "/** Beta value.\n * @since @pomeranian/beta@Unreleased\n */\nexport const value = 42;\n",
+    );
+    const entries: Source[] = [
+      { package: "@pomeranian/alpha", entry: alpha, status: "fixture" },
+      { package: "@pomeranian/beta", entry: beta, status: "fixture" },
+    ];
+    const first = await reference(entries.slice(0, 1), path.join(output, "single"));
+    const second = await reference(entries, path.join(output, "multiple"));
+    const declarations = (model: typeof first) =>
+      model.symbols
+        .filter((symbol) => symbol.package === "@pomeranian/alpha" && symbol.kind !== "Module")
+        .map((symbol) => ({ key: symbol.key, parent: symbol.parent }))
+        .sort((a, b) => a.key.localeCompare(b.key));
+    expect(declarations(second)).toEqual(declarations(first));
+    expect(
+      first.symbols.some((symbol) =>
+        symbol.key.includes("/namespace-instance-Space/variable-instance-value"),
+      ),
+    ).toBe(true);
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
+});
+
 test("owns ordinary entrypoints by source path without requiring invented module names", async () => {
   const output = await mkdtemp(path.join(tmpdir(), "pomeranian-entrypoints-"));
   try {
