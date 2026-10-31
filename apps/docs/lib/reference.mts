@@ -85,12 +85,18 @@ export async function reference(sources: Source[], output: string) {
   app.validate(project);
   if (app.logger.hasErrors() || app.logger.hasWarnings())
     throw new Error("API documentation validation failed; see TypeDoc diagnostics");
+  const symbolProject = project;
   const symbols: SymbolEntry[] = [];
   const ownerByReflection: Record<string, string> = { [project.id]: "project" };
   const byId = new Map<number, SymbolEntry>();
   function discover(reflection: DeclarationReflection, pkg: string, parent: string | null) {
+    const filename =
+      reflection.sources?.[0]?.fullFileName ??
+      symbolProject.getSymbolIdFromReflection(reflection)?.fileName;
     const module = reflection.kindOf(ReflectionKind.Module)
-      ? sources.find((source) => source.package === reflection.name)
+      ? (sources.find(
+          (source) => filename && path.resolve(source.entry) === path.resolve(filename),
+        ) ?? sources.find((source) => source.package === reflection.name))
       : undefined;
     const owner = module?.package ?? pkg;
     if (!owner) throw new Error(`Unregistered API owner: ${reflection.name}`);
