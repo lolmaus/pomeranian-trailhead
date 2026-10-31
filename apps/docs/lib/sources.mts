@@ -69,6 +69,22 @@ export async function registeredSources(repo: string): Promise<RegisteredSource[
       status: "development",
       guides: ["guides/testing.md"],
     },
+    {
+      package: "@repo/test-support",
+      workspace: "packages/test-support",
+      export: "./stories",
+      entry: path.join(repo, "packages/test-support/src/stories.mts"),
+      status: "development",
+      guides: ["guides/testing.md"],
+    },
+    {
+      package: "@repo/test-support",
+      workspace: "packages/test-support",
+      export: "./story-server",
+      entry: path.join(repo, "packages/test-support/src/story-server.mts"),
+      status: "development",
+      guides: ["guides/testing.md"],
+    },
   ];
   const workspaces: Workspace[] = [];
   for (const tree of ["apps", "packages"]) {

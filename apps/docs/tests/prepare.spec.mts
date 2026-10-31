@@ -14,7 +14,17 @@ test("builds site inputs and shared model from actual comments and checked guide
     expect(
       model.pages.find((page) => page.path === "getting-started.md")?.document.examples,
     ).toEqual([expect.objectContaining({ path: "examples/inline.spec.mts", region: "scenario" })]);
-    expect(model.api?.symbols.map((symbol) => symbol.name)).toEqual(["testConfig"]);
+    expect(model.api?.symbols.map((symbol) => symbol.name)).toEqual(
+      expect.arrayContaining([
+        "testConfig",
+        "typedStories",
+        "StoryTitle",
+        "StoryOptions",
+        "storyURL",
+        "storyServer",
+        "assertStoryHost",
+      ]),
+    );
     expect(await readFile(path.join(model.site, "guides/testing.md"), "utf8")).toContain(
       "export const exampleConfig",
     );

@@ -101,7 +101,7 @@ test("live preview regenerates API changes, exposes failures and recovers", asyn
       .poll(
         async () =>
           readFile(
-            path.join(output, "site/reference/development/variables/testConfig.md"),
+            path.join(output, "site/reference/development/config/variables/testConfig.md"),
             "utf8",
           ).catch(() => ""),
         { timeout: 25_000 },

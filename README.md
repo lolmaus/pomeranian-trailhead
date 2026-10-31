@@ -7,8 +7,8 @@ harness. Public page object APIs and publication are not implemented yet.
 
 Product requirements and decisions live in the [project map (#2)](https://github.com/lolmaus/pomeranian-trailhead/issues/2).
 The [testing contract (#3)](https://github.com/lolmaus/pomeranian-trailhead/issues/3)
-defines the workflow below. React Storybook hosting and typed story navigation
-belong to [the next harness ticket (#8)](https://github.com/lolmaus/pomeranian-trailhead/issues/8).
+defines the workflow below. The shared React Storybook hosts package-owned
+scenarios, while typed story navigation keeps browser UI out of Node test execution.
 
 ## Setup
 
@@ -134,11 +134,39 @@ test("click increments a counter", async ({ page }) => {
 ```
 
 Inline HTML needs no story server. Keep state behavior ordinary within a test;
-never depend on another test's state. Large/shared stories will be colocated TSX
-fixtures served through the maintained React Storybook in ticket #8. A package
-that eventually needs a server can supply Playwright's `webServer` configuration
-locally, including CI-clean startup and appropriate local reuse. Do not add a
-global server or universal framework adapter to the inline path.
+never depend on another test's state. Large/shared scenarios live in colocated TSX
+story files served through the maintained React Storybook. React, Storybook, and
+Ant Design are development dependencies of the fixture workspaces; they are not
+runtime dependencies of a published Pomeranian toolkit. The Ant Design fixture
+workspace is private and makes no production coverage or compatibility promise.
+
+The [story authoring guide](apps/docs/guides/testing.md) explains manual browsing,
+compiler-checked selection, browser readiness, server lifecycle, and debugging.
+
+```sh
+# Browse package-owned React scenarios without running tests (port 6006):
+pnpm run storybook
+
+# Auto-start the required host and run extracted HTML-as-TSX checks (port 6007):
+pnpm --filter @repo/test-support run test:stories
+
+# Run a selected real Ant Design scenario (port 6008):
+pnpm --filter @repo/ant-design-fixtures run test button.spec.mts -g "dialog"
+
+# Force a new host; the requested port must be free:
+STORYBOOK_FRESH=1 pnpm --filter @repo/test-support run test:stories
+```
+
+Local hosted runs can reuse an identity-checked host from this checkout. CI and
+`STORYBOOK_FRESH=1` disable reuse. Independent suite ports avoid collisions between
+separately launched tests; override them with `STORYBOOK_SUPPORT_PORT` and
+`STORYBOOK_ANTD_PORT`. Direct inline commands above remain server-free. Root
+`test` includes both inline and hosted tests and the Storybook production-build
+check. `test:fresh` forces task execution; use `STORYBOOK_FRESH=1` as well when
+you need a fresh server. Normal Playwright file/title/debug/UI flags apply to the
+owning package's configuration. Full test and CI routes run one workspace task at
+a time to bound memory while Storybook, Chromium, and documentation compilers are
+active. Each suite retains its own Playwright worker settings.
 
 These bootstrap scenarios validate the harness, not future Pomeranian page-object
 features. Add feature, type, and report-semantic tests incrementally with the
