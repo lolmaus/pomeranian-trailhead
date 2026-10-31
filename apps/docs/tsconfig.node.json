@@ -1,0 +1,5 @@
+{
+  "extends": "@repo/typescript-config/tsconfig.playwright.json",
+  "compilerOptions": { "allowImportingTsExtensions": true, "lib": ["ESNext", "DOM"] },
+  "include": ["lib/**/*.mts", "tests/**/*.mts", "examples/**/*.mts", "*.mts", ".vitepress/**/*.mts"]
+}
