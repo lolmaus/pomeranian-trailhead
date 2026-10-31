@@ -23,6 +23,23 @@ test("rejects meaningful web-only content rather than losing it", () => {
   expect(() => content('# Guide\n\n<Widget important="meaning" />\n')).toThrow("Unsupported HTML");
 });
 
+test("rejects raw code imports outside literal code, including nested content", () => {
+  for (const source of [
+    "# Raw import\n\n<<< ./sample.ts\n",
+    "> <<< ./sample.ts\n",
+    "- <<< ./sample.ts\n",
+    "::: warning Imported content\n<<< ./sample.ts\n:::\n",
+  ])
+    expect(() => content(source)).toThrow("Unsupported raw code import");
+  for (const source of [
+    "```md\n<<< ./sample.ts\n```\n",
+    "`<<< ./sample.ts`\n",
+    "> ```md\n> <<< ./sample.ts\n> ```\n",
+    "    <<< ./sample.ts\n",
+  ])
+    expect(content(source).markdown).toBe(source);
+});
+
 test("rejects unresolved or ambiguous checked regions and web-only enhancements", () => {
   const directive = "<!-- @example examples/demo.mts#shown -->\n";
   expect(() => content(directive)).toThrow("Unknown checked example");
