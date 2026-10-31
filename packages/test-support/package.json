@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./config": "./src/config.mts"
+    "./config": "./src/config.mts",
+    "./stories": "./src/stories.mts"
   },
   "scripts": {
     "test": "playwright test",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "typecheck": "tsc --noEmit --project tsconfig.node.json"
+    "typecheck": "tsc -p tsconfig.node.json && tsc -p tsconfig.stories.json && tsc -p tsconfig.story-tests.json",
+    "test:stories": "playwright test --config playwright.stories.config.mts",
+    "test:all": "pnpm run test && pnpm run test:stories"
   },
   "dependencies": {
     "@playwright/test": "1.64.1"
@@ -18,8 +21,14 @@
   "devDependencies": {
     "@repo/oxlint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@storybook/react": "10.6.5",
     "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "oxlint": "1.89.0",
-    "typescript": "7.0.2"
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "typescript": "7.0.2",
+    "vite": "8.3.5"
   }
 }

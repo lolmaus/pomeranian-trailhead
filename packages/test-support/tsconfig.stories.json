@@ -1,0 +1,7 @@
+{
+  "extends": "@repo/typescript-config/tsconfig.react.json",
+  "compilerOptions": {
+    "skipLibCheck": true
+  },
+  "include": ["tests/fixtures/**/*.tsx"]
+}

@@ -1,0 +1,8 @@
+{
+  "extends": "@repo/typescript-config/tsconfig.playwright.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "skipLibCheck": true
+  },
+  "include": ["tests/**/*.story.spec.mts"]
+}
