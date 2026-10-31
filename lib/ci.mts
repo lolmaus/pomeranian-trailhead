@@ -30,22 +30,27 @@ console.error(
     ? "CI: checking affected packages and their dependencies"
     : `CI: checking full workspace (${problem})`,
 );
-const result = spawnSync(
-  "pnpm",
-  [
-    "exec",
-    "turbo",
-    "run",
-    "lint",
-    "typecheck",
-    "test",
-    ...(affected ? ["--affected"] : []),
-    ...process.argv.slice(2),
-  ],
-  {
-    stdio: "inherit",
-    env: { ...process.env, ...(affected ? { TURBO_SCM_BASE: base, TURBO_SCM_HEAD: head } : {}) },
-  },
-);
-if (result.error) console.error(result.error.message);
-process.exitCode = result.status ?? 1;
+const forwarded = process.argv.slice(2);
+// Dry runs report the complete selection in one JSON document. Real runs keep
+// lightweight checks parallel and bound memory by running browser suites serially.
+const phases = forwarded.some((argument) => argument.startsWith("--dry"))
+  ? [["lint", "typecheck", "test", "test:stories"]]
+  : [
+      ["lint", "typecheck"],
+      ["test", "test:stories", "--concurrency=1"],
+    ];
+for (const tasks of phases) {
+  const result = spawnSync(
+    "pnpm",
+    ["exec", "turbo", "run", ...tasks, ...(affected ? ["--affected"] : []), ...forwarded],
+    {
+      stdio: "inherit",
+      env: { ...process.env, ...(affected ? { TURBO_SCM_BASE: base, TURBO_SCM_HEAD: head } : {}) },
+    },
+  );
+  if (result.error) console.error(result.error.message);
+  if (result.status !== 0) {
+    process.exitCode = result.status ?? 1;
+    break;
+  }
+}

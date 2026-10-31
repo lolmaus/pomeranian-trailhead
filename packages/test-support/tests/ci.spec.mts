@@ -158,6 +158,9 @@ test("shared support changes select every dependent and exclude unrelated tests"
 });
 
 test("shared TypeScript configuration invalidates every package", async ({ workspace }) => {
+  const before = selected(workspace.root, "", "").report.tasks.find(
+    (task) => task.taskId === "@fixture/unrelated#test",
+  )?.hash;
   write(
     workspace.root,
     "packages/typescript-config/tsconfig.base.json",
@@ -165,6 +168,9 @@ test("shared TypeScript configuration invalidates every package", async ({ works
   );
   const selection = selected(workspace.root, workspace.baseSha, commit(workspace.root));
   expect(selection.packages).toEqual(names.map((name) => `@fixture/${name}`).sort());
+  expect(
+    selection.report.tasks.find((task) => task.taskId === "@fixture/unrelated#test")?.hash,
+  ).not.toBe(before);
 });
 
 test("generated lint logs do not change unrelated task hashes", async ({ workspace }) => {
@@ -247,5 +253,49 @@ for (const path of ["tests/local.spec.mts", "playwright.config.mts"]) {
     );
     expect(task?.inputs[path]).toBeDefined();
     expect(task?.hash).not.toBe(before);
+  });
+}
+
+for (const path of [
+  "packages/lib-ant-design/tests/button.stories.tsx",
+  "packages/lib-ant-design/tests/button-label.ts",
+  "packages/test-support/tests/fixtures/counter.stories.tsx",
+  "apps/storybook-react/.storybook/main.ts",
+  "packages/test-support/src/stories.mts",
+  "packages/test-support/src/story-server.mts",
+  "packages/test-support/playwright.stories.config.mts",
+  "packages/test-support/story-setup.mts",
+]) {
+  test(`external story input ${path} selects packages and changes hashes`, async ({
+    workspace,
+  }) => {
+    const before = selected(workspace.root, "", "").report.tasks.find(
+      (task) => task.taskId === "@fixture/unrelated#test",
+    )?.hash;
+    write(workspace.root, path, "// changed external input\n");
+    const selection = selected(workspace.root, workspace.baseSha, commit(workspace.root));
+    expect(selection.packages).toEqual(names.map((name) => `@fixture/${name}`).sort());
+    expect(
+      selection.report.tasks.find((task) => task.taskId === "@fixture/unrelated#test")?.hash,
+    ).not.toBe(before);
+  });
+}
+
+for (const path of [
+  "apps/storybook-react/dist/index.html",
+  "apps/storybook-react/.turbo/turbo-build.log",
+  "packages/test-support/test-results/stories/result.json",
+  "packages/test-support/playwright-report/stories/index.html",
+]) {
+  test(`generated story output ${path} leaves hashes unchanged`, async ({ workspace }) => {
+    const before = selected(workspace.root, "", "").report.tasks.find(
+      (task) => task.taskId === "@fixture/unrelated#test",
+    )?.hash;
+    write(workspace.root, path, "generated\n");
+    const after = selected(workspace.root, "", "").report.tasks.find(
+      (task) => task.taskId === "@fixture/unrelated#test",
+    )?.hash;
+    expect(before).toBeDefined();
+    expect(after).toBe(before);
   });
 }

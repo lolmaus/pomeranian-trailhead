@@ -6,7 +6,8 @@
     "dev": "storybook dev --host 127.0.0.1 --port 6006 --ci --no-open --exact-port",
     "build": "storybook build --output-dir dist",
     "lint": "oxlint .",
-    "typecheck": "tsc -p tsconfig.node.json"
+    "typecheck": "tsc -p tsconfig.node.json",
+    "test": "pnpm run build"
   },
   "devDependencies": {
     "@repo/oxlint-config": "workspace:*",

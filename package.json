@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "turbo run test",
-    "test:fresh": "turbo run test --force",
+    "test": "turbo run test test:stories --concurrency=1",
+    "test:fresh": "STORYBOOK_FRESH=1 turbo run test test:stories --concurrency=1 --force",
     "test:install": "pnpm --filter @repo/test-support exec playwright install chromium",
     "check": "pnpm run lint && pnpm run typecheck && pnpm run format && pnpm run test",
     "ci": "pnpm run lint:root && pnpm run typecheck:root && pnpm run format && node lib/ci.mts",

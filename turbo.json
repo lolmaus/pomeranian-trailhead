@@ -10,14 +10,29 @@
     "tsconfig*.json",
     "lib/**",
     ".github/workflows/ci.yml",
-    "packages/core/prototypes/factory-typing/**"
+    "packages/core/prototypes/factory-typing/**",
+    "apps/storybook-react/.storybook/**",
+    "apps/storybook-react/package.json",
+    "packages/lib-ant-design/tests/**",
+    "packages/lib-ant-design/package.json",
+    "packages/lib-ant-design/tsconfig*.json",
+    "packages/test-support/src/**",
+    "packages/test-support/tests/fixtures/**",
+    "packages/test-support/playwright.stories.config.mts",
+    "packages/test-support/story-setup.mts",
+    "packages/test-support/package.json",
+    "packages/test-support/tsconfig*.json",
+    "!**/node_modules/**",
+    "!**/dist/**",
+    "!**/test-results/**",
+    "!**/playwright-report/**"
   ],
   "tasks": {
     "test": {
       "dependsOn": ["^build"],
       "cache": false,
       "outputs": [],
-      "passThroughEnv": ["CI", "PLAYWRIGHT_*", "PWDEBUG", "DISPLAY"]
+      "passThroughEnv": ["CI", "PLAYWRIGHT_*", "PWDEBUG", "DISPLAY", "STORYBOOK_*"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -63,6 +78,12 @@
       "cache": false,
       "outputs": [],
       "passThroughEnv": ["CI", "PLAYWRIGHT_*", "PWDEBUG", "DISPLAY"]
+    },
+    "test:stories": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": [],
+      "passThroughEnv": ["CI", "PLAYWRIGHT_*", "PWDEBUG", "DISPLAY", "STORYBOOK_*"]
     }
   }
 }
