@@ -12,3 +12,14 @@ test("shared content preserves headings, tables and literal code", () => {
 test("rejects meaningful web-only content rather than losing it", () => {
   expect(() => content('# Guide\n\n<Widget important="meaning" />\n')).toThrow("Unsupported HTML");
 });
+
+test("normalizes labelled callouts without interpreting fenced examples", () => {
+  const result = content(
+    "::: warning Compatibility\nKeep the limitation.\n\n```md\n::: imaginary\n```\n:::\n",
+  );
+  expect(result.markdown).toContain("> **Warning: Compatibility**");
+  expect(result.markdown).toContain("> Keep the limitation.");
+  expect(result.markdown).toContain("> ::: imaginary");
+  expect(() => content("::: imaginary\nLost meaning\n:::\n")).toThrow("Unsupported container");
+  expect(() => content("::: note\nMissing end\n")).toThrow("Unclosed container");
+});
