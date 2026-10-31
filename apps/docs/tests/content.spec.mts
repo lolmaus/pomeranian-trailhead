@@ -8,3 +8,7 @@ test("shared content preserves headings, tables and literal code", () => {
   expect(result.markdown).toBe(source);
   expect(result.headings).toEqual(["Examples"]);
 });
+
+test("rejects meaningful web-only content rather than losing it", () => {
+  expect(() => content('# Guide\n\n<Widget important="meaning" />\n')).toThrow("Unsupported HTML");
+});
