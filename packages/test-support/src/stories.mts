@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 
 /** A required literal default-metadata title; widened or missing titles cannot bind.
+ * Rejects unions and open-ended template or transformed string types as well.
  * @since @repo/test-support@Unreleased
  */
 export type StoryTitle<M> = M extends {
@@ -9,7 +10,8 @@ export type StoryTitle<M> = M extends {
       string;
   };
 }
-  ? string extends T
+  ? // Open-ended strings form index signatures; a concrete literal requires a key.
+    Record<never, never> extends Record<T, unknown>
     ? never
     : (T extends unknown ? (value: T) => void : never) extends (value: infer I) => void
       ? [T] extends [I]

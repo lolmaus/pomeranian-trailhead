@@ -9,6 +9,21 @@ const prelude =
   'import { typedStories } from "../../src/stories.mts";\nimport type { Page } from "@playwright/test";\nconst options={baseURL:"http://localhost",ready:(p:Page)=>p.locator("button")};\n';
 for (const [name, body, diagnostic] of [
   [
+    "open string template title",
+    'typedStories<{default:{title:`Actual/${string}`};Primary:object}>("Actual/WRONG",options);',
+    "TS2345",
+  ],
+  [
+    "open number template title",
+    'typedStories<{default:{title:`Actual/${number}`};Primary:object}>("Actual/42",options);',
+    "TS2345",
+  ],
+  [
+    "open transformed title",
+    'typedStories<{default:{title:Capitalize<string>};Primary:object}>("Anything",options);',
+    "TS2345",
+  ],
+  [
     "union title",
     'typedStories<{default:{title:"Actual"|"Other"};Primary:object}>("Actual",options);',
     "TS2345",
