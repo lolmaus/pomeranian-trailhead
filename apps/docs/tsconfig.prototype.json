@@ -1,0 +1,9 @@
+{
+  "extends": "../../packages/core/prototypes/factory-typing/tsconfig.json",
+  "include": ["examples/prototype.spec.mts"],
+  "compilerOptions": {
+    "paths": {
+      "@playwright/test": ["./node_modules/@playwright/test"]
+    }
+  }
+}
