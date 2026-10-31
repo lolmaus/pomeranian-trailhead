@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { fileURLToPath } from "node:url";
+import { stripVTControlCharacters } from "node:util";
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { test, expect } from "@playwright/test";
 
@@ -64,7 +65,7 @@ function run(
     child.once("close", (code) => {
       clearTimeout(timer);
       rmSync(outputDirectory, { recursive: true, force: true });
-      resolve({ code, output });
+      resolve({ code, output: stripVTControlCharacters(output) });
     });
   });
 }
@@ -135,7 +136,11 @@ test("process lifecycle: incompatible occupied server and failing test clean up"
       file,
       'import {test,expect} from "@playwright/test";test("lifecycle intentional failure",()=>{expect(1).toBe(2);});',
     );
-    const failed = await run(port, {}, [file, "-g", "lifecycle intentional failure"]);
+    const failed = await run(port, { FORCE_COLOR: "1", NO_COLOR: "" }, [
+      file,
+      "-g",
+      "lifecycle intentional failure",
+    ]);
     expect(failed.code, failed.output).not.toBe(0);
     expect(failed.output).toContain("Expected: 2");
     await expect.poll(() => reachable(port)).toBe(false);
