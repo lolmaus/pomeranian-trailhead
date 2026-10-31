@@ -29,7 +29,7 @@ export interface StoryOptions {
   baseURL: string;
   /** A visible control or other meaningful ready state for this module. @since @repo/test-support@Unreleased */
   ready: (page: Page) => Locator;
-  /** Readiness bound in milliseconds; defaults to 15000. Index requests default to 10000.
+  /** Navigation/readiness bound in milliseconds; defaults to 15000. Index requests default to 10000.
    * @since @repo/test-support@Unreleased
    */
   timeout?: number;
@@ -90,7 +90,10 @@ export function typedStories<M>(title: StoryTitle<M>, options: StoryOptions) {
       preview.searchParams.set("id", entry["id"]);
       preview.searchParams.set("viewMode", "story");
       previewURL = preview.href;
-      await page.goto(preview.href);
+      await page.goto(preview.href, {
+        waitUntil: "domcontentloaded",
+        timeout: options.timeout ?? 15000,
+      });
       try {
         await options.ready(page).waitFor({ state: "visible", timeout: options.timeout ?? 15000 });
       } catch (error) {
