@@ -9,6 +9,16 @@ test("shared content preserves headings, tables and literal code", () => {
   expect(result.headings).toEqual(["Examples"]);
 });
 
+test("includes exact named regions from checked examples", () => {
+  const sources = {
+    "examples/demo.mts":
+      "outside\n// #region shown\nconst answer = 42;\n// #endregion shown\noutside\n",
+  };
+  expect(content("# Guide\n\n<!-- @example examples/demo.mts#shown -->\n", sources).markdown).toBe(
+    "# Guide\n\n```ts\nconst answer = 42;\n```\n",
+  );
+});
+
 test("rejects meaningful web-only content rather than losing it", () => {
   expect(() => content('# Guide\n\n<Widget important="meaning" />\n')).toThrow("Unsupported HTML");
 });

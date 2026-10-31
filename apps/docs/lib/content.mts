@@ -2,7 +2,8 @@ import MarkdownIt from "markdown-it";
 
 const parser = new MarkdownIt({ html: true });
 
-export function content(source: string) {
+export function content(source: string, examples: Record<string, string> = {}) {
+  void examples;
   const lines: string[] = [];
   let callout = false;
   let fence = "";
