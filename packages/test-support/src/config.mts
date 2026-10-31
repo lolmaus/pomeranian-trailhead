@@ -1,6 +1,10 @@
 import { defineConfig } from "@playwright/test";
 
-/** Framework-independent defaults. Each consumer owns its testDir and optional webServer. */
+/** Framework-independent Chromium defaults for repository contributors.
+ * Each consumer owns its testDir and optional webServer. This private workspace
+ * is development infrastructure, not a published Pomeranian consumer API.
+ * @since @repo/test-support@Unreleased
+ */
 export const testConfig = defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env["CI"]),
