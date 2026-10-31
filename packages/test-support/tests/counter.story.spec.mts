@@ -1,7 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { storyURL } from "../src/story-server.mts";
+const baseURL = storyURL(Number(process.env["STORYBOOK_SUPPORT_PORT"] ?? 6007));
 import { typedStories } from "../src/stories.mts";
 const open = typedStories<typeof import("./fixtures/counter.stories.tsx")>("HTML/Counter", {
-  baseURL: "http://127.0.0.1:6006",
+  baseURL: baseURL,
   ready: (p) => p.getByRole("button", { name: "Count: 0" }),
 });
 test("extracted HTML counter changes ordinary state", async ({ page }) => {
@@ -16,7 +18,7 @@ for (const scenario of ["first", "second"]) {
     await open(page, "Counting");
     expect(await page.evaluate(() => localStorage.getItem("scenario"))).toBeNull();
     await page.evaluate((value) => localStorage.setItem("scenario", value), scenario);
-    await context.addCookies([{ name: "scenario", value: scenario, url: "http://127.0.0.1:6006" }]);
+    await context.addCookies([{ name: "scenario", value: scenario, url: baseURL }]);
     await page.getByRole("button").click();
     await expect(page.getByRole("button", { name: "Count: 1" })).toBeVisible();
   });
@@ -26,14 +28,14 @@ test("real excluded helper fails discovery", async ({ page }) => {
 });
 test("undiscovered file and title-prefix mismatch fail clearly", async ({ page }) => {
   const hidden = typedStories<typeof import("./fixtures/undiscovered.tsx")>("Hidden/Counter", {
-    baseURL: "http://127.0.0.1:6006",
+    baseURL: baseURL,
     ready: (p) => p.getByRole("button"),
   });
   await expect(hidden(page, "Hidden")).rejects.toThrow(/Hidden\/Counter.*found 0.*title prefixes/s);
 });
 test("real throwing story and never-ready story report context", async ({ page }) => {
   const checked = typedStories<typeof import("./fixtures/counter.stories.tsx")>("HTML/Counter", {
-    baseURL: "http://127.0.0.1:6006",
+    baseURL: baseURL,
     ready: (p) => p.getByRole("button", { name: "Count: 0" }),
     timeout: 1500,
   });
@@ -41,4 +43,54 @@ test("real throwing story and never-ready story report context", async ({ page }
     /HTML\/Counter\/Throwing.*Counter fixture render exploded/s,
   );
   await expect(checked(page, "NotReady")).rejects.toThrow(/HTML\/Counter\/NotReady.*Timeout/s);
+});
+
+test("manager catalog opens the manually interactive scenario", async ({ page }) => {
+  await page.goto(baseURL);
+  await expect(page.locator("#html")).toContainText("HTML");
+  await page.getByRole("button", { name: "Counter", exact: true }).click();
+  await page.getByRole("link", { name: "Readable counter", exact: true }).click();
+  const preview = page.frameLocator("#storybook-preview-iframe");
+  await preview.getByRole("button", { name: "Count: 0" }).click();
+  await expect(preview.getByRole("button", { name: "Count: 1" })).toBeVisible();
+});
+
+test("same binding sees live IDs and removed discovery without an index cache", async ({
+  page,
+}) => {
+  const { mkdtemp, writeFile, rm } = await import("node:fs/promises");
+  const directory = await mkdtemp(new URL("./fixtures/live-", import.meta.url).pathname);
+  const file = `${directory}/live.stories.tsx`;
+  const source = (id: string) =>
+    `const meta={title:"Live/Freshness",id:"${id}"} as const;export default meta;export const Ready={render:()=> <button>Live ready</button>};`;
+  const live = typedStories<{ default: { title: "Live/Freshness" }; Ready: object }>(
+    "Live/Freshness",
+    { baseURL, ready: (p) => p.getByRole("button", { name: "Live ready" }) },
+  );
+  const ids = async () => {
+    const response = await page.request.get(`${baseURL}/index.json`, {
+      headers: { "Cache-Control": "no-cache" },
+    });
+    const index = (await response.json()) as {
+      entries: Record<string, { title: string; id: string }>;
+    };
+    return Object.values(index.entries)
+      .filter((e) => e.title === "Live/Freshness")
+      .map((e) => e.id);
+  };
+  try {
+    await writeFile(file, source("live-first"));
+    await expect.poll(ids, { timeout: 15000 }).toEqual(["live-first--ready"]);
+    await live(page, "Ready");
+    expect(page.url()).toContain("id=live-first--ready");
+    await writeFile(file, source("live-second"));
+    await expect.poll(ids, { timeout: 15000 }).toEqual(["live-second--ready"]);
+    await live(page, "Ready");
+    expect(page.url()).toContain("id=live-second--ready");
+    await rm(directory, { recursive: true, force: true });
+    await expect.poll(ids, { timeout: 15000 }).toEqual([]);
+    await expect(live(page, "Ready")).rejects.toThrow("found 0");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

@@ -9,6 +9,11 @@ const prelude =
   'import { typedStories } from "../../src/stories.mts";\nimport type { Page } from "@playwright/test";\nconst options={baseURL:"http://localhost",ready:(p:Page)=>p.locator("button")};\n';
 for (const [name, body, diagnostic] of [
   [
+    "union title",
+    'typedStories<{default:{title:"Actual"|"Other"};Primary:object}>("Actual",options);',
+    "TS2345",
+  ],
+  [
     "valid",
     'typedStories<typeof import("../fixtures/counter.stories.tsx")>("HTML/Counter",options);',
     undefined,

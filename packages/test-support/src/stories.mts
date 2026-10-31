@@ -1,9 +1,21 @@
 import type { Locator, Page } from "@playwright/test";
 
-type Title<M> = M extends { default: { title: infer T extends string } }
+/** A required literal default-metadata title; widened or missing titles cannot bind.
+ * @since @repo/test-support@Unreleased
+ */
+export type StoryTitle<M> = M extends {
+  /** CSF metadata export. @since @repo/test-support@Unreleased */ default: {
+    /** Explicit literal catalog title. @since @repo/test-support@Unreleased */ title: infer T extends
+      string;
+  };
+}
   ? string extends T
     ? never
-    : T
+    : (T extends unknown ? (value: T) => void : never) extends (value: infer I) => void
+      ? [T] extends [I]
+        ? T
+        : never
+      : never
   : never;
 
 /** Host and meaningful readiness observation, shared by a module's scenarios.
@@ -11,8 +23,13 @@ type Title<M> = M extends { default: { title: infer T extends string } }
  * @since @repo/test-support@Unreleased
  */
 export interface StoryOptions {
+  /** Explicit URL of the framework host. @since @repo/test-support@Unreleased */
   baseURL: string;
+  /** A visible control or other meaningful ready state for this module. @since @repo/test-support@Unreleased */
   ready: (page: Page) => Locator;
+  /** Readiness bound in milliseconds; defaults to 15000. Index requests default to 10000.
+   * @since @repo/test-support@Unreleased
+   */
   timeout?: number;
 }
 
@@ -21,10 +38,11 @@ export interface StoryOptions {
  * Navigation preserves the Page and its portaled DOM.
  * @since @repo/test-support@Unreleased
  */
-export function typedStories<M>(title: Title<M>, options: StoryOptions) {
+export function typedStories<M>(title: StoryTitle<M>, options: StoryOptions) {
   return async (page: Page, name: Exclude<keyof M, "default"> & string): Promise<void> => {
     const indexURL = new URL("/index.json", options.baseURL).href;
     const context = `${title}/${name} (${indexURL})`;
+    let previewURL: string | undefined;
     let browserError: Error | undefined;
     const onError = (error: Error) => {
       browserError = error;
@@ -69,6 +87,7 @@ export function typedStories<M>(title: Title<M>, options: StoryOptions) {
       const preview = new URL("/iframe.html", options.baseURL);
       preview.searchParams.set("id", entry["id"]);
       preview.searchParams.set("viewMode", "story");
+      previewURL = preview.href;
       await page.goto(preview.href);
       try {
         await options.ready(page).waitFor({ state: "visible", timeout: options.timeout ?? 15000 });
@@ -82,7 +101,7 @@ export function typedStories<M>(title: Title<M>, options: StoryOptions) {
       if (browserError) throw browserError;
     } catch (error) {
       throw new Error(
-        `Cannot open story ${context}: ${error instanceof Error ? error.message : String(error)}`,
+        `Cannot open story ${context}${previewURL ? ` preview ${previewURL}` : ""}: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error },
       );
     } finally {

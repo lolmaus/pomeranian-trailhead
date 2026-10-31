@@ -17,4 +17,4 @@ typedStories<{ default: { title?: "Actual" }; Primary: object }>("Actual", optio
 // @ts-expect-error Missing titles are unchecked.
 typedStories<{ default: object; Primary: object }>("Actual", options);
 // @ts-expect-error Missing modules must be resolved by the real compiler.
-type MissingModule = typeof import("./no-such-story.tsx");
+export type MissingModule = typeof import("./no-such-story.tsx");

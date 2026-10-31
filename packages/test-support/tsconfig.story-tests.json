@@ -2,7 +2,8 @@
   "extends": "@repo/typescript-config/tsconfig.playwright.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": ["node", "@playwright/test", "vite/client"]
   },
-  "include": ["tests/**/*.story.spec.mts"]
+  "include": ["tests/**/*.story.spec.mts", "tests/story-reference-contracts.mts"]
 }

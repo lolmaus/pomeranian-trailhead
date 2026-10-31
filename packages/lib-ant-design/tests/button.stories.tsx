@@ -1,3 +1,4 @@
+import { buttonLabel } from "./button-label.ts";
 import type { Meta, StoryObj } from "@storybook/react";
 import { Button, Modal } from "antd";
 import { useState } from "react";
@@ -23,7 +24,7 @@ function Details({ label }: { label: string }) {
 const meta = {
   title: "Ant Design/Button",
   component: Details,
-  args: { label: "Open details" },
+  args: { label: buttonLabel },
 } as const;
 meta satisfies Meta<typeof Details>;
 export default meta;
