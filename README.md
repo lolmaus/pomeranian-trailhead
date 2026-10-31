@@ -143,7 +143,34 @@ global server or universal framework adapter to the inline path.
 These bootstrap scenarios validate the harness, not future Pomeranian page-object
 features. Add feature, type, and report-semantic tests incrementally with the
 behavior they specify. Preserve relevant guides and source documentation as
-features arrive; documentation-site tooling remains a separate decision.
+features arrive; the documentation workflow below checks them alongside code.
+
+## Documentation
+
+The VitePress app in `apps/docs` publishes development documentation with explicit
+production-package status and prototype boundaries. It uses the default theme;
+visual design, AI text export, and deployment remain separate work.
+
+```sh
+pnpm run docs:dev      # Live guide/example/API regeneration
+pnpm run docs:build    # Static artifact and shared content/symbol model
+pnpm run docs:preview  # Serve the existing built artifact
+pnpm run docs:check    # Full compiler/content/API/link/example/browser validation
+```
+
+Author Markdown in `apps/docs` and API comments in their owning packages. The
+[authoring guide](apps/docs/guides/documentation.md) defines supported text-first
+content, checked excerpt inclusion, package-qualified availability/change history,
+and real workspace API registration. Generated reference, indexes, staging, and
+HTML stay ignored under `apps/docs/.generated`. The shared content/reflection
+model is the input for the next AI-output ticket; no parallel authored corpus is
+maintained. TypeDoc's supported TypeScript 6 dependency is local to docs tooling;
+project and maintained-example checks remain on TypeScript 7.
+
+The existing non-workspace factory proof is an explicit global Turbo input, so its
+changes conservatively select docs and invalidate reference/context generation.
+Real documented packages must have docs workspace dependencies; regression tests
+exercise actual Turbo affected selection and build hashes.
 
 ## Continuous integration
 

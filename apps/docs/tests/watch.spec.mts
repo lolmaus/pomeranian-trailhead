@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { cp, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import path from "node:path";
 import { tmpdir } from "node:os";
-import { docsRoot, repoRoot } from "../lib/prepare.mts";
+import { repoRoot } from "../lib/prepare.mts";
 
 test("live preview regenerates API changes, exposes failures and recovers", async () => {
   test.setTimeout(100_000);
@@ -117,6 +117,19 @@ test("live preview regenerates API changes, exposes failures and recovers", asyn
         { timeout: 10_000 },
       )
       .toBe(true);
+    const invalidExample = path.join(root, "apps/docs/examples/inline.spec.mts");
+    await writeFile(
+      invalidExample,
+      (await readFile(invalidExample, "utf8")) +
+        '\nexport const invalidMaintainedExample: number = "wrong";\n',
+    );
+    const check = spawnSync("pnpm", ["run", "check"], {
+      cwd: path.join(root, "apps/docs"),
+      encoding: "utf8",
+      timeout: 30_000,
+    });
+    expect(check.status).not.toBe(0);
+    expect(check.stdout + check.stderr).toContain("TS2322");
   } finally {
     child.kill("SIGTERM");
     const ended = await Promise.race([
@@ -129,5 +142,4 @@ test("live preview regenerates API changes, exposes failures and recovers", asyn
     }
     await rm(root, { recursive: true, force: true });
   }
-  void docsRoot;
 });

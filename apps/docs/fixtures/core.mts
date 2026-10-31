@@ -20,6 +20,38 @@ export class Widget<R extends Root = Root> {
    */
   label = "core";
 
+  /** Static collision fixture.
+   * @since @pomeranian/proof-core@Unreleased
+   */
+  static identify(): "static" {
+    return "static";
+  }
+
+  /** Instance collision fixture.
+   * @since @pomeranian/proof-core@Unreleased
+   */
+  identify(): "instance" {
+    return "instance";
+  }
+
+  /** Getter documentation.
+   * @since @pomeranian/proof-core@Unreleased
+   */
+  get title(): string {
+    return this.label;
+  }
+  /** Setter documentation.
+   * @since @pomeranian/proof-core@Unreleased
+   */
+  set title(value: string) {
+    this.label = value;
+  }
+
+  /** Callable property, distinct from a method.
+   * @since @pomeranian/proof-core@Unreleased
+   */
+  onValue: <T>(value: T) => T = <T,>(value: T): T => value;
+
   /** Protected subclass hook.
    * @since @pomeranian/proof-core@Unreleased
    */
@@ -57,3 +89,19 @@ export class Widget<R extends Root = Root> {
     return mode === "many" ? { values: value } : { value: this.transform(value) };
   }
 }
+
+/** Conditional mapped root result.
+ * @since @pomeranian/proof-core@Unreleased
+ */
+export type RootShape<R extends Root> = {
+  /** Optional root field. */
+  readonly [K in keyof NonNullable<R>]?: NonNullable<R>[K];
+} & {
+  /** Root association. */
+  kind: R extends null ? "unbound" : "rooted";
+};
+
+/** Infer an item from a sequence.
+ * @since @pomeranian/proof-core@Unreleased
+ */
+export type ItemOf<T> = T extends readonly (infer Item)[] ? Item : never;

@@ -1,9 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { reference, type Source } from "../lib/reference.mts";
+import { checkHtml } from "../lib/html-links.mts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const sources: Source[] = [
@@ -19,6 +21,31 @@ const sources: Source[] = [
   },
 ];
 
+test("owns ordinary entrypoints by source path without requiring invented module names", async () => {
+  const output = await mkdtemp(path.join(tmpdir(), "pomeranian-entrypoints-"));
+  try {
+    const entries: Source[] = [];
+    for (const name of ["alpha", "beta"]) {
+      const entry = path.join(output, `${name}.mts`);
+      const pkg = `@pomeranian/${name}`;
+      await writeFile(
+        entry,
+        `/** An ordinary exported value.\n * @since ${pkg}@Unreleased\n */\nexport const value = 42;\n`,
+      );
+      entries.push({ package: pkg, entry, status: "fixture" });
+    }
+    const model = await reference(entries, path.join(output, "reference"));
+    expect(
+      model.symbols
+        .filter((symbol) => symbol.name === "value")
+        .map((symbol) => symbol.package)
+        .sort(),
+    ).toEqual(["@pomeranian/alpha", "@pomeranian/beta"]);
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
+});
+
 test("reference exposes generic, overloaded, protected and inherited symbols across packages", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "pomeranian-reference-"));
   try {
@@ -33,6 +60,12 @@ test("reference exposes generic, overloaded, protected and inherited symbols acr
     );
     expect(model.symbols.some((symbol) => symbol.name === "map" && symbol.inherited)).toBe(true);
     expect(new Set(model.symbols.map((symbol) => symbol.key)).size).toBe(model.symbols.length);
+    expect(
+      model.symbols.filter(
+        (symbol) => symbol.name === "identify" && symbol.package === "@pomeranian/proof-core",
+      ),
+    ).toHaveLength(2);
+    expect(model.symbols.find((symbol) => symbol.name === "title")?.kind).toBe("Accessor");
     expect(
       model.symbols.find(
         (symbol) => symbol.name === "Widget" && symbol.package === "@pomeranian/proof-core",
@@ -56,6 +89,94 @@ test("reference exposes generic, overloaded, protected and inherited symbols acr
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("rich reference builds with valid symbol routes and stable identities", async () => {
+  test.setTimeout(60_000);
+  await mkdir(path.join(root, ".generated"), { recursive: true });
+  const output = await mkdtemp(path.join(root, ".generated/reference-regression-"));
+  try {
+    const first = await reference(sources, path.join(output, "first"));
+    const second = await reference(sources, path.join(output, "second"));
+    const stable = (model: typeof first) =>
+      model.symbols.map(({ reflectionId: _id, ...symbol }) => symbol);
+    expect(stable(second)).toEqual(stable(first));
+    const site = path.join(output, "first/reference");
+    await mkdir(path.join(site, ".vitepress"));
+    await writeFile(path.join(site, ".vitepress/config.mjs"), "export default {};\n");
+    await writeFile(
+      path.join(site, "mapping-probe.md"),
+      "# Complete symbol mappings\n\n" +
+        first.symbols.map((symbol) => `- [${symbol.key}](${symbol.html})`).join("\n") +
+        "\n",
+    );
+    const build = spawnSync(
+      process.execPath,
+      [path.join(root, "node_modules/vitepress/bin/vitepress.js"), "build", site],
+      { encoding: "utf8", timeout: 40_000 },
+    );
+    expect(build.status, build.stdout + build.stderr).toBe(0);
+    expect(await checkHtml(path.join(site, ".vitepress/dist"))).toBeGreaterThan(5);
+    const widget = first.symbols.find(
+      (symbol) => symbol.name === "Widget" && symbol.package === "@pomeranian/proof-core",
+    );
+    if (!widget) throw new Error("Fixture Widget missing");
+    const html = await readFile(
+      path.join(site, ".vitepress/dist", widget.html.split("#")[0] ?? ""),
+      "utf8",
+    );
+    for (const expected of [
+      "Scalar overload",
+      "Sequence overload",
+      "Getter documentation",
+      "Setter documentation",
+      "Available since @pomeranian/proof-core@1.2.3",
+      "Changed in @pomeranian/proof-core@1.4.0",
+    ])
+      expect(html).toContain(expected);
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
+});
+
+for (const [name, source, failure] of [
+  ["missing documentation", "export const undocumented = 42;", "documentation validation failed"],
+  [
+    "wrong history owner",
+    "/** Documented.\n * @since @pomeranian/other@Unreleased\n */\nexport const added = 42;",
+    "Invalid package-qualified @since",
+  ],
+  [
+    "invalid change history",
+    "/** Documented.\n * @since @pomeranian/new@Unreleased\n * @remarks Changed in @pomeranian/new@banana: broken version.\n */\nexport const added = 42;",
+    "Invalid package-qualified change history",
+  ],
+  [
+    "unresolved symbol link",
+    "/** See {@link DoesNotExist}.\n * @since @pomeranian/new@Unreleased\n */\nexport const added = 42;",
+    "documentation validation failed",
+  ],
+  [
+    "compiler failure",
+    "/** Documented.\n * @since @pomeranian/new@Unreleased\n */\nexport const added: number = 'wrong';",
+    "API conversion failed",
+  ],
+] as const) {
+  test(`rejects ${name}`, async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), "pomeranian-invalid-api-"));
+    try {
+      const entry = path.join(directory, "api.mts");
+      await writeFile(entry, source);
+      await expect(
+        reference(
+          [{ package: "@pomeranian/new", entry, status: "fixture" }],
+          path.join(directory, "out"),
+        ),
+      ).rejects.toThrow(failure);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+}
 
 test("fails when an exported addition has no owning-package availability annotation", async () => {
   const directory = await mkdtemp(path.join(tmpdir(), "pomeranian-history-"));
