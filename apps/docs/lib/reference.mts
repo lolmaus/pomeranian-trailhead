@@ -19,6 +19,8 @@ export interface Source {
   package: string;
   entry: string;
   status: "development" | "production" | "fixture";
+  /** Stable public export subpath; defaults to the package's sole root entry. */
+  export?: string;
 }
 
 export interface SymbolEntry {
@@ -38,6 +40,16 @@ export interface SymbolEntry {
 
 export async function reference(sources: Source[], output: string) {
   if (!sources.length) throw new Error("No registered documentation sources");
+  const entrypointKeys = new Map<Source, string>();
+  for (const source of sources) {
+    const key = `${encodeURIComponent(source.package)}/entrypoint-${encodeURIComponent(source.export ?? ".")}`;
+    if ([...entrypointKeys.values()].includes(key)) {
+      throw new Error(
+        `Duplicate package entrypoint; register distinct public export subpaths: ${key}`,
+      );
+    }
+    entrypointKeys.set(source, key);
+  }
   await mkdir(output, { recursive: true });
   const config = path.join(output, "tsconfig.json");
   await writeFile(
@@ -89,7 +101,11 @@ export async function reference(sources: Source[], output: string) {
   const symbols: SymbolEntry[] = [];
   const ownerByReflection: Record<string, string> = { [project.id]: "project" };
   const byId = new Map<number, SymbolEntry>();
-  function discover(reflection: DeclarationReflection, pkg: string, parent: string | null) {
+  function discover(
+    reflection: DeclarationReflection,
+    source: Source | undefined,
+    parent: string | null,
+  ) {
     const filename =
       reflection.sources?.[0]?.fullFileName ??
       symbolProject.getSymbolIdFromReflection(reflection)?.fileName;
@@ -98,11 +114,16 @@ export async function reference(sources: Source[], output: string) {
           (source) => filename && path.resolve(source.entry) === path.resolve(filename),
         ) ?? sources.find((source) => source.package === reflection.name))
       : undefined;
-    const owner = module?.package ?? pkg;
-    if (!owner) throw new Error(`Unregistered API owner: ${reflection.name}`);
+    const owningSource = module ?? source;
+    if (!owningSource) throw new Error(`Unregistered API owner: ${reflection.name}`);
+    const owner = owningSource.package;
+    const entrypoint = entrypointKeys.get(owningSource);
+    if (!entrypoint) throw new Error(`Unregistered API entrypoint: ${reflection.name}`);
+    const syntheticModule =
+      reflection.kindOf(ReflectionKind.Module) && reflection.parent === symbolProject;
     const kind = ReflectionKind.singularString(reflection.kind);
     const segment = `${kind.toLowerCase()}-${reflection.flags.isStatic ? "static" : "instance"}-${encodeURIComponent(reflection.name)}`;
-    const key = parent ? `${parent}/${segment}` : `${encodeURIComponent(owner)}/${segment}`;
+    const key = syntheticModule ? entrypoint : `${parent ?? entrypoint}/${segment}`;
     if (symbols.some((symbol) => symbol.key === key))
       throw new Error(`Duplicate symbol identity: ${key}`);
     const symbol: SymbolEntry = {
@@ -125,10 +146,11 @@ export async function reference(sources: Source[], output: string) {
     symbols.push(symbol);
     byId.set(reflection.id, symbol);
     ownerByReflection[reflection.id] = key;
-    for (const child of reflection.children ?? []) discover(child, owner, key);
+    for (const child of reflection.children ?? [])
+      discover(child, owningSource, syntheticModule ? null : key);
   }
   for (const reflection of project.children ?? [])
-    discover(reflection, sources.length === 1 ? (sources[0]?.package ?? "") : "", null);
+    discover(reflection, sources.length === 1 ? sources[0] : undefined, null);
   for (const reflection of Object.values(project.reflections)) {
     let owner: Reflection | undefined = reflection;
     while (owner && !byId.has(owner.id)) owner = owner.parent;

@@ -56,6 +56,54 @@ test("declaration keys survive unrelated entrypoint registration and retain real
   }
 });
 
+test("registered export subpaths distinguish same-named declarations in one package", async () => {
+  const output = await mkdtemp(path.join(tmpdir(), "pomeranian-export-identities-"));
+  try {
+    const entries: Source[] = [];
+    for (const name of ["alpha", "beta"]) {
+      const directory = path.join(output, name);
+      await mkdir(directory);
+      const entry = path.join(directory, "index.mts");
+      await writeFile(
+        entry,
+        "/** Same declaration name, separate export.\n * @since @pomeranian/shared@Unreleased\n */\nexport const value = 42;\n",
+      );
+      entries.push({
+        package: "@pomeranian/shared",
+        export: `./${name}`,
+        entry,
+        status: "fixture",
+      });
+    }
+    const first = await reference(entries, path.join(output, "first"));
+    const values = first.symbols.filter((symbol) => symbol.name === "value");
+    expect(values).toHaveLength(2);
+    expect(new Set(values.map((symbol) => symbol.key)).size).toBe(2);
+    expect(values.map((symbol) => symbol.key)).toEqual(
+      expect.arrayContaining([
+        "%40pomeranian%2Fshared/entrypoint-.%2Falpha/variable-instance-value",
+        "%40pomeranian%2Fshared/entrypoint-.%2Fbeta/variable-instance-value",
+      ]),
+    );
+    const reversed = await reference(entries.toReversed(), path.join(output, "reversed"));
+    expect(reversed.symbols.map((symbol) => symbol.key).sort()).toEqual(
+      first.symbols.map((symbol) => symbol.key).sort(),
+    );
+    await expect(
+      reference(
+        entries.map((source) => ({
+          package: source.package,
+          entry: source.entry,
+          status: source.status,
+        })),
+        path.join(output, "ambiguous"),
+      ),
+    ).rejects.toThrow("Duplicate package entrypoint");
+  } finally {
+    await rm(output, { recursive: true, force: true });
+  }
+});
+
 test("owns ordinary entrypoints by source path without requiring invented module names", async () => {
   const output = await mkdtemp(path.join(tmpdir(), "pomeranian-entrypoints-"));
   try {
