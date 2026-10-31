@@ -1,6 +1,19 @@
 import MarkdownIt from "markdown-it";
 
 const parser = new MarkdownIt({ html: true });
+// Match VitePress's block syntax at the parser boundary, so lists and quotes are
+// covered while fenced, indented and inline code remain literal.
+parser.block.ruler.before("fence", "reject-unchecked-code-import", (state, line) => {
+  const start = state.bMarks[line];
+  const shift = state.tShift[line];
+  const indent = state.sCount[line];
+  if (start === undefined || shift === undefined || indent === undefined) return false;
+  if (indent - state.blkIndent >= 4) return false;
+  if (state.src.startsWith("<<<", start + shift)) {
+    throw new Error("Unsupported raw code import; include a checked example region instead");
+  }
+  return false;
+});
 
 export function content(source: string, examples: Record<string, string> = {}) {
   const included: { path: string; region: string; code: string }[] = [];

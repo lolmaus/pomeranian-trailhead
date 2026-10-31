@@ -12,7 +12,7 @@ Describe the limitation and what the reader should do.
 :::
 ```
 
-Supported callout kinds are `note`, `tip`, `info`, `warning`, and `danger`. Nested containers and unclosed fences/containers fail validation. Raw HTML/Vue, interpolation, images, unknown containers, and frontmatter are rejected. Put substantive meaning in supported Markdown, not visual components or metadata. Add a tested semantic conversion before extending this subset.
+Supported callout kinds are `note`, `tip`, `info`, `warning`, and `danger`. Nested containers and unclosed fences/containers fail validation. Raw HTML/Vue, interpolation, images, unknown containers, frontmatter, and VitePress raw code imports (`<<<`) are rejected. Use the checked-example inclusion syntax below for source excerpts. Code-import syntax inside fenced, indented, or inline code stays literal. Put substantive meaning in supported Markdown, not visual components or metadata. Add a tested semantic conversion before extending this subset.
 
 ## Maintained excerpts
 
