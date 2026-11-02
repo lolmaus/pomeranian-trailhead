@@ -38,6 +38,47 @@ test("first reconstructs the concrete class and reinitializes its custom fields"
   await expect(source.locator).toHaveCount(2);
 });
 
+test("captures inherited filter option getters once instead of dropping their criteria", async ({
+  page,
+}) => {
+  await page.setContent(
+    "<article>Sale <b>A</b></article><article>Other <i>B</i></article><article hidden>Sale <b>Archived</b></article>",
+  );
+  const reads = new Map<string, number>();
+  const read = <Value,>(key: string, value: Value): Value => {
+    reads.set(key, (reads.get(key) ?? 0) + 1);
+    return value;
+  };
+  class Criteria {
+    get has() {
+      return read("has", page.locator("b"));
+    }
+    get hasNot() {
+      return read("hasNot", page.locator("i"));
+    }
+    get hasText() {
+      return read("hasText", /Sale/i);
+    }
+    get hasNotText() {
+      return read("hasNotText", "Archived");
+    }
+    get visible() {
+      return read("visible", true);
+    }
+  }
+  const options = new Criteria();
+  const derived = DomPageObject.create(page, "article").filter(options);
+  expect([...reads.entries()].sort()).toEqual([
+    ["has", 1],
+    ["hasNot", 1],
+    ["hasNotText", 1],
+    ["hasText", 1],
+    ["visible", 1],
+  ]);
+  await expect(derived.locator).toHaveText("Sale A");
+  expect([...reads.values()]).toEqual([1, 1, 1, 1, 1]);
+});
+
 test("keeps occurrence parentage separate from immutable ordered derivation information", async ({
   page,
 }) => {
