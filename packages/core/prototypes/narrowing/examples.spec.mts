@@ -1,7 +1,12 @@
 // THROWAWAY #11: typed reconstruction evidence, not production core.
 import { test, expect } from "@playwright/test";
-import { DomPageObject, PageObject, rootFixture, type LocatorFactory } from "./probe.mts";
-import * as proof from "./probe.mts";
+import {
+  DomPageObject,
+  PageObject,
+  rootFixture,
+  inspectOccurrenceForProof,
+  type LocatorFactory,
+} from "./probe.mts";
 
 test("first reconstructs the concrete class and reinitializes its custom fields", async ({
   page,
@@ -45,20 +50,11 @@ test("keeps occurrence parentage separate from immutable ordered derivation info
   const source = Row.create(parent, "article");
   const filtered = source.filter({ hasText: /Sale/i });
   const selected = filtered.nth(0);
-  const inspect = Reflect.get(proof, "inspectOccurrenceForProof") as
-    | ((object: PageObject) => {
-        parent: PageObject | null;
-        derivation: {
-          source: PageObject;
-          operation: { kind: string; index?: number; options?: unknown };
-        } | null;
-      })
-    | undefined;
-  expect(typeof inspect).toBe("function");
-  expect(inspect!(source).parent).toBe(parent);
-  expect(inspect!(source).derivation).toBeNull();
-  const filteredInfo = inspect!(filtered);
-  const selectedInfo = inspect!(selected);
+  const inspect = inspectOccurrenceForProof;
+  expect(inspect(source).parent).toBe(parent);
+  expect(inspect(source).derivation).toBeNull();
+  const filteredInfo = inspect(filtered);
+  const selectedInfo = inspect(selected);
   expect(filteredInfo.parent).toBe(parent);
   expect(filteredInfo.derivation?.source).toBe(source);
   expect(filteredInfo.derivation?.operation).toEqual({
@@ -68,8 +64,8 @@ test("keeps occurrence parentage separate from immutable ordered derivation info
   expect(selectedInfo.parent).toBe(parent);
   expect(selectedInfo.derivation?.source).toBe(filtered);
   expect(selectedInfo.derivation?.operation).toEqual({ kind: "nth", index: 0 });
-  expect(inspect!(selected.Button).parent).toBe(selected);
-  expect(inspect!(selected.Button).derivation).toBeNull();
+  expect(inspect(selected.Button).parent).toBe(selected);
+  expect(inspect(selected.Button).derivation).toBeNull();
   expect(Reflect.set(selectedInfo.derivation!.operation, "index", 99)).toBe(false);
   await expect(selected.Button.locator).toHaveText("A");
 });

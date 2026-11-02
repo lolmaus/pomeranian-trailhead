@@ -1,4 +1,4 @@
-// THROWAWAY #11: target-resolution experiment, not production core code.
+// THROWAWAY #11: narrowing/reconstruction experiment, not production core code.
 // Factory typing is borrowed from the separately bounded #9 proof.
 import type { Page, Locator } from "@playwright/test";
 
@@ -15,6 +15,44 @@ function captureFilterOptions(options: FilterOptions | undefined): FilterOptions
     if (value instanceof RegExp) copy[key] = new RegExp(value.source, value.flags);
   }
   return Object.freeze(copy);
+}
+
+type TextDescription = string | Readonly<{ source: string; flags: string }>;
+type FilterDescription = Readonly<
+  Omit<FilterOptions, "hasText" | "hasNotText"> & {
+    hasText?: TextDescription;
+    hasNotText?: TextDescription;
+  }
+>;
+type Operation = Readonly<
+  | { kind: "first" | "last" }
+  | { kind: "nth"; index: number }
+  | { kind: "filter"; options: FilterDescription | undefined }
+>;
+type Occurrence = Readonly<{
+  parent: PageObject | null;
+  derivation: Readonly<{ source: DomPageObject; operation: Operation }> | null;
+}>;
+const occurrences = new WeakMap<PageObject, Occurrence>();
+const reconstructInstance: unique symbol = Symbol("reconstruct instance");
+
+function describeFilter(options: FilterOptions | undefined): FilterDescription | undefined {
+  if (options === undefined) return undefined;
+  const describeText = (value: string | RegExp): TextDescription =>
+    typeof value === "string" ? value : Object.freeze({ source: value.source, flags: value.flags });
+  const { hasText, hasNotText, ...rest } = options;
+  return Object.freeze({
+    ...rest,
+    ...(hasText === undefined ? {} : { hasText: describeText(hasText) }),
+    ...(hasNotText === undefined ? {} : { hasNotText: describeText(hasNotText) }),
+  });
+}
+
+// Diagnostic seam for this proof only, not a proposed production parent/report API.
+export function inspectOccurrenceForProof(object: PageObject): Occurrence {
+  const occurrence = occurrences.get(object);
+  if (!occurrence) throw new Error("Not a page object from this proof.");
+  return occurrence;
 }
 
 // Validate the engine boundary, not the complete CSS grammar. Full CSS parsing
@@ -108,6 +146,7 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
     this.#parent = context instanceof PageObject ? context : null;
     this.#page = this.#parent ? this.#parent.page : (context as Page);
     this.#root = (asRoot ? this : this.#parent ? this.#parent.root : null) as Root;
+    occurrences.set(this, Object.freeze({ parent: this.#parent, derivation: null }));
   }
 
   get page(): Page {
@@ -131,7 +170,7 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
     this.#parent?.assertInitialized();
   }
 
-  protected reconstruct(target: Target): this {
+  [reconstructInstance](target: Target): this {
     if (!this.#complete) throw new Error("Narrowing during page-object initialization.");
     const object = Reflect.construct(this.#concreteClass, [
       this.#parent ?? this.#page,
@@ -169,20 +208,35 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
   }
 
   first(): this {
-    return this.reconstruct(() => this.locator.first());
+    return this.#derive({ kind: "first" }, (locator) => locator.first());
   }
 
   last(): this {
-    return this.reconstruct(() => this.locator.last());
+    return this.#derive({ kind: "last" }, (locator) => locator.last());
   }
 
   nth(index: number): this {
-    return this.reconstruct(() => this.locator.nth(index));
+    return this.#derive({ kind: "nth", index }, (locator) => locator.nth(index));
   }
 
   filter(options?: Parameters<Locator["filter"]>[0]): this {
     const captured = captureFilterOptions(options);
-    return this.reconstruct(() => this.locator.filter(captured));
+    return this.#derive({ kind: "filter", options: describeFilter(captured) }, (locator) =>
+      locator.filter(captured),
+    );
+  }
+
+  #derive(operation: Operation, transform: (source: Locator) => Locator): this {
+    const object = this[reconstructInstance](() => transform(this.locator));
+    const { parent } = inspectOccurrenceForProof(object);
+    occurrences.set(
+      object,
+      Object.freeze({
+        parent,
+        derivation: Object.freeze({ source: this, operation: Object.freeze(operation) }),
+      }),
+    );
+    return object;
   }
 
   get effectiveTarget(): Target {
