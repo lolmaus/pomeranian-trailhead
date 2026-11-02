@@ -5,6 +5,17 @@ import type { Page, Locator } from "@playwright/test";
 export type LocatorFactoryContext = Readonly<{ page: Page; scope: Locator | null }>;
 export type LocatorFactory = (context: LocatorFactoryContext) => Locator;
 export type Target = string | Locator | LocatorFactory;
+type FilterOptions = NonNullable<Parameters<Locator["filter"]>[0]>;
+
+function captureFilterOptions(options: FilterOptions | undefined): FilterOptions | undefined {
+  if (options === undefined) return undefined;
+  const copy = { ...options };
+  for (const key of ["hasText", "hasNotText"] as const) {
+    const value = copy[key];
+    if (value instanceof RegExp) copy[key] = new RegExp(value.source, value.flags);
+  }
+  return Object.freeze(copy);
+}
 
 // Validate the engine boundary, not the complete CSS grammar. Full CSS parsing
 // remains Playwright's responsibility when the Locator is actually evaluated.
@@ -169,7 +180,8 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
   }
 
   filter(options?: Parameters<Locator["filter"]>[0]): this {
-    return this.reconstruct(() => this.locator.filter(options));
+    const captured = captureFilterOptions(options);
+    return this.reconstruct(() => this.locator.filter(captured));
   }
 
   get effectiveTarget(): Target {
