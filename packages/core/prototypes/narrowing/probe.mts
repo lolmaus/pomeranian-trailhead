@@ -160,6 +160,18 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
     return this.reconstruct(() => this.locator.first());
   }
 
+  last(): this {
+    return this.reconstruct(() => this.locator.last());
+  }
+
+  nth(index: number): this {
+    return this.reconstruct(() => this.locator.nth(index));
+  }
+
+  filter(options?: Parameters<Locator["filter"]>[0]): this {
+    return this.reconstruct(() => this.locator.filter(options));
+  }
+
   get effectiveTarget(): Target {
     if (this.#selectedTarget !== undefined) return this.#selectedTarget;
     const declared = this.#explicitTarget !== undefined ? this.#explicitTarget : this.defaultTarget;
