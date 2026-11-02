@@ -1,9 +1,9 @@
 # Throwaway narrowing/reconstruction proof (#11)
 
-This experiment tests the developing decision in
+This experiment demonstrates the author-confirmed decision in
 [typed narrowing and instance reconstruction (#11)](https://github.com/lolmaus/pomeranian-trailhead/issues/11).
-It is not production core, has no package manifest or exports, and settles no
-additional public API until the author confirms the complete contract.
+It is not production core and has no package manifest or exports. The complete
+contract and implementation work split were confirmed by the author on ticket #11.
 
 Run with installed workspace dependencies and Chromium:
 
@@ -20,10 +20,10 @@ The agreed starting point is a new concrete instance with a derived target,
 ordinary field/private-state initialization, fresh children, and the initial
 first/last/nth/filter surface. Convenience APIs have their own decision (#19).
 
-## Candidate contract demonstrated
+## Confirmed contract demonstrated
 
 The operations live on `DomPageObject`; a future `Element` subclass inherits them.
-Grouping objects do not acquire DOM narrowing. The proposed declarations follow
+Grouping objects do not acquire DOM narrowing. The confirmed declarations follow
 Playwright's method spellings and options, returning polymorphic `this`:
 
 ```ts
@@ -121,6 +121,14 @@ The runner always performs its own strict compiler check; ordinary workspace
 lint/type/test commands do not automatically include this standalone directory.
 No changes to production packages, normal task discovery, dependencies, releases,
 or generated documentation are made by the proof.
+
+Production construction/target internals are tracked in
+[core construction and target resolution (#18)](https://github.com/lolmaus/pomeranian-trailhead/issues/18).
+The initial public narrowing slice, integrated tests and complete documentation
+are tracked in
+[Implement initial typed DOM narrowing (#20)](https://github.com/lolmaus/pomeranian-trailhead/issues/20).
+The separate convenience-method decision remains in
+[Define ergonomic narrowing convenience methods (#19)](https://github.com/lolmaus/pomeranian-trailhead/issues/19).
 
 Primary references: [Locator methods](https://playwright.dev/docs/api/class-locator)
 and [filtering semantics](https://playwright.dev/docs/locators#filtering-locators).
