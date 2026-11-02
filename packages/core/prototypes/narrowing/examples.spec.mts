@@ -32,6 +32,31 @@ test("first reconstructs the concrete class and reinitializes its custom fields"
   await expect(source.locator).toHaveCount(2);
 });
 
+test("rejects deriving the initializing object before reconstructing its fields recursively", async ({
+  page,
+}) => {
+  let constructions = 0;
+  let failure: unknown;
+  class Early extends DomPageObject<null> {
+    Attempt = (() => {
+      if (++constructions > 1)
+        throw new Error("Recursive reconstruction entered field initialization");
+      try {
+        this.first();
+      } catch (error) {
+        failure = error;
+      }
+      return true;
+    })();
+    override readonly defaultTarget = "button";
+  }
+  const source = Early.create(page);
+  expect(failure).toBeInstanceOf(Error);
+  expect((failure as Error).message).toMatch(/during.*initialization/i);
+  expect(constructions).toBe(1);
+  expect(source.locator.page()).toBe(page);
+});
+
 test("filter captures its arguments when called while Locator resolution remains lazy", async ({
   page,
 }) => {
