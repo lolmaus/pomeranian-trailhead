@@ -111,10 +111,11 @@ set rather than treating this proof as shipped source enforcement.
 The strict compiler checks exact concrete/default results, additional generic
 parameters and return values, App/null/nullable roots, custom fluent methods, and
 rejections of invalid options/contexts, group narrowing, and public construction.
-Thirteen real Chromium cases exercise fresh state and classes, nested repeated
+Fourteen real Chromium cases exercise fresh state and classes, nested repeated
 components/groups, mixed targets, inherited defaults/methods, live queries,
 composition, argument capture, initialization, retry/ownership, native filtering,
-ordinary root designation, and ordered occurrence/derivation data.
+ordinary root designation, inherited filter option getters, and ordered
+occurrence/derivation data.
 
 The runner always performs its own strict compiler check; ordinary workspace
 lint/type/test commands do not automatically include this standalone directory.

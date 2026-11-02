@@ -9,7 +9,13 @@ type FilterOptions = NonNullable<Parameters<Locator["filter"]>[0]>;
 
 function captureFilterOptions(options: FilterOptions | undefined): FilterOptions | undefined {
   if (options === undefined) return undefined;
-  const copy = { ...options };
+  const copy: FilterOptions = {};
+  // Read supported fields once, including inherited getters and non-enumerable properties.
+  for (const key of ["has", "hasNot", "hasText", "hasNotText", "visible"] as const) {
+    const value = options[key];
+    if (value !== undefined)
+      Object.defineProperty(copy, key, { value, enumerable: true, writable: true });
+  }
   for (const key of ["hasText", "hasNotText"] as const) {
     const value = copy[key];
     if (value instanceof RegExp) copy[key] = new RegExp(value.source, value.flags);

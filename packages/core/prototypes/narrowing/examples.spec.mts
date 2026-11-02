@@ -68,6 +68,12 @@ test("captures inherited filter option getters once instead of dropping their cr
   }
   const options = new Criteria();
   const derived = DomPageObject.create(page, "article").filter(options);
+  const operation = inspectOccurrenceForProof(derived).derivation?.operation;
+  expect(operation?.kind).toBe("filter");
+  if (operation?.kind !== "filter") throw new Error("Expected filter description");
+  expect(operation.options?.hasText).toEqual({ source: "Sale", flags: "i" });
+  expect(operation.options?.hasNotText).toBe("Archived");
+  expect(operation.options?.visible).toBe(true);
   expect([...reads.entries()].sort()).toEqual([
     ["has", 1],
     ["hasNot", 1],
