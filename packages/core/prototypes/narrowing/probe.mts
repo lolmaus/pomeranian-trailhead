@@ -87,9 +87,13 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
   readonly #parent: PageObject<Root> | null;
   readonly #page: Page;
   readonly #root: Root;
+  readonly #concreteClass: Function;
+  readonly #asRoot: boolean;
   #complete = false;
 
   protected constructor(context: Page | PageObject<Root>, _target?: Target, asRoot = false) {
+    this.#concreteClass = new.target;
+    this.#asRoot = asRoot;
     this.#parent = context instanceof PageObject ? context : null;
     this.#page = this.#parent ? this.#parent.page : (context as Page);
     this.#root = (asRoot ? this : this.#parent ? this.#parent.root : null) as Root;
@@ -116,6 +120,16 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
     this.#parent?.assertInitialized();
   }
 
+  protected reconstruct(target: Target): this {
+    const object = Reflect.construct(this.#concreteClass, [
+      this.#parent ?? this.#page,
+      target,
+      this.#asRoot,
+    ]) as this;
+    object.finishConstruction(target);
+    return object;
+  }
+
   static create<C extends Class>(
     this: C,
     context: Context<Result<C>["root"]>,
@@ -140,6 +154,10 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
     super(context, target, asRoot);
     this.#explicitTarget = target;
     this.#rootFallback = asRoot ? "html" : undefined;
+  }
+
+  first(): this {
+    return this.reconstruct(() => this.locator.first());
   }
 
   get effectiveTarget(): Target {

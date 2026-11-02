@@ -21,10 +21,7 @@ test("first reconstructs the concrete class and reinitializes its custom fields"
   source.label = "Changed";
   expect(source.increment()).toBe(1);
   expect(source.increment()).toBe(2);
-  // A capability assertion gives an intended assertion failure before the method exists.
-  const first = Reflect.get(source, "first") as (() => Row) | undefined;
-  expect(typeof first).toBe("function");
-  const derived = first!.call(source);
+  const derived = source.first();
   expect(derived).not.toBe(source);
   expect(derived).toBeInstanceOf(Row);
   expect(derived.custom()).toBe("Row API");
