@@ -132,6 +132,7 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
   }
 
   protected reconstruct(target: Target): this {
+    if (!this.#complete) throw new Error("Narrowing during page-object initialization.");
     const object = Reflect.construct(this.#concreteClass, [
       this.#parent ?? this.#page,
       target,

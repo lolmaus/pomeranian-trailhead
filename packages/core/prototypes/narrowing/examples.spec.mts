@@ -32,6 +32,131 @@ test("first reconstructs the concrete class and reinitializes its custom fields"
   await expect(source.locator).toHaveCount(2);
 });
 
+for (const form of ["string", "supplied", "factory"] as const) {
+  test(`derives a live query from a fixed ${form} target without recapturing defaults`, async ({
+    page,
+  }) => {
+    await page.setContent('<p class="item">Before A</p><p class="item">Before B</p><b>Wrong</b>');
+    let calls = 0;
+    const factory: LocatorFactory = ({ page: received }) => {
+      calls++;
+      return received.locator(".item");
+    };
+    const target =
+      form === "string" ? ".item" : form === "supplied" ? page.locator(".item") : factory;
+    class Item extends DomPageObject<null> {
+      override defaultTarget = "b";
+    }
+    const source = Item.create(page, target);
+    const derived = source.last();
+    source.defaultTarget = "html";
+    expect(calls).toBe(0);
+    await expect(derived.locator).toHaveText("Before B");
+    expect(derived.root).toBeNull();
+    expect(calls).toBe(form === "factory" ? 1 : 0);
+    await page.setContent('<p class="item">After A</p><p class="item">After B</p>');
+    await expect(derived.locator).toHaveText("After B");
+    await expect(source.locator).toHaveCount(2);
+  });
+}
+
+test("supports narrowed child declarations before ancestor defaults finish initializing", async ({
+  page,
+}) => {
+  await page.setContent(
+    '<section id="panel"><button>A</button><button>B</button></section><button>Outside</button>',
+  );
+  let failure: unknown;
+  let calls = 0;
+  class Panel extends DomPageObject<null> {
+    LastButton = DomPageObject.create(this, ({ page: received, scope }) => {
+      calls++;
+      return (scope ?? received).locator("button");
+    }).last();
+    Check = (() => {
+      try {
+        void this.LastButton.locator;
+      } catch (error) {
+        failure = error;
+      }
+      return true;
+    })();
+    override readonly defaultTarget = "#panel";
+  }
+  const panel = Panel.create(page);
+  expect(failure).toBeInstanceOf(Error);
+  expect((failure as Error).message).toMatch(/initialization/i);
+  expect(calls).toBe(0);
+  await expect(panel.LastButton.locator).toHaveText("B");
+  expect(calls).toBe(1);
+});
+
+test("retains successful-only source and derived memoization after resolution failures", async ({
+  page,
+  context,
+}) => {
+  const other = await context.newPage();
+  try {
+    await page.setContent("<button>A</button><button>B</button>");
+    let attempt = 0;
+    const source = DomPageObject.create(page, () => {
+      attempt++;
+      if (attempt === 1) throw new Error("Not ready");
+      if (attempt === 2) return other.locator("button");
+      return page.locator("button");
+    });
+    const derived = source.last().first();
+    expect(attempt).toBe(0);
+    expect(() => derived.locator).toThrow("Not ready");
+    expect(() => derived.locator).toThrow(/same Page/);
+    const locator = derived.locator;
+    expect(derived.locator).toBe(locator);
+    expect(attempt).toBe(3);
+    await expect(locator).toHaveText("B");
+  } finally {
+    await other.close();
+  }
+});
+
+test("ordinary reconstruction retains construction context and root designation", async ({
+  page,
+}) => {
+  await page.setContent("<main><button>A</button></main><main><button>B</button></main>");
+  class App extends DomPageObject<App> {
+    Button = DomPageObject.create(this, "button");
+    override readonly defaultTarget = "main";
+  }
+  await rootFixture(App)({ page }, async (app) => {
+    const derived = app.last();
+    expect(derived).not.toBe(app);
+    expect(derived.root).toBe(derived);
+    expect(derived.Button.root).toBe(derived);
+    expect(app.root).toBe(app);
+    expect(app.Button.root).toBe(app);
+    await expect(derived.Button.locator).toHaveText("B");
+    await expect(app.Button.locator).toHaveCount(2);
+  });
+});
+
+test("delegates native filter criteria and frame restrictions without a page-object overload", async ({
+  page,
+}) => {
+  await page.setContent(
+    '<article>Sale <b>A</b></article><article>Other <i>B</i></article><article hidden>Archived <b>C</b></article><iframe srcdoc="<b>Frame</b>"></iframe>',
+  );
+  const source = DomPageObject.create(page, "article");
+  await expect(source.filter({ has: page.locator("b"), visible: true }).locator).toHaveText(
+    "Sale A",
+  );
+  await expect(source.filter({ hasNot: page.locator("b") }).locator).toHaveText("Other B");
+  await expect(source.filter({ hasNotText: /Archived/, hasText: "SALE" }).locator).toHaveText(
+    "Sale A",
+  );
+  await expect(source.filter({ visible: false }).locator).toHaveText("Archived C");
+  const crossFrame = source.filter({ has: page.frameLocator("iframe").locator("b") });
+  await expect(crossFrame.locator.count()).rejects.toThrow(/frame|FrameLocator/i);
+});
+
 test("rejects deriving the initializing object before reconstructing its fields recursively", async ({
   page,
 }) => {
