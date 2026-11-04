@@ -394,6 +394,28 @@ test("matching uses native CSS self scope including extensions and relative inte
     expect(() => items.matching(invalid)).toThrow();
 });
 
+test("matching preserves mixed relative selector-list branches in either order", async ({
+  page,
+}) => {
+  await page.setContent(
+    '<section><div id="a" class="item active a,b" data-label=","><div id="n" class="item"></div></div><div id="b" class="item"></div></section>',
+  );
+  const items = DomPageObject.create(page, ".item");
+  for (const selector of [
+    ".active, > .item",
+    "> .item, .active",
+    ".a\\,b, > .item",
+    '[data-label=","], > .item',
+    ":is(.active, #missing), > .item",
+    ".active/* , */, > .item",
+  ]) {
+    expect(
+      await items.matching(selector).locator.evaluateAll((nodes) => nodes.map((node) => node.id)),
+      selector,
+    ).toEqual(["a", "n"]);
+  }
+});
+
 test("exact class and raw attribute positives and negatives include literal unusual tokens", async ({
   page,
 }) => {
