@@ -446,6 +446,41 @@ test("test-ID configuration and regex criteria capture happen before lazy resolu
   selectors.setTestIdAttribute("data-testid");
 });
 
+test("test-ID adapter decodes quoted and multi-attribute names and rejects malformed shapes", async ({
+  page,
+}) => {
+  const { selectors } = await import("@playwright/test");
+  await page.setContent(
+    '<div id="a" class="item" data-proof="ID"></div><div id="b" class="item" other="ID"></div><div id="c" class="item"></div>',
+  );
+  const items = DomPageObject.create(page, ".item");
+  const ids = (object: DomPageObject) =>
+    object.locator.evaluateAll((nodes) => nodes.map((node) => node.id));
+  try {
+    for (const configuration of ['"data-proof"', "'data-proof'", " data-proof "]) {
+      selectors.setTestIdAttribute(configuration);
+      expect(
+        await page.getByTestId("ID").evaluateAll((nodes) => nodes.map((node) => node.id)),
+      ).toEqual(["a"]);
+      expect(await ids(items.withTestId("ID"))).toEqual(["a"]);
+      expect(await ids(items.withoutTestId("ID"))).toEqual(["b", "c"]);
+    }
+    selectors.setTestIdAttribute("data-proof,other");
+    const positive = items.withTestId(/^ID$/);
+    const negative = items.withoutTestId("ID");
+    selectors.setTestIdAttribute("data-testid");
+    expect(await ids(positive)).toEqual(["a", "b"]);
+    expect(await ids(negative)).toEqual(["c"]);
+    for (const malformed of ["data-proof=x", "data-proof] >> css=.item", '"data-proof']) {
+      selectors.setTestIdAttribute(malformed);
+      expect(() => items.withTestId("ID")).toThrow(/unsupported.*encoding/i);
+      expect(() => items.withoutTestId("ID")).toThrow(/unsupported.*encoding/i);
+    }
+  } finally {
+    selectors.setTestIdAttribute("data-testid");
+  }
+});
+
 test("native text visibility and own role retain Playwright semantics", async ({ page }) => {
   await page.setContent(
     '<div id="a" class="item">HELLO <b>world</b></div><button id="b" class="item" aria-label="Buy" aria-description="cheap">BUY</button><div id="c" class="item" style="display:none">hello world<button>Buy</button></div><button id="d" class="item" aria-hidden="true">Buy</button><input id="e" class="item" type="checkbox" checked>',
