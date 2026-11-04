@@ -107,6 +107,38 @@ function cssTarget(input: string): string {
   return `css=${body}`;
 }
 
+// Split only top-level list separators; native Playwright still parses CSS.
+function selfMatchingSelector(body: string): string {
+  const branches: string[] = [];
+  let start = 0;
+  let depth = 0;
+  let quote: string | undefined;
+  for (let index = 0; index < body.length; index++) {
+    const char = body[index];
+    if (char === "\\") index++;
+    else if (quote === char) quote = undefined;
+    else if (quote) continue;
+    else if (char === '"' || char === "'" || char === "`") quote = char;
+    else if (char === "/" && body[index + 1] === "*") {
+      const end = body.indexOf("*/", index + 2);
+      index = end < 0 ? body.length : end + 1;
+    } else if (char === "(" || char === "[") depth++;
+    else if (char === ")" || char === "]") depth--;
+    else if (char === "," && depth === 0) {
+      branches.push(body.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+  branches.push(body.slice(start).trim());
+  if (branches.some((branch) => !branch)) return body;
+  return branches
+    .map((branch) => {
+      const head = branch.replace(/^(?:\s|\/\*[\s\S]*?\*\/)*/, "");
+      return /^[>+~]/.test(head) ? `:scope ${branch}` : `:scope:is(${branch})`;
+    })
+    .join(", ");
+}
+
 function isLocator(value: unknown): value is Locator {
   const candidate = value as Partial<Locator> | null;
   return (
@@ -466,8 +498,7 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
       if (typeof captured === "string") {
         // Native CSS evaluator retains Playwright extensions. Relative selectors
         // run normally then intersect; they never become containment filters.
-        const relative = /^[>+~]/.test(captured);
-        return source.and(source.locator(`css=${relative ? captured : `:scope:is(${captured})`}`));
+        return source.and(source.locator(`css=${selfMatchingSelector(captured)}`));
       }
       return source.and(
         validateLocator(

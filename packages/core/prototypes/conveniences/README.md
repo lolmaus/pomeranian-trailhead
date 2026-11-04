@@ -46,12 +46,16 @@ including implicit roles, native full options, separate ARIA hidden rules, and
 captured inherited getter options (including both regex fields).
 
 CSS `matching` validates the same single-CSS-body target boundary as #11. It uses
-Playwright's native CSS evaluator with `:scope:is(body)`, intersecting the result
-with the source. Thus `.active` and `:scope.active` inspect each source itself,
+Playwright's native CSS evaluator with `:scope:is(branch)` for ordinary selector
+list branches, intersecting the result with the source. A bounded scanner splits
+top-level commas while preserving quoted/escaped commas, functions, attributes and
+comments; native Playwright still parses the CSS. Thus `.active` and `:scope.active`
+inspect each source itself,
 including nested source elements. CSS lists, shadow piercing and `:has-text` are
 exercised; this is not browser `Element.matches` or string concatenation onto the
-original target selector. Leading `>`, `+`, or `~` keeps native relative selection
-then intersects with the original source. Consequently `> .active` may keep a
+original target selector. Leading `>`, `+`, or `~` on each list branch keeps native
+relative selection, then intersects with the original source. Mixed ordinary/relative
+lists preserve both branches regardless of their order. Consequently `> .active` may keep a
 nested source element and `+ .item` may keep a source sibling. Neither becomes
 `:has`, and neither introduces an element absent from the source query. A factory
 receives the nonnull source Locator and retains normal Locator selection semantics.
