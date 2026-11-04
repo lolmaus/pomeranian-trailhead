@@ -104,17 +104,64 @@ export function convenienceTypes(page: Page, app: App, locator: Locator) {
   const root: App = bound.root;
   const value: number | undefined = bound.value();
   const concrete: BoundRow = bound;
-  void [root, value, concrete];
+  const direct = ValueRow.create(page).withClass("sale").matching(".row").withText(/Sale/);
+  const nullable = NullableRow.create(page).withAttribute("data-x", /x/).visible();
+  const standalone = StandaloneRow.create(page).withoutClass("off").withoutText("old");
+  type BoundExact = Check<Equal<typeof bound, BoundRow>>;
+  type BoundRoot = Check<Equal<typeof bound.root, App>>;
+  type BoundValue = Check<Equal<ReturnType<typeof bound.value>, number | undefined>>;
+  type BoundNotAny = Check<Equal<IsAny<typeof bound>, false>>;
+  type DirectExact = Check<Equal<typeof direct, ValueRow>>;
+  type DirectNotAny = Check<Equal<IsAny<typeof direct>, false>>;
+  type NullableExact = Check<Equal<typeof nullable, NullableRow>>;
+  type NullableRoot = Check<Equal<typeof nullable.root, App | null>>;
+  type NullableValue = Check<Equal<ReturnType<typeof nullable.value>, boolean | undefined>>;
+  type StandaloneExact = Check<Equal<typeof standalone, StandaloneRow>>;
+  type StandaloneRoot = Check<Equal<typeof standalone.root, null>>;
+  const exactProofs: [
+    BoundExact,
+    BoundRoot,
+    BoundValue,
+    BoundNotAny,
+    DirectExact,
+    DirectNotAny,
+    NullableExact,
+    NullableRoot,
+    NullableValue,
+    StandaloneExact,
+    StandaloneRoot,
+  ] = [true, true, true, true, true, true, true, true, true, true, true];
+  bound.matching((context) => {
+    const definiteScope: Locator = context.scope;
+    // @ts-expect-error Matching factory context is read-only.
+    context.scope = locator;
+    return definiteScope;
+  });
+  void [root, value, concrete, exactProofs];
   // @ts-expect-error Must supply at least one class token.
   bound.withClass();
   // @ts-expect-error Class tokens are strings.
   bound.withAnyClass(123);
+  // @ts-expect-error All class variants require at least one token.
+  bound.withoutClass();
+  // @ts-expect-error All class variants require at least one token.
+  bound.withAnyClass();
   // @ts-expect-error Role union is native.
   bound.withRole("not-a-role");
   // @ts-expect-error Native state option types retained.
   bound.withRole("button", { checked: "yes" });
   // @ts-expect-error Async matching factories unsupported.
   bound.matching(async () => locator);
+  // @ts-expect-error Page is not a matching query input.
+  bound.matching(page);
+  // @ts-expect-error Test IDs require a string or RegExp value.
+  bound.withTestId(undefined);
+  // @ts-expect-error Attribute values retain string/RegExp types.
+  bound.withAttribute("data-x", 123);
+  // @ts-expect-error Visibility methods take no Boolean argument.
+  bound.visible(true);
+  // @ts-expect-error No protected custom-naming extension is selected.
+  bound.narrowAs("sale", [], ".sale");
   // @ts-expect-error Grouping objects have no convenience API.
   PageObject.create(page).visible();
   // @ts-expect-error No generic public subtraction.
