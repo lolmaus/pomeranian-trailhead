@@ -227,6 +227,7 @@ await selectors.register("proofself19", () => ({
       mode: string;
       tokens?: string[];
       name?: string;
+      names?: string[];
       value?: string | { source: string; flags: string };
       negative?: boolean;
     };
@@ -240,14 +241,15 @@ await selectors.register("proofself19", () => ({
             ? !found.some(Boolean)
             : found.every(Boolean);
     } else {
-      const actual = root.getAttribute(c.name!);
-      result =
-        c.value === undefined
+      result = (c.names ?? [c.name!]).some((name) => {
+        const actual = root.getAttribute(name);
+        return c.value === undefined
           ? actual !== null
           : actual !== null &&
-            (typeof c.value === "string"
-              ? actual === c.value
-              : new RegExp(c.value.source, c.value.flags).test(actual));
+              (typeof c.value === "string"
+                ? actual === c.value
+                : new RegExp(c.value.source, c.value.flags).test(actual));
+      });
       if (c.negative) result = !result;
     }
     return result ? [root] : [];
@@ -276,12 +278,29 @@ function nativePredicate(locator: Locator, engine: "role" | "testid"): string {
   return selector;
 }
 
-function testIdAttribute(page: Page): string {
+function testIdAttributes(page: Page): readonly string[] {
   const selector = nativePredicate(page.getByTestId("proof19-config-sentinel"), "testid");
-  const match = /^internal:testid=\[([^=]+)=/.exec(selector);
-  if (!match?.[1])
+  const prefix = "internal:testid=[";
+  const suffix = '="proof19-config-sentinel"s]';
+  const fail = (): never => {
     throw new Error("Unsupported Playwright test-ID adapter encoding (requires 1.64.1).");
-  return match[1];
+  };
+  if (!selector.startsWith(prefix) || !selector.endsWith(suffix)) return fail();
+  const encoded = selector.slice(prefix.length, -suffix.length).trim();
+  let decoded: string;
+  if (/^"(?:[^"\\]|\\[\s\S])*"$/.test(encoded) || /^'(?:[^'\\]|\\[\s\S])*'$/.test(encoded)) {
+    // Pinned native attribute tokens discard the escape marker, not JSON-decode
+    // its following character. Native multi-attribute names are quoted tokens.
+    decoded = encoded.slice(1, -1).replace(/\\([\s\S])/g, "$1");
+  } else if (/^[\w\u0080-\uFFFF-]+$/u.test(encoded)) {
+    decoded = encoded;
+  } else return fail();
+  const names = decoded.split(",");
+  // Fail closed outside the supported literal native attribute-name encoding.
+  // In particular never truncate a malformed configuration at '=' or ']'.
+  const identifier = /^-?(?:[A-Za-z_\u0080-\uFFFF]|-)[\w\u0080-\uFFFF-]*$/u;
+  if (names.some((name) => name === "-" || !identifier.test(name))) return fail();
+  return Object.freeze(names);
 }
 
 export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageObject<Root> {
@@ -362,10 +381,21 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
     );
   }
   withTestId(value: string | RegExp): this {
-    return this.#attribute("withTestId", testIdAttribute(this.page), value);
+    return this.#testIds("withTestId", value);
   }
   withoutTestId(value: string | RegExp): this {
-    return this.#attribute("withoutTestId", testIdAttribute(this.page), value);
+    return this.#testIds("withoutTestId", value);
+  }
+  #testIds(kind: "withTestId" | "withoutTestId", value: string | RegExp): this {
+    const criteria = Object.freeze({
+      names: testIdAttributes(this.page),
+      value: describeValue(captureValue(value)),
+    });
+    return this.#derive({ kind, criteria }, (source) =>
+      source.locator(
+        `proofself19=${JSON.stringify({ mode: "attribute", ...criteria, negative: kind === "withoutTestId" })}`,
+      ),
+    );
   }
   withText(value: string | RegExp): this {
     const captured = captureValue(value);

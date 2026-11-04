@@ -74,7 +74,11 @@ CSS grammar remains Playwright's error at evaluation, as in #11.
   Shared isolated code requires exactly `@playwright/test` 1.64.1 at runtime and
   validates native engine prefixes/shapes. A native sentinel `page.getByTestId`
   query supplies the configured attribute through its `internal:testid=[attribute=...]`
-  encoding. A native `page.getByRole` query supplies the complete native role
+  encoding. The bounded decoder accepts literal native identifier names, quoted
+  names, and comma-separated configured name lists; it captures the complete list
+  and tests any matching attribute. Unsupported/malformed encodings fail at the
+  call boundary rather than being truncated or silently reinterpreted. A native
+  `page.getByRole` query supplies the complete native role
   predicate, including escaped criteria/options. The role adapter appends it as
   `internal:and=JSON.stringify(predicate)` to the source Locator, preserving its
   original root/frame context. This uses private query encoding and engine syntax,
@@ -94,3 +98,9 @@ cases cover reconstruction, initialization, root binding, lazy retries and sourc
 query identity. New #19 cases cover convenience self-selection, absence, exactness,
 escaping, mutation/getter capture, native semantics, scopes/relative CSS, lineage,
 fresh children, factories, frame compatibility and strict type rejection.
+
+Process limitation: several initial convenience implementations were grouped after
+the first failing seam rather than developed through strict one-operation-at-a-time
+RED/GREEN cycles. Subsequent review regressions follow test-first repair. Passing
+tests and review findings establish bounded behavior evidence, not a claim that the
+initial implementation followed the project's complete TDD process.
