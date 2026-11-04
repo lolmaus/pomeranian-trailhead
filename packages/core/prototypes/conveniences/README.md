@@ -5,6 +5,17 @@ Locator cache, readiness/cycle/ownership guards, and internal occurrence machine
 It is evidence for an API decision, not a production package or approved integration.
 It changes no earlier prototype and installs no dependencies.
 
+The author confirmed the [complete convenience contract](https://github.com/lolmaus/pomeranian-trailhead/issues/19#issuecomment-6632430518)
+and its implementation split. Production work is tracked in
+[class/attribute conveniences (#21)](https://github.com/lolmaus/pomeranian-trailhead/issues/21),
+[general matching (#22)](https://github.com/lolmaus/pomeranian-trailhead/issues/22),
+[configured test-ID/role narrowing (#23)](https://github.com/lolmaus/pomeranian-trailhead/issues/23),
+and [text/visibility shortcuts (#24)](https://github.com/lolmaus/pomeranian-trailhead/issues/24).
+The [packaging/compatibility decision (#17)](https://github.com/lolmaus/pomeranian-trailhead/issues/17)
+must choose production registration and adapter delivery before those builds.
+The [checked review ledger](https://github.com/lolmaus/pomeranian-trailhead/issues/19#issuecomment-6632309101)
+records both fixed findings and all 26 passing Chromium cases.
+
 Run from any directory:
 
 ```sh
@@ -91,9 +102,11 @@ CSS grammar remains Playwright's error at evaluation, as in #11.
   private candidate passes html, shadow, single and nested frame examples.
   These dependencies are candidate evidence only: no permission to ship them, no
   compatibility range, and no project-wide private-API policy is implied. Ticket
-  #17 must settle compatibility; author approval of both adapters remains owed.
-- `withoutClass`/`withAnyClass` are working names. Their strict shared token policy
-  is a complete-contract proposal pending final author review.
+  #17 must settle compatibility and the production adapter policy. The author
+  confirmed this boundary with the semantic API and implementation work split.
+- `withoutClass`/`withAnyClass` and their shared strict token policy were confirmed
+  with the complete contract. No general `notMatching` or custom naming hook is
+  selected.
 - The copied #11 factory/source-authoring proof limitations still apply. This
   experiment does not implement source lint enforcement or production exports.
 
