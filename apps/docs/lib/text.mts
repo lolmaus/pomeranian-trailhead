@@ -1,5 +1,84 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import MarkdownIt from "markdown-it";
+
+const markdownParser = new MarkdownIt();
+const textHref = (filename: string) => "/" + filename.split("/").map(encodeURIComponent).join("/");
+
+// Use Markdown's destination parser and code-block maps, preserving source text
+// rather than rendering signatures/examples through a second representation.
+function rebaseLinks(markdown: string, source: string, pageNames: Set<string>): string {
+  const tokens = markdownParser.parse(markdown, {});
+  const links = new Set(
+    tokens
+      .flatMap((token) => token.children ?? [])
+      .filter((token) => token.type === "link_open")
+      .map((token) => token.attrGet("href")),
+  );
+  const offsets = [0];
+  for (const match of markdown.matchAll(/\n/g)) offsets.push((match.index ?? 0) + 1);
+  const code = tokens
+    .filter((token) => token.type === "fence" || token.type === "code_block")
+    .flatMap((token) =>
+      token.map
+        ? [[offsets[token.map[0]] ?? 0, offsets[token.map[1]] ?? markdown.length] as const]
+        : [],
+    );
+  const replacements: { start: number; end: number; value: string }[] = [];
+  function destination(start: number) {
+    const parsed = markdownParser.helpers.parseLinkDestination(markdown, start, markdown.length);
+    if (!parsed.ok || !links.has(markdownParser.normalizeLink(parsed.str))) return;
+    const href = parsed.str;
+    if (/^(?:[a-z][\w+.-]*:|\/\/)/i.test(href)) return;
+    const split = href.search(/[?#]/);
+    const pathname = split < 0 ? href : href.slice(0, split);
+    const suffix = split < 0 ? "" : href.slice(split);
+    let page = pathname
+      ? path.posix.resolve("/", path.posix.dirname(source), decodeURIComponent(pathname)).slice(1)
+      : source;
+    if (page.endsWith("/")) page += "index.md";
+    if (page.endsWith(".html")) page = page.replace(/\.html$/, ".md");
+    if (!pageNames.has(page))
+      throw new Error(`Missing text link destination in ${source}: ${href}`);
+    replacements.push({
+      start,
+      end: parsed.pos,
+      value: textHref(`text/${page.replace(/\.md$/, ".txt")}`) + suffix,
+    });
+  }
+  for (let index = 0; index < markdown.length; index++) {
+    const block = code.find(([start, end]) => index >= start && index < end);
+    if (block) {
+      index = block[1] - 1;
+      continue;
+    }
+    if (markdown[index] === "\\") {
+      index++;
+      continue;
+    }
+    if (markdown[index] === "`") {
+      const marker = /^`+/.exec(markdown.slice(index))?.[0] ?? "`";
+      let end = markdown.indexOf(marker, index + marker.length);
+      while (end >= 0 && (markdown[end - 1] === "`" || markdown[end + marker.length] === "`"))
+        end = markdown.indexOf(marker, end + marker.length);
+      if (end >= 0) index = end + marker.length - 1;
+      continue;
+    }
+    if (markdown.startsWith("](", index)) {
+      const whitespace = /^\s*/.exec(markdown.slice(index + 2))?.[0].length ?? 0;
+      destination(index + 2 + whitespace);
+    }
+  }
+  for (const label of markdown.matchAll(/^ {0,3}\[[^\n]+\]:\s*/gm)) {
+    const start = label.index;
+    if (!code.some(([from, to]) => start >= from && start < to))
+      destination(start + label[0].length);
+  }
+  let result = markdown;
+  for (const item of replacements.sort((a, b) => b.start - a.start))
+    result = result.slice(0, item.start) + item.value + result.slice(item.end);
+  return result;
+}
 
 interface TextSymbol {
   key: string;
@@ -50,11 +129,12 @@ export function textArtifacts(
   symbols: TextSymbol[],
 ): Map<string, string> {
   const output = new Map<string, string>();
-  const href = (filename: string) => "/" + filename.split("/").map(encodeURIComponent).join("/");
+  const href = textHref;
+  const pageNames = new Set(pages.map((page) => page.path));
   const topics: string[] = [];
   for (const page of pages) {
     const target = `text/${page.path.replace(/\.md$/, ".txt")}`;
-    output.set(target, page.document.markdown);
+    output.set(target, rebaseLinks(page.document.markdown, page.path, pageNames));
     topics.push(`- [${page.path}](${href(target)})`);
   }
   const memberPath = (symbol: TextSymbol) => `text/members/${encodeURIComponent(symbol.key)}.txt`;
@@ -65,7 +145,7 @@ export function textArtifacts(
     if (!page) throw new Error(`Missing text source for ${symbol.key}: ${symbol.html}`);
     output.set(
       memberPath(symbol),
-      `# ${symbol.name}\n\nSource: ${symbol.html}\n${anchor ? `Member anchor: ${anchor}\n` : ""}\n${memberText(page.document.markdown, symbol)}`,
+      `# ${symbol.name}\n\nSource: ${symbol.html}\n${anchor ? `Member anchor: ${anchor}\n` : ""}\n${memberText(rebaseLinks(page.document.markdown, page.path, pageNames), symbol)}`,
     );
     if (["Class", "Interface", "TypeAlias"].includes(symbol.kind)) {
       output.set(

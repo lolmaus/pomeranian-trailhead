@@ -1,5 +1,7 @@
 import { test, expect } from "@playwright/test";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm } from "node:fs/promises";
+import MarkdownIt from "markdown-it";
+import { files } from "../lib/html-links.mts";
 import path from "node:path";
 import { tmpdir } from "node:os";
 import { prepare, guideHistory, repoRoot } from "../lib/prepare.mts";
@@ -46,9 +48,27 @@ test("builds site inputs and shared model from actual comments and checked guide
     );
     const discovery = await readFile(path.join(model.site, "public/llms.txt"), "utf8");
     expect(discovery).toContain("/text/getting-started.txt");
-    expect(await readFile(path.join(model.site, "public/text/getting-started.txt"), "utf8")).toBe(
-      model.pages.find((page) => page.path === "getting-started.md")?.document.markdown,
+    const gettingStartedText = await readFile(
+      path.join(model.site, "public/text/getting-started.txt"),
+      "utf8",
     );
+    expect(gettingStartedText).toContain("class App extends DomPageObject<App>");
+    expect(gettingStartedText).toContain("](/text/installation.txt)");
+    expect(gettingStartedText).not.toContain("](installation.md)");
+    const parser = new MarkdownIt();
+    const publicRoot = path.join(model.site, "public");
+    for (const filename of await files(publicRoot)) {
+      if (!filename.endsWith(".txt")) continue;
+      const tokens = parser.parse(await readFile(filename, "utf8"), {});
+      for (const token of tokens.flatMap((item) => item.children ?? [])) {
+        if (token.type !== "link_open") continue;
+        const href = token.attrGet("href") ?? "";
+        if (/^(?:[a-z][\w+.-]*:|\/\/)/i.test(href)) continue;
+        expect(href, `text link in ${filename}`).toMatch(/^\/text\//);
+        const target = decodeURIComponent(href.split(/[?#]/)[0] ?? "");
+        await expect(access(path.join(publicRoot, target))).resolves.toBeUndefined();
+      }
+    }
     const core = model.api.symbols.find(
       (symbol) => symbol.package === "@pomeranian/core" && symbol.name === "DomPageObject",
     );

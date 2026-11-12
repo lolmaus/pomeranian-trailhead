@@ -1,6 +1,41 @@
 import { test, expect } from "@playwright/test";
 import { textArtifacts } from "../lib/text.mts";
 
+test("text topics and relocated members resolve internal links while preserving literal code", () => {
+  const literal = "`[literal](missing.md)`\n\n```md\n[literal](missing.md)\n```\n";
+  const output = textArtifacts(
+    [
+      {
+        path: "guides/usage.md",
+        document: { markdown: "# Usage\n\n[Type](../reference/type.md#read)\n\n" + literal },
+      },
+      {
+        path: "reference/type.md",
+        document: {
+          markdown:
+            "# Type\n\n## read\n\n[Guide](../guides/usage.md?mode=all#usage)\n\n[reference][guide]\n\n[guide]: ../guides/usage.md\n",
+        },
+      },
+    ],
+    [
+      {
+        key: "type/read",
+        name: "read",
+        package: "core",
+        kind: "Method",
+        html: "/reference/type.html#read",
+        parent: "type",
+      },
+    ],
+  );
+  expect(output.get("text/guides/usage.txt")).toContain("](/text/reference/type.txt#read)");
+  expect(output.get("text/guides/usage.txt")).toContain(literal);
+  expect(output.get("text/members/type%2Fread.txt")).toContain(
+    "](/text/guides/usage.txt?mode=all#usage)",
+  );
+  expect(output.get("text/reference/type.txt")).toContain("[guide]: /text/guides/usage.txt");
+});
+
 test("text discovery preserves full topics and individual API members", () => {
   const markdown =
     "# Example\n\n## create\n\n`create(page)`\n\n```ts\nconst x = 1;\n```\n\n## root\n\nApp or null.\n";

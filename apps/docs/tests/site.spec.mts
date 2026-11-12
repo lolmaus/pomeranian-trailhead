@@ -20,9 +20,9 @@ test("built development site navigates to honest package status and generated re
   await page.goto("/reference/development/story-server/functions/storyServer.html");
   await expect(page.locator("main")).toContainText("CI/fresh runs cannot reuse a busy server");
   await page.goto("/getting-started.html");
-  await expect(page.locator("main pre").filter({ hasText: "await page.setContent" })).toContainText(
-    "await page.setContent",
-  );
+  await expect(
+    page.locator("main pre").filter({ hasText: "await page.setContent" }).first(),
+  ).toContainText("await page.setContent");
   await page.goto("/guides/factory-proof.html#accepted-typedoc-limitation");
   await expect(page.locator("main")).toContainText("accepted, unfixed limitation");
   const discovery = await page.request.get("/llms.txt");
