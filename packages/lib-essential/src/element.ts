@@ -53,4 +53,11 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
   ): ReturnType<Locator["pressSequentially"]> {
     return this.locator.pressSequentially(...args);
   }
+  /** Perform native type, retaining Playwright waiting, options and errors.
+   * @deprecated Use locator.fill for replacement or pressSequentially for keyboard input.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  type(...args: Parameters<Locator["type"]>): ReturnType<Locator["type"]> {
+    return this.locator.type(...args);
+  }
 }
