@@ -27,4 +27,10 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
   hover(...args: Parameters<Locator["hover"]>): ReturnType<Locator["hover"]> {
     return this.locator.hover(...args);
   }
+  /** Perform native focus, retaining Playwright waiting, options and errors.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  focus(...args: Parameters<Locator["focus"]>): ReturnType<Locator["focus"]> {
+    return this.locator.focus(...args);
+  }
 }
