@@ -48,3 +48,15 @@ test("blur preserves native effects", async ({ page }) => {
   await (button as unknown as { blur: import("playwright-core").Locator["blur"] }).blur();
   await expect(button.locator).not.toBeFocused();
 });
+test("press preserves native effects", async ({ page }) => {
+  await page.setContent("<input value='ab'>");
+  const button = Element.create(page, "button, input, textarea");
+  expect(typeof (button as unknown as { [key: string]: unknown })["press"]).toBe("function");
+  await button.locator.focus();
+  await (button as unknown as { press: import("playwright-core").Locator["press"] }).press("End");
+  await (button as unknown as { press: import("playwright-core").Locator["press"] }).press(
+    "ArrowLeft",
+  );
+  await (button as unknown as { press: import("playwright-core").Locator["press"] }).press("X");
+  await expect(button.locator).toHaveValue("aXb");
+});
