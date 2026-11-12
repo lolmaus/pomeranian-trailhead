@@ -1,0 +1,47 @@
+{
+  "name": "@pomeranian/lib-essential",
+  "version": "0.1.0",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./element": {
+      "types": "./dist/element.d.ts",
+      "import": "./dist/element.mjs",
+      "require": "./dist/element.js"
+    }
+  },
+  "scripts": {
+    "build": "node ../core/lib/build.mts && node lib/build.mts",
+    "test": "pnpm run build && playwright test && pnpm run test:consumers",
+    "typecheck": "tsc -p tsconfig.node.json",
+    "lint": "oxlint . --ignore-pattern prototypes",
+    "lint:fix": "oxlint --fix . --ignore-pattern prototypes",
+    "test:consumers": "node lib/verify-consumers.mts",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@pomeranian/core": "workspace:*",
+    "@repo/oxlint-config": "workspace:*",
+    "@repo/test-support": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "26.6.5",
+    "oxlint": "1.89.0",
+    "playwright-core": "1.64.1",
+    "typescript": "7.0.2"
+  },
+  "peerDependencies": {
+    "@pomeranian/core": "^0.1.0",
+    "playwright-core": ">=1.64.1 <2"
+  }
+}

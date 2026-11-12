@@ -1,0 +1,8 @@
+{
+  "extends": "@repo/typescript-config/tsconfig.node.json",
+  "compilerOptions": {
+    "lib": ["ESNext", "DOM"],
+    "verbatimModuleSyntax": false
+  },
+  "include": ["src/**/*.ts", "tests/**/*.mts", "lib/**/*.mts", "*.mts"]
+}
