@@ -40,3 +40,11 @@ test("focus preserves native effects", async ({ page }) => {
   await (button as unknown as { focus: import("playwright-core").Locator["focus"] }).focus();
   await expect(button.locator).toBeFocused();
 });
+test("blur preserves native effects", async ({ page }) => {
+  await page.setContent("<input>");
+  const button = Element.create(page, "button, input, textarea");
+  expect(typeof (button as unknown as { [key: string]: unknown })["blur"]).toBe("function");
+  await button.locator.focus();
+  await (button as unknown as { blur: import("playwright-core").Locator["blur"] }).blur();
+  await expect(button.locator).not.toBeFocused();
+});
