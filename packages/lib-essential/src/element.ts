@@ -39,4 +39,10 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
   blur(...args: Parameters<Locator["blur"]>): ReturnType<Locator["blur"]> {
     return this.locator.blur(...args);
   }
+  /** Perform native press, retaining Playwright waiting, options and errors.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  press(...args: Parameters<Locator["press"]>): ReturnType<Locator["press"]> {
+    return this.locator.press(...args);
+  }
 }
