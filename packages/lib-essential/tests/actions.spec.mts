@@ -60,3 +60,16 @@ test("press preserves native effects", async ({ page }) => {
   await (button as unknown as { press: import("playwright-core").Locator["press"] }).press("X");
   await expect(button.locator).toHaveValue("aXb");
 });
+test("pressSequentially preserves native effects", async ({ page }) => {
+  await page.setContent("<input>");
+  const button = Element.create(page, "button, input, textarea");
+  expect(typeof (button as unknown as { [key: string]: unknown })["pressSequentially"]).toBe(
+    "function",
+  );
+  await (
+    button as unknown as {
+      pressSequentially: import("playwright-core").Locator["pressSequentially"];
+    }
+  ).pressSequentially("Hello", { delay: 1 });
+  await expect(button.locator).toHaveValue("Hello");
+});
