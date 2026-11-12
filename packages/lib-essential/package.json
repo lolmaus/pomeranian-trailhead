@@ -23,7 +23,7 @@
   "scripts": {
     "build": "node ../core/lib/build.mts && node lib/build.mts",
     "test": "pnpm run build && playwright test && pnpm run test:consumers",
-    "typecheck": "tsc -p tsconfig.node.json",
+    "typecheck": "node ../core/lib/build.mts && tsc -p tsconfig.node.json",
     "lint": "oxlint . --ignore-pattern prototypes",
     "lint:fix": "oxlint --fix . --ignore-pattern prototypes",
     "test:consumers": "node lib/verify-consumers.mts",
