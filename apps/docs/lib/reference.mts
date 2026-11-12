@@ -6,6 +6,7 @@ import ts from "typescript";
 import {
   Application,
   DeclarationReflection,
+  ReferenceReflection,
   ReflectionKind,
   TSConfigReader,
   normalizePath,
@@ -21,6 +22,8 @@ export interface Source {
   status: "development" | "production" | "fixture";
   /** Stable public export subpath; defaults to the package's sole root entry. */
   export?: string;
+  /** Stable renderer module name for an established reference URL. */
+  referenceName?: string;
 }
 
 export interface SymbolEntry {
@@ -35,6 +38,7 @@ export interface SymbolEntry {
   history: string[];
   parent: string | null;
   reflectionId: number;
+  aliasOf?: string;
   sources: { file: string; line: number }[];
 }
 
@@ -94,6 +98,14 @@ export async function reference(sources: Source[], output: string) {
   const project = await app.convert();
   if (!project || app.logger.hasErrors() || app.logger.hasWarnings())
     throw new Error("API conversion failed; see TypeDoc diagnostics");
+  for (const module of project.children ?? []) {
+    const filename =
+      module.sources?.[0]?.fullFileName ?? project.getSymbolIdFromReflection(module)?.fileName;
+    const source = sources.find(
+      (item) => filename && path.resolve(item.entry) === path.resolve(filename),
+    );
+    if (source?.referenceName) module.name = source.referenceName;
+  }
   app.validate(project);
   if (app.logger.hasErrors() || app.logger.hasWarnings())
     throw new Error("API documentation validation failed; see TypeDoc diagnostics");
@@ -185,6 +197,18 @@ export async function reference(sources: Source[], output: string) {
     if (symbol) symbol.history.push(...history);
   }
   for (const symbol of symbols) {
+    const reflection = project.getReflectionById(symbol.reflectionId);
+    if (!(reflection instanceof ReferenceReflection)) continue;
+    const target = reflection.tryGetTargetReflection();
+    const canonical = target ? byId.get(target.id) : undefined;
+    if (!canonical) throw new Error(`Unresolved public alias: ${symbol.key}`);
+    symbol.aliasOf = canonical.key;
+    symbol.history = [...canonical.history];
+    symbol.kind = canonical.kind;
+    symbol.signatures = canonical.signatures;
+    symbol.sources = canonical.sources;
+  }
+  for (const symbol of symbols) {
     if (
       !symbol.inherited &&
       !["Module", "Namespace", "Constructor"].includes(symbol.kind) &&
@@ -199,7 +223,10 @@ export async function reference(sources: Source[], output: string) {
       const model = project.getReflectionById(symbol.reflectionId);
       if (!model || !renderer.router)
         throw new Error(`Missing rendered symbol mapping: ${symbol.key}`);
-      symbol.html = renderer.router.getFullUrl(model).replace(/\.md(?=#|$)/, ".html");
+      const defining =
+        model instanceof ReferenceReflection ? model.tryGetTargetReflection() : model;
+      if (!defining) throw new Error(`Unresolved rendered alias: ${symbol.key}`);
+      symbol.html = renderer.router.getFullUrl(defining).replace(/\.md(?=#|$)/, ".html");
       if (!symbol.html) throw new Error(`Empty rendered symbol mapping: ${symbol.key}`);
     }
   });

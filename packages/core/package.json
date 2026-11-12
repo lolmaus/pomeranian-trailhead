@@ -1,0 +1,65 @@
+{
+  "name": "@pomeranian/core",
+  "version": "0.1.0",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./page-object": {
+      "types": "./dist/page-object.d.ts",
+      "import": "./dist/page-object.mjs",
+      "require": "./dist/page-object.js"
+    },
+    "./dom-page-object": {
+      "types": "./dist/dom-page-object.d.ts",
+      "import": "./dist/dom-page-object.mjs",
+      "require": "./dist/dom-page-object.js"
+    },
+    "./root-fixture": {
+      "types": "./dist/root-fixture.d.ts",
+      "import": "./dist/root-fixture.mjs",
+      "require": "./dist/root-fixture.js"
+    },
+    "./authoring": {
+      "types": "./dist/authoring.d.ts",
+      "import": "./dist/authoring.mjs",
+      "require": "./dist/authoring.js"
+    },
+    "./target": {
+      "types": "./dist/target.d.ts",
+      "import": "./dist/target.mjs",
+      "require": "./dist/target.js"
+    }
+  },
+  "scripts": {
+    "build": "node lib/build.mts",
+    "test": "pnpm run build && playwright test && pnpm run test:consumers",
+    "typecheck": "tsc -p tsconfig.node.json",
+    "lint": "oxlint . --ignore-pattern prototypes",
+    "lint:fix": "oxlint --fix . --ignore-pattern prototypes",
+    "test:consumers": "node lib/verify-consumers.mts",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@repo/oxlint-config": "workspace:*",
+    "@repo/test-support": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "26.6.5",
+    "oxlint": "1.89.0",
+    "playwright-core": "1.64.1",
+    "typescript": "7.0.2"
+  },
+  "peerDependencies": {
+    "playwright-core": ">=1.64.1 <2"
+  }
+}

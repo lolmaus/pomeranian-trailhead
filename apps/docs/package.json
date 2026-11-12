@@ -11,9 +11,10 @@
     "test:unit": "playwright test --config playwright.unit.config.mts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "typecheck": "node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.fixtures.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.prototype.json && node ../../packages/core/prototypes/factory-typing/run.mjs --types-only"
+    "typecheck": "node ../../packages/core/lib/build.mts && node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.fixtures.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.prototype.json && node ../../packages/core/prototypes/factory-typing/run.mjs --types-only"
   },
   "dependencies": {
+    "@pomeranian/core": "workspace:*",
     "@repo/test-support": "workspace:*"
   },
   "devDependencies": {
@@ -26,6 +27,8 @@
     "markdown-it": "14.1.1",
     "oxlint": "1.89.0",
     "parse5": "8.0.1",
+    "playwright": "1.64.1",
+    "playwright-core": "1.64.1",
     "typedoc": "0.28.20",
     "typedoc-plugin-markdown": "4.14.1",
     "typedoc-vitepress-theme": "1.1.4",

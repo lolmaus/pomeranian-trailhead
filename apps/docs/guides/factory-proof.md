@@ -4,6 +4,8 @@
 Everything in `packages/core/prototypes/factory-typing` is a bounded experiment. Its source rules and compiler checks are required together. It is not a production implementation of `@pomeranian/core`, and its string-target and constructor restrictions must not be generalized into future API promises.
 :::
 
+Production construction and targets are now available from the locally built core package. Follow [construction](construction.md) and [library authoring](authoring.md) for that API. The later packaging decision made additional source checking optional; this historical proof's combined source-rule/compiler guarantee applies only to its own bounded checked mode.
+
 Run the complete proof from the repository root:
 
 ```sh

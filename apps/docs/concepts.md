@@ -1,6 +1,6 @@
 # Concepts and implementation boundaries
 
-The following vocabulary was confirmed in [the foundation decision](https://github.com/lolmaus/pomeranian-trailhead/issues/4#issuecomment-6513794545). It describes the design direction; the complete production framework has not been implemented.
+The following vocabulary was confirmed in [the foundation decision](https://github.com/lolmaus/pomeranian-trailhead/issues/4#issuecomment-6513794545). Core construction and DOM targeting are implemented. Actions/assertions, public narrowing, selector setup and reporting remain separate work.
 
 | Term                       | Meaning                                                                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -12,8 +12,8 @@ The following vocabulary was confirmed in [the foundation decision](https://gith
 | Context                    | The Playwright Page or parent object supplied during initialization.                                                                  |
 | Target                     | A specification identifying an object's subject. A target family is broader than a particular input form such as a string or Locator. |
 
-## What the factory proof demonstrates
+## Production construction and historical evidence
 
-The [throwaway proof](guides/factory-proof.md) demonstrates nullable versus application-bound roots, inherited factories, ordinary child fields, instance defaults, and field-based state. It uses string targets only. Locator inputs, full target resolution, narrowing/reconstruction, naming, and the production action/assertion APIs remain separate work.
+The [throwaway proof](guides/factory-proof.md) demonstrates nullable versus application-bound roots, inherited factories, ordinary child fields, instance defaults, and field-based state. It uses string targets only. The production core now implements CSS/Locator/factory targets and internal reconstruction seams, documented in [construction](guides/construction.md). Public narrowing, naming, and production actions/assertions remain separate work.
 
-Prototype classes called `PageObject`, `DomPageObject`, and `Element` are useful evidence for that bounded contract. They are not exported production package APIs. [Package reference pages](api/index.md) will gain exact signatures as real implementations arrive.
+Prototype classes called `PageObject`, `DomPageObject`, and `Element` are useful evidence for that bounded contract. They are not exported production package APIs. [Package reference pages](api/index.md) link the implemented core signatures separately from those proofs.

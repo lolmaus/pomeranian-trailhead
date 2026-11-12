@@ -29,6 +29,12 @@
     "packages/test-support/tests/prefix/**"
   ],
   "tasks": {
+    "@pomeranian/core#test": {
+      "dependsOn": ["build", "^build"],
+      "cache": false,
+      "outputs": [],
+      "passThroughEnv": ["CI", "PLAYWRIGHT_*", "PWDEBUG", "DISPLAY"]
+    },
     "test": {
       "dependsOn": ["^build"],
       "cache": false,

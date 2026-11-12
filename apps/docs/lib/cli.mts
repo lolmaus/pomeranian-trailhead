@@ -47,6 +47,7 @@ async function main() {
     if (args.length) throw new Error(`Unexpected arguments: ${args.join(" ")}`);
     await mkdir(output, { recursive: true });
     await rm(path.join(output, "ready.json"), { force: true });
+    await run([path.join(repoRoot, "packages/core/lib/build.mts")]);
     await prepare(output);
     const digest = createHash("sha256")
       .update(await readFile(path.join(output, "content-model.json")))
@@ -71,7 +72,7 @@ async function main() {
       stopWatching = resolve;
     });
     const ignored =
-      /(^|[/\\])(?:node_modules|\.git|\.generated|\.turbo|test-results|playwright-report)(?:[/\\]|$)/;
+      /(^|[/\\])(?:node_modules|\.git|\.generated|\.turbo|test-results|playwright-report|dist)(?:[/\\]|$)/;
     watcher = watch(
       [
         "apps/docs",

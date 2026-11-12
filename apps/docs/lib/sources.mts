@@ -46,7 +46,21 @@ export function assertSources(
         if (value && typeof value === "object") return Object.values(value).flatMap(targets);
         return [];
       }
-      if (!targets(entry).includes(path.resolve(source.entry)))
+      const emitted = targets(entry);
+      const definingSource = path.resolve(source.entry);
+      const relativeSource = path.relative(path.join(workspace.directory, "src"), definingSource);
+      const compiledStem = path.join(
+        workspace.directory,
+        "dist",
+        relativeSource.replace(/\.ts$/, ""),
+      );
+      const compiled =
+        !relativeSource.startsWith("..") &&
+        relativeSource.endsWith(".ts") &&
+        emitted.includes(`${compiledStem}.d.ts`) &&
+        emitted.includes(`${compiledStem}.mjs`) &&
+        emitted.includes(`${compiledStem}.js`);
+      if (!emitted.includes(definingSource) && !compiled)
         throw new Error(
           `Documented entry does not match actual export: ${source.package}${source.export}`,
         );
@@ -61,10 +75,26 @@ export function assertSources(
 
 export async function registeredSources(repo: string): Promise<RegisteredSource[]> {
   const sources: RegisteredSource[] = [
+    ...["index", "page-object", "dom-page-object", "root-fixture", "authoring", "target"].map(
+      (module): RegisteredSource => ({
+        package: "@pomeranian/core",
+        workspace: "packages/core",
+        export: module === "index" ? "." : `./${module}`,
+        entry: path.join(repo, `packages/core/src/${module}.ts`),
+        status: "production",
+        guides: [
+          "guides/construction.md",
+          "guides/authoring.md",
+          "recipes/standalone.md",
+          "recipes/multiple-pages.md",
+        ],
+      }),
+    ),
     {
       package: "@repo/test-support",
       workspace: "packages/test-support",
       export: "./config",
+      referenceName: "config",
       entry: path.join(repo, "packages/test-support/src/config.mts"),
       status: "development",
       guides: ["guides/testing.md"],
@@ -73,6 +103,7 @@ export async function registeredSources(repo: string): Promise<RegisteredSource[
       package: "@repo/test-support",
       workspace: "packages/test-support",
       export: "./stories",
+      referenceName: "stories",
       entry: path.join(repo, "packages/test-support/src/stories.mts"),
       status: "development",
       guides: ["guides/testing.md"],
@@ -81,6 +112,7 @@ export async function registeredSources(repo: string): Promise<RegisteredSource[
       package: "@repo/test-support",
       workspace: "packages/test-support",
       export: "./story-server",
+      referenceName: "story-server",
       entry: path.join(repo, "packages/test-support/src/story-server.mts"),
       status: "development",
       guides: ["guides/testing.md"],

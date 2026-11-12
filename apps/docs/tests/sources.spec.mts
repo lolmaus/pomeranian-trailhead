@@ -29,3 +29,33 @@ test("rejects production packages or entrypoints missing from the docs dependenc
     ]),
   ).not.toThrow();
 });
+
+test("maps compiled public exports to included defining sources without accepting unrelated outputs", () => {
+  const source: RegisteredSource = {
+    package: "@pomeranian/core",
+    workspace: "packages/core",
+    export: "./page-object",
+    entry: "/repo/packages/core/src/page-object.ts",
+    status: "production",
+    guides: ["guides/construction.md"],
+  };
+  const workspace = {
+    name: "@pomeranian/core",
+    directory: "/repo/packages/core",
+    exports: {
+      "./page-object": {
+        types: "./dist/page-object.d.ts",
+        import: "./dist/page-object.mjs",
+        require: "./dist/page-object.js",
+      },
+    },
+  };
+  expect(() =>
+    assertSources([workspace], { "@pomeranian/core": "workspace:*" }, [source]),
+  ).not.toThrow();
+  expect(() =>
+    assertSources([workspace], { "@pomeranian/core": "workspace:*" }, [
+      { ...source, entry: "/repo/packages/core/src/other.ts" },
+    ]),
+  ).toThrow("Documented entry does not match");
+});

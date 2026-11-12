@@ -1,0 +1,9 @@
+import { DomPageObject } from '@pomeranian/core/dom-page-object';
+import { defaultInstanceType, checkLibrary, type UnboundRoot } from '@pomeranian/core/authoring';
+export class LibraryButton<Root extends UnboundRoot = UnboundRoot, Value = string> extends DomPageObject<Root> {
+  declare readonly [defaultInstanceType]: { instance: LibraryButton; parameters: { root: Root; value: Value } };
+  override defaultTarget = 'button';
+  #value: Value | undefined = undefined;
+  value(): Value | undefined { return this.#value; }
+}
+checkLibrary<LibraryButton>()(LibraryButton);

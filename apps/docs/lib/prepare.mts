@@ -6,6 +6,7 @@ import { content } from "./content.mts";
 import { reference } from "./reference.mts";
 import { registeredSources, type RegisteredSource } from "./sources.mts";
 import { files } from "./html-links.mts";
+import { textArtifacts, replaceTextAssets } from "./text.mts";
 
 export const docsRoot = fileURLToPath(new URL("..", import.meta.url));
 export const repoRoot = path.resolve(docsRoot, "../..");
@@ -14,6 +15,12 @@ export interface ContentPage {
   path: string;
   origin: "authored" | "reference";
   document: ReturnType<typeof content>;
+}
+
+export function referenceNotice(status: string): string {
+  return status === "production"
+    ? "\n\n> **Unreleased core API:** @pomeranian/core implementation from main; no npm release is implied.\n"
+    : "\n\n> **Development infrastructure:** private workspace API, not a published Pomeranian consumer package.\n";
 }
 
 export function guideHistory(
@@ -48,6 +55,36 @@ export function guideHistory(
         throw new Error(`Missing corresponding guide history for ${source.package}: ${history}`);
     }
   }
+}
+
+export function authoringContext(sourceText: string): string {
+  const source = ts.createSourceFile(
+    "authoring.ts",
+    sourceText,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const snippets = [
+    "Class",
+    "Default",
+    "Equal",
+    "Erased",
+    "Result",
+    "IsAny",
+    "Context",
+    "TargetArguments",
+  ].map((name) => {
+    const declaration = source.statements.find(
+      (item) => ts.isTypeAliasDeclaration(item) && item.name.text === name,
+    );
+    if (!declaration) throw new Error(`Missing production authoring helper: ${name}`);
+    return `## ${name}\n\n\`\`\`ts\n${declaration.getText(source)}\n\`\`\`\n`;
+  });
+  return (
+    "# Production authoring helper context\n\nThese declarations come directly from the production authoring module. Result reads the instance/default and complete independent parameter metadata through defaultInstanceType. RootReference defines the Page and nullable root structural boundary; UnboundRoot is RootReference | null. Internal helper names referenced by public factory signatures explain the computation; their appearance here does not create additional package exports. Read the [authoring guide](../guides/authoring.md) for supported conventions and compiler-only limits.\n\n" +
+    snippets.join("\n")
+  );
 }
 
 async function helperContext() {
@@ -130,14 +167,37 @@ export async function prepare(output: string) {
         "reference/development/" +
         path.relative(path.join(scratch, "api/reference"), file).split(path.sep).join("/");
       const markdown = await readFile(file, "utf8");
+      const relative = path
+        .relative(path.join(scratch, "api/reference"), file)
+        .split(path.sep)
+        .join("/");
+      const owners = api.symbols.filter(
+        (symbol) => symbol.html.split("#")[0] === relative.replace(/\.md$/, ".html"),
+      );
+      const production = owners.some((symbol) =>
+        sources.some(
+          (source) => source.package === symbol.package && source.status === "production",
+        ),
+      );
       const notice =
-        "\n\n> **Development infrastructure:** private workspace API, not a published Pomeranian consumer package.\n";
+        relative === "index.md"
+          ? "\n\nGenerated reference includes unreleased production core and private development infrastructure. The development URL segment is retained for existing links.\n"
+          : referenceNotice(production ? "production" : "development");
       pages.push({ path: name, origin: "reference", document: content(markdown + notice) });
     }
     pages.push({
       path: "reference/prototype-helpers.md",
       origin: "reference",
       document: content(await helperContext()),
+    });
+    pages.push({
+      path: "reference/authoring-helpers.md",
+      origin: "reference",
+      document: content(
+        authoringContext(
+          await readFile(path.join(repoRoot, "packages/core/src/authoring.ts"), "utf8"),
+        ),
+      ),
     });
     const generatedSite = path.join(scratch, "site");
     const names = new Set<string>();
@@ -154,6 +214,7 @@ export async function prepare(output: string) {
       path.join(generatedSite, ".vitepress/config.mjs"),
     );
     for (const symbol of api.symbols) symbol.html = `/reference/development/${symbol.html}`;
+    const artifacts = textArtifacts(pages, api.symbols);
     const model = { schemaVersion: 1, pages, api };
     await writeFile(path.join(scratch, "api/api-model.json"), JSON.stringify(api, null, 2) + "\n");
     await writeFile(
@@ -167,6 +228,7 @@ export async function prepare(output: string) {
         await rm(file);
     }
     await cp(generatedSite, site, { recursive: true });
+    await replaceTextAssets(path.join(site, "public"), artifacts);
     await rm(path.join(output, "api"), { recursive: true, force: true });
     await cp(path.join(scratch, "api"), path.join(output, "api"), { recursive: true });
     await cp(path.join(scratch, "content-model.json"), path.join(output, "content-model.json"));

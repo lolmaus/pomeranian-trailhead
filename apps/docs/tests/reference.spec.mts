@@ -5,7 +5,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { reference, type Source } from "../lib/reference.mts";
-import { checkHtml } from "../lib/html-links.mts";
+import { checkHtml, files } from "../lib/html-links.mts";
+import { textArtifacts } from "../lib/text.mts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const sources: Source[] = [
@@ -168,6 +169,29 @@ test("reference exposes generic, overloaded, protected and inherited symbols acr
     expect(markdown).toContain("Available since @pomeranian/proof-core@Unreleased");
     expect(markdown).toContain("readonly");
     expect(markdown).toContain("root");
+    const pages = await Promise.all(
+      (await files(path.join(directory, "reference")))
+        .filter((file) => file.endsWith(".md"))
+        .map(async (file) => ({
+          path: path.relative(path.join(directory, "reference"), file),
+          document: { markdown: await readFile(file, "utf8") },
+        })),
+    );
+    const artifacts = textArtifacts(
+      pages,
+      model.symbols.map((symbol) => ({ ...symbol, html: "/" + symbol.html })),
+    );
+    const inherited = model.symbols.find((symbol) => symbol.name === "map" && symbol.inherited);
+    expect(inherited).toBeDefined();
+    const chunk = artifacts.get(
+      `text/members/${encodeURIComponent(inherited?.key ?? "missing")}.txt`,
+    );
+    expect(chunk).toContain("Scalar overload");
+    expect(chunk).toContain("Sequence overload");
+    expect(chunk).toContain("Type Parameters");
+    expect(
+      artifacts.get(`text/types/${encodeURIComponent(inherited?.parent ?? "missing")}.txt`),
+    ).toContain("map");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -277,5 +301,42 @@ test("fails when an exported addition has no owning-package availability annotat
     ).rejects.toThrow("Missing package-qualified availability");
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("root re-exports retain defining-module history and rendered documentation", async () => {
+  const output = await mkdtemp(path.join(tmpdir(), "pomeranian-aliases-"));
+  try {
+    const defining = path.join(output, "defining.mts");
+    const aggregate = path.join(output, "index.mts");
+    await writeFile(
+      defining,
+      "/** Read the canonical value.\n * @since @pomeranian/aliases@Unreleased\n */\nexport function read(): number { return 42; }\n",
+    );
+    await writeFile(aggregate, 'export { read } from "./defining.mts";\n');
+    const model = await reference(
+      [
+        { package: "@pomeranian/aliases", export: ".", entry: aggregate, status: "fixture" },
+        {
+          package: "@pomeranian/aliases",
+          export: "./defining",
+          entry: defining,
+          status: "fixture",
+        },
+      ],
+      path.join(output, "out"),
+    );
+    const symbols = model.symbols.filter((symbol) => symbol.name === "read");
+    expect(symbols).toHaveLength(2);
+    for (const symbol of symbols) {
+      expect(symbol.history).toContain("Available since @pomeranian/aliases@Unreleased");
+      const markdown = await readFile(
+        path.join(output, "out/reference", symbol.html.replace(/\.html$/, ".md")),
+        "utf8",
+      );
+      expect(markdown).toContain("Read the canonical value");
+    }
+  } finally {
+    await rm(output, { recursive: true, force: true });
   }
 });

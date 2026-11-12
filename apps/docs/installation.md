@@ -1,6 +1,8 @@
 # Installation and development status
 
-No `@pomeranian` package is published or installable from this repository yet. The planned package names in the [API reference](api/index.md) describe intended ownership, not available npm releases.
+No `@pomeranian` package has been published yet. Production `@pomeranian/core` can be built and packed locally; [the standalone recipe](recipes/standalone.md) shows tarball installation. For Playwright Test consumers, install the tarball with `@playwright/test@1.64.1` and `playwright-core@1.64.1`. Always supply playwright-core at the exact native runner/library version. Core peers support >=1.64.1 <2; the range alone does not enforce alignment.
+
+Core supports ESM and CommonJS root/direct imports through one shared runtime, strict TypeScript 6.0.3 and 7.0.2 consumer checks, NodeNext/Node16 resolution and ES2022-compatible output across maintained Node LTS lines. Native declarations require Node ambient types and modern lib definitions. No selector registration or optional source checker is required for this slice.
 
 ## Set up this repository
 
@@ -12,7 +14,7 @@ pnpm run test:install
 pnpm run check
 ```
 
-`test:install` installs the Chromium browser required by Playwright. React and Storybook integration is separate work; the current inline HTML scenarios need neither.
+`test:install` installs the Chromium browser required by Playwright. Inline HTML core scenarios need neither React nor Storybook; the repository also has a separate shared React Storybook test workflow.
 
 ## Documentation commands
 

@@ -6,7 +6,7 @@ import path from "node:path";
 import { repoRoot } from "../lib/prepare.mts";
 
 interface DryRun {
-  tasks: { taskId: string; command: string; hash: string }[];
+  tasks: { taskId: string; command: string; hash: string; dependencies: string[] }[];
 }
 
 test("actual Turbo graph selects docs for source changes and invalidates its build", () => {
@@ -92,10 +92,12 @@ test("actual Turbo graph selects docs for source changes and invalidates its bui
       ),
     );
     expect(dependencies["@repo/test-support"]).toBe("workspace:*");
+    expect(dependencies["@pomeranian/core"]).toBe("workspace:*");
     let lock = "lockfileVersion: '9.0'\nimporters:\n  .: {}\n";
     for (const [directory, name] of [
       ["apps/docs", "@repo/docs"],
       ["packages/test-support", "@repo/test-support"],
+      ["packages/core", "@pomeranian/core"],
       ["packages/typescript-config", "@repo/typescript-config"],
       ["packages/oxlint-config", "@repo/oxlint-config"],
       ["packages/unrelated", "@fixture/unrelated"],
@@ -127,15 +129,26 @@ test("actual Turbo graph selects docs for source changes and invalidates its bui
     write("pnpm-lock.yaml", lock);
     run("pnpm", ["exec", "turbo", "--version"]);
     const base = commit();
+    const coreTestGraph = JSON.parse(
+      run("pnpm", ["exec", "turbo", "run", "test", "--filter=@pomeranian/core", "--dry=json"]),
+    ) as DryRun;
+    expect(
+      coreTestGraph.tasks.find((task) => task.taskId === "@pomeranian/core#test")?.dependencies,
+    ).toContain("@pomeranian/core#build");
     const before = buildHash();
     write("packages/test-support/source.mts", "export const value = 2;\n");
     const support = commit();
     expect(selected(base, support)).toEqual(["@repo/docs", "@repo/test-support"]);
     expect(before).toBeDefined();
     expect(buildHash()).not.toBe(before);
+    const beforeCore = buildHash();
+    write("packages/core/source.mts", "export const value = 2;\n");
+    const core = commit();
+    expect(selected(support, core)).toEqual(["@pomeranian/core", "@repo/docs"]);
+    expect(buildHash()).not.toBe(beforeCore);
     write("packages/unrelated/source.mts", "export const value = 2;\n");
     const unrelated = commit();
-    expect(selected(support, unrelated)).toEqual(["@fixture/unrelated"]);
+    expect(selected(core, unrelated)).toEqual(["@fixture/unrelated"]);
     const beforePrototype = buildHash();
     write("packages/core/prototypes/factory-typing/probe.mts", "export const prototype = 2;\n");
     const prototype = commit();

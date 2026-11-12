@@ -199,6 +199,9 @@ importers:
 
   apps/docs:
     dependencies:
+      '@pomeranian/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@repo/test-support':
         specifier: workspace:*
         version: link:../../packages/test-support
@@ -230,6 +233,12 @@ importers:
       parse5:
         specifier: 8.0.1
         version: 8.0.1
+      playwright:
+        specifier: 1.64.1
+        version: 1.64.1
+      playwright-core:
+        specifier: 1.64.1
+        version: 1.64.1
       typedoc:
         specifier: 0.28.20
         version: 0.28.20(typescript@6.0.3)
@@ -290,6 +299,33 @@ importers:
       vite:
         specifier: 8.3.5
         version: 8.3.5(@types/node@26.6.5)(jiti@2.7.0)(yaml@2.9.1)
+
+  packages/core:
+    devDependencies:
+      '@playwright/test':
+        specifier: 1.64.1
+        version: 1.64.1
+      '@repo/oxlint-config':
+        specifier: workspace:*
+        version: link:../oxlint-config
+      '@repo/test-support':
+        specifier: workspace:*
+        version: link:../test-support
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 26.6.5
+        version: 26.6.5
+      oxlint:
+        specifier: 1.89.0
+        version: 1.89.0
+      playwright-core:
+        specifier: 1.64.1
+        version: 1.64.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   packages/lib-ant-design:
     devDependencies:

@@ -24,6 +24,10 @@ export default {
       {
         text: "Guides and recipes",
         items: [
+          { text: "Construction and targets", link: "/guides/construction" },
+          { text: "Library authoring", link: "/guides/authoring" },
+          { text: "Standalone Playwright", link: "/recipes/standalone" },
+          { text: "Multiple Pages and frames", link: "/recipes/multiple-pages" },
           { text: "Chromium testing", link: "/guides/testing" },
           { text: "Explore the factory proof", link: "/guides/factory-proof" },
           { text: "Author documentation", link: "/guides/documentation" },
@@ -38,6 +42,7 @@ export default {
           { text: "@pomeranian/lib-essential", link: "/api/lib-essential" },
           { text: "@pomeranian/lib-ant-design", link: "/api/lib-ant-design" },
           { text: "Development infrastructure", link: "/reference/development/" },
+          { text: "Authoring helper context", link: "/reference/authoring-helpers" },
           { text: "Prototype helper context", link: "/reference/prototype-helpers" },
         ],
       },
