@@ -21,4 +21,10 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
   dblclick(...args: Parameters<Locator["dblclick"]>): ReturnType<Locator["dblclick"]> {
     return this.locator.dblclick(...args);
   }
+  /** Perform native hover, retaining Playwright waiting, options and errors.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  hover(...args: Parameters<Locator["hover"]>): ReturnType<Locator["hover"]> {
+    return this.locator.hover(...args);
+  }
 }
