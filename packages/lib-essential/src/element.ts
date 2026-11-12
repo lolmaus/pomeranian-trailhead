@@ -1,3 +1,4 @@
+import type { Locator } from "playwright-core";
 import { DomPageObject } from "@pomeranian/core/dom-page-object";
 import { defaultInstanceType, type UnboundRoot } from "@pomeranian/core/authoring";
 /** A DOM element with native Playwright interactions.
@@ -8,4 +9,10 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
    * @since @pomeranian/lib-essential@Unreleased
    */
   declare readonly [defaultInstanceType]: { instance: Element; parameters: { root: Root } };
+  /** Perform native click, retaining Playwright waiting, options and errors.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  click(...args: Parameters<Locator["click"]>): ReturnType<Locator["click"]> {
+    return this.locator.click(...args);
+  }
 }
