@@ -15,4 +15,10 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
   click(...args: Parameters<Locator["click"]>): ReturnType<Locator["click"]> {
     return this.locator.click(...args);
   }
+  /** Perform native dblclick, retaining Playwright waiting, options and errors.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  dblclick(...args: Parameters<Locator["dblclick"]>): ReturnType<Locator["dblclick"]> {
+    return this.locator.dblclick(...args);
+  }
 }
