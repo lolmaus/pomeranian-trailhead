@@ -45,4 +45,12 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
   press(...args: Parameters<Locator["press"]>): ReturnType<Locator["press"]> {
     return this.locator.press(...args);
   }
+  /** Perform native pressSequentially, retaining Playwright waiting, options and errors.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  pressSequentially(
+    ...args: Parameters<Locator["pressSequentially"]>
+  ): ReturnType<Locator["pressSequentially"]> {
+    return this.locator.pressSequentially(...args);
+  }
 }
