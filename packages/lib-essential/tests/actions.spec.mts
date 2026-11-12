@@ -33,3 +33,10 @@ test("hover preserves native effects", async ({ page }) => {
   await (button as unknown as { hover: import("playwright-core").Locator["hover"] }).hover();
   await expect(button.locator).toHaveText("hovered");
 });
+test("focus preserves native effects", async ({ page }) => {
+  await page.setContent("<input>");
+  const button = Element.create(page, "button, input, textarea");
+  expect(typeof (button as unknown as { [key: string]: unknown })["focus"]).toBe("function");
+  await (button as unknown as { focus: import("playwright-core").Locator["focus"] }).focus();
+  await expect(button.locator).toBeFocused();
+});
