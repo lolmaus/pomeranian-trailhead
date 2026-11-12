@@ -26,3 +26,10 @@ test("dblclick preserves native effects", async ({ page }) => {
   ).dblclick();
   await expect(button.locator).toHaveText("double");
 });
+test("hover preserves native effects", async ({ page }) => {
+  await page.setContent("<button onmouseenter=\"this.textContent='hovered'\">Ready</button>");
+  const button = Element.create(page, "button, input, textarea");
+  expect(typeof (button as unknown as { [key: string]: unknown })["hover"]).toBe("function");
+  await (button as unknown as { hover: import("playwright-core").Locator["hover"] }).hover();
+  await expect(button.locator).toHaveText("hovered");
+});
