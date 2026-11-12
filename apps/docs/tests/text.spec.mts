@@ -2,7 +2,8 @@ import { test, expect } from "@playwright/test";
 import { textArtifacts } from "../lib/text.mts";
 
 test("text topics and relocated members resolve internal links while preserving literal code", () => {
-  const literal = "`[literal](missing.md)`\n\n```md\n[literal](missing.md)\n```\n";
+  const literal =
+    "`[literal](../reference/type.md#read)`\n\n```md\n[literal](../reference/type.md#read)\n```\n";
   const output = textArtifacts(
     [
       {
