@@ -1,7 +1,15 @@
 # @pomeranian/lib-essential
 
-Status: planned production package. There is no implementation or installable release yet.
+Status: implemented Unreleased basic interactions, locally buildable and packable. No npm publication exists.
 
-The [approved initial action milestone](../guides/essential-milestone.md) selects `Element` with comprehensive native Locator interactions and `TextInput.appendText` for text-like native inputs and textareas. The milestone specifies native compatibility, a page-object destination for `dragTo`, explicit exclusions and future coverage. These are approved designs, not available production APIs. Assertion organization and coverage remain a separate decision.
+`Element<Root>` extends core `DomPageObject<Root>` and inherits its exact factories, protected construction, grouping, application roots and explicit target/defaultTarget authoring. It adds `click`, `dblclick`, `hover`, `focus`, `blur`, `press`, `pressSequentially` and deprecated `type`, with native arguments, options, results, waits and errors. Use `pressSequentially` for keyboard input or native `.locator.fill` for replacement. Element's own `fill` remains pending #35.
 
-See [package status](index.md) and [contribution expectations](../contributing.md). Future APIs must carry owning source comments, checked examples, and package-qualified availability/change history.
+<!-- @example examples/essential.spec.mts#essential -->
+
+Both `@pomeranian/lib-essential` and `@pomeranian/lib-essential/element` export the same class across ESM and CommonJS. Build core and essential before packing; consumers install both tarballs and aligned playwright-core/native runner or standalone playwright versions. No automatic selector discovery or broad default selector is introduced.
+
+The [approved milestone](../guides/essential-milestone.md) tracks remaining form actions (#35), other interactions (#36), and TextInput.appendText (#37). These later APIs are not implemented. Assertion organization and public narrowing remain separate work.
+
+Available since @pomeranian/lib-essential@Unreleased.
+
+Inherited construction and target APIs: Available since @pomeranian/core@Unreleased.

@@ -1,6 +1,6 @@
 # Initial essential action milestone
 
-This is the approved product specification from [the essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27), not an implemented API reference. `@pomeranian/lib-essential` remains planned and unreleased. Implementation tickets deliver each complete slice before its APIs are documented as available.
+This is the approved product specification from [the essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27), not an implemented API reference. `@pomeranian/lib-essential` now implements the eight basic interactions and remains unreleased. Implementation tickets deliver each complete slice before its APIs are documented as available.
 
 ## Complete operations and native compatibility
 
@@ -55,3 +55,15 @@ Explicit follow-on decisions, each responsible for creating implementation homes
 Further essential/integration coverage and full authoring guides remain visible on the project map.
 
 `Checkbox.toggle` was explicitly dropped because `click` already provides that interaction. Do not introduce a `Checkbox` or `Select` class merely to rename inherited actions. A future specialized class must supply meaningful additional capabilities. Reporting, narrowing, selector setup and integration contracts retain their separate tickets.
+
+## Native inventory ownership
+
+Supported minimum and repository-current Playwright: 1.64.1 (the pins coincide).
+
+| Operations                                                                       | Delivery                      |
+| -------------------------------------------------------------------------------- | ----------------------------- |
+| click, dblclick, hover, focus, blur, press, pressSequentially, type (deprecated) | Implemented Unreleased in #34 |
+| check, clear, fill, selectOption, selectText, setChecked, uncheck                | Pending #35                   |
+| dispatchEvent, dragTo, scrollIntoViewIfNeeded, setInputFiles, tap                | Pending #36                   |
+
+This reconciles all twenty interactions in the supported Locator baseline, including deprecated type. Reads, handles, waits, captures and assertions are not interaction wrappers. Current upstream versions beyond the supported repository pin are not claimed as tested.

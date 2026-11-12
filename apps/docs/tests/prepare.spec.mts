@@ -83,6 +83,22 @@ test("builds site inputs and shared model from actual comments and checked guide
     expect(await readFile(path.join(model.site, corePage ?? "missing"), "utf8")).not.toContain(
       "private workspace API",
     );
+    const element = model.api.symbols.find(
+      (symbol) => symbol.package === "@pomeranian/lib-essential" && symbol.name === "Element",
+    );
+    expect(element).toBeDefined();
+    const elementPage = element?.html
+      .split("#")[0]
+      ?.replace(/^\//, "")
+      .replace(/\.html$/, ".md");
+    const elementContent = await readFile(path.join(model.site, elementPage ?? "missing"), "utf8");
+    expect(elementContent).toContain("@pomeranian/lib-essential");
+    expect(elementContent).toContain("#### Deprecated");
+    expect(elementContent).toContain("Use locator.fill for replacement or pressSequentially");
+    const legacy = model.api.symbols.find(
+      (symbol) => symbol.package === "@pomeranian/lib-essential" && symbol.name === "type",
+    );
+    expect(legacy?.history).toContain("Available since @pomeranian/lib-essential@Unreleased");
     const sources = await registeredSources(repoRoot);
     const missing = model.pages.map((page) =>
       page.path === "guides/testing.md"

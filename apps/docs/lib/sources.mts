@@ -75,6 +75,14 @@ export function assertSources(
 
 export async function registeredSources(repo: string): Promise<RegisteredSource[]> {
   const sources: RegisteredSource[] = [
+    ...["index", "element"].map((module): RegisteredSource => ({
+      package: "@pomeranian/lib-essential",
+      workspace: "packages/lib-essential",
+      export: module === "index" ? "." : "./element",
+      entry: path.join(repo, `packages/lib-essential/src/${module}.ts`),
+      status: "production",
+      guides: ["api/lib-essential.md", "guides/essential-milestone.md"],
+    })),
     ...["index", "page-object", "dom-page-object", "root-fixture", "authoring", "target"].map(
       (module): RegisteredSource => ({
         package: "@pomeranian/core",

@@ -11,10 +11,11 @@
     "test:unit": "playwright test --config playwright.unit.config.mts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "typecheck": "node ../../packages/core/lib/build.mts && node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.fixtures.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.prototype.json && node ../../packages/core/prototypes/factory-typing/run.mjs --types-only"
+    "typecheck": "node ../../packages/core/lib/build.mts && node ../../packages/lib-essential/lib/build.mts && node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.fixtures.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.prototype.json && node ../../packages/core/prototypes/factory-typing/run.mjs --types-only"
   },
   "dependencies": {
     "@pomeranian/core": "workspace:*",
+    "@pomeranian/lib-essential": "workspace:*",
     "@repo/test-support": "workspace:*"
   },
   "devDependencies": {

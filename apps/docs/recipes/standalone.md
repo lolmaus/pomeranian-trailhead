@@ -9,14 +9,15 @@ Use the same core package with standalone `playwright`, without Playwright Test 
 Core is unreleased; first build and pack it in this repository:
 
 ```sh
-pnpm --filter @pomeranian/core build
+pnpm --filter @pomeranian/lib-essential build
 pnpm --filter @pomeranian/core pack --pack-destination /tmp
+pnpm --filter @pomeranian/lib-essential pack --pack-destination /tmp
 ```
 
 In a separate consumer project, install the generated tarball with aligned native packages:
 
 ```sh
-pnpm add /tmp/pomeranian-core-0.1.0.tgz playwright@1.64.1 playwright-core@1.64.1
+pnpm add /tmp/pomeranian-core-0.1.0.tgz /tmp/pomeranian-lib-essential-0.1.0.tgz playwright@1.64.1 playwright-core@1.64.1
 pnpm add -D typescript@7.0.2 @types/node
 pnpm exec playwright install chromium
 ```
@@ -32,3 +33,5 @@ Always close the context and browser, including on failure. A browser may contai
 The checked example imports `chromium` directly from `playwright`. The package verifier additionally installs a clean external standalone consumer with no `@playwright/test` dependency, builds a separate generic page-object library, and validates its consumer through the packed declarations. It does not publish any package.
 
 Public selector registration, custom Page settings and test-ID fixture forwarding belong to the later setup/configuration slice. No not-yet-implemented setup export is required or shown here. For rooted Playwright Test usage, see [construction](../guides/construction.md); for tabs and frames, see [multiple Pages](multiple-pages.md).
+
+Element basic actions: Available since @pomeranian/lib-essential@Unreleased. Its native actions also work in standalone consumers.

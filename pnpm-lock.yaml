@@ -202,6 +202,9 @@ importers:
       '@pomeranian/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@pomeranian/lib-essential':
+        specifier: workspace:*
+        version: link:../../packages/lib-essential
       '@repo/test-support':
         specifier: workspace:*
         version: link:../../packages/test-support

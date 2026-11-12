@@ -15,7 +15,12 @@ test("live preview regenerates API changes, exposes failures and recovers", asyn
     "test-results",
     "playwright-report",
   ]);
-  for (const name of ["apps/docs", "packages/test-support", "packages/core"]) {
+  for (const name of [
+    "apps/docs",
+    "packages/test-support",
+    "packages/core",
+    "packages/lib-essential",
+  ]) {
     await cp(path.join(repoRoot, name), path.join(root, name), {
       recursive: true,
       filter: (filename) => !ignored.has(path.basename(filename)),
@@ -24,7 +29,12 @@ test("live preview regenerates API changes, exposes failures and recovers", asyn
   await cp(path.join(repoRoot, "package.json"), path.join(root, "package.json"));
   await cp(path.join(repoRoot, ".gitignore"), path.join(root, ".gitignore"));
   await symlink(path.join(repoRoot, "node_modules"), path.join(root, "node_modules"), "dir");
-  for (const name of ["apps/docs", "packages/test-support", "packages/core"])
+  for (const name of [
+    "apps/docs",
+    "packages/test-support",
+    "packages/core",
+    "packages/lib-essential",
+  ])
     await symlink(
       path.join(repoRoot, name, "node_modules"),
       path.join(root, name, "node_modules"),

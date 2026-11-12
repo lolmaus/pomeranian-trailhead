@@ -17,9 +17,9 @@ export interface ContentPage {
   document: ReturnType<typeof content>;
 }
 
-export function referenceNotice(status: string): string {
+export function referenceNotice(status: string, owner = "@pomeranian/core"): string {
   return status === "production"
-    ? "\n\n> **Unreleased core API:** @pomeranian/core implementation from main; no npm release is implied.\n"
+    ? `\n\n> **Unreleased ${owner === "@pomeranian/core" ? "core" : owner} API:** ${owner} implementation from main; no npm release is implied.\n`
     : "\n\n> **Development infrastructure:** private workspace API, not a published Pomeranian consumer package.\n";
 }
 
@@ -181,8 +181,8 @@ export async function prepare(output: string) {
       );
       const notice =
         relative === "index.md"
-          ? "\n\nGenerated reference includes unreleased production core and private development infrastructure. The development URL segment is retained for existing links.\n"
-          : referenceNotice(production ? "production" : "development");
+          ? "\n\nGenerated reference includes unreleased production packages and private development infrastructure. The development URL segment is retained for existing links.\n"
+          : referenceNotice(production ? "production" : "development", owners[0]?.package);
       pages.push({ path: name, origin: "reference", document: content(markdown + notice) });
     }
     pages.push({

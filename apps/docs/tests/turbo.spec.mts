@@ -98,6 +98,7 @@ test("actual Turbo graph selects docs for source changes and invalidates its bui
       ["apps/docs", "@repo/docs"],
       ["packages/test-support", "@repo/test-support"],
       ["packages/core", "@pomeranian/core"],
+      ["packages/lib-essential", "@pomeranian/lib-essential"],
       ["packages/typescript-config", "@repo/typescript-config"],
       ["packages/oxlint-config", "@repo/oxlint-config"],
       ["packages/unrelated", "@fixture/unrelated"],
@@ -135,10 +136,15 @@ test("actual Turbo graph selects docs for source changes and invalidates its bui
     expect(
       coreTestGraph.tasks.find((task) => task.taskId === "@pomeranian/core#test")?.dependencies,
     ).toContain("@pomeranian/core#build");
+    const beforeEssential = buildHash();
+    write("packages/lib-essential/source.mts", "export const value = 2;\n");
+    const essential = commit();
+    expect(selected(base, essential)).toEqual(["@pomeranian/lib-essential", "@repo/docs"]);
+    expect(buildHash()).not.toBe(beforeEssential);
     const before = buildHash();
     write("packages/test-support/source.mts", "export const value = 2;\n");
     const support = commit();
-    expect(selected(base, support)).toEqual(["@repo/docs", "@repo/test-support"]);
+    expect(selected(essential, support)).toEqual(["@repo/docs", "@repo/test-support"]);
     expect(before).toBeDefined();
     expect(buildHash()).not.toBe(before);
     const beforeCore = buildHash();

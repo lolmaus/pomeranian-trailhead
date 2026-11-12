@@ -4,7 +4,7 @@ Begin with a small real-browser scenario using the locally built production core
 
 <!-- @example examples/core.spec.mts#construction -->
 
-The app fixture establishes root identity before child fields initialize. Grouping Menu forwards the app DOM scope to its button. This core slice uses native Locator assertions; universal action/assertion methods are later essential-layer work.
+The app fixture establishes root identity before child fields initialize. Grouping Menu forwards the app DOM scope to its button. This core slice uses native Locator assertions; Element basic actions are available in the essential package; assertions remain separate work.
 
 ## An independent browser scenario
 
@@ -23,3 +23,7 @@ The maintained test below runs against Chromium and is checked by TypeScript 7. 
 `page.setContent` creates a fresh scenario in the test's browser context. The ordinary Playwright assertion independently verifies what happened after the click.
 
 Continue with [construction and DOM targets](guides/construction.md) and [library authoring](guides/authoring.md). The [historical factory proof](guides/factory-proof.md) is separate bounded evidence. To add a larger shared scenario later, follow [the testing guide](guides/testing.md).
+
+## Essential actions
+
+<!-- @example examples/essential.spec.mts#essential -->

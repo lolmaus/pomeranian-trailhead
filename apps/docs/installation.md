@@ -28,3 +28,7 @@ pnpm run check
 The root project checks use TypeScript 7. TypeDoc runs with the documentation workspace's separate supported TypeScript 6 dependency. Changing the generator compiler does not change the compiler used to check project code or maintained examples.
 
 The site documents the current development tree. Package-qualified release annotations distinguish shipped versions from `Unreleased`; future release snapshots and deployment are separate work.
+
+## Essential package
+
+Build with `pnpm --filter @pomeranian/lib-essential build`, then pack both core and essential with their package `pnpm pack` commands. Install both tarballs with aligned native peers. Run `pnpm --filter @pomeranian/lib-essential test` for Chromium and packed consumer checks. The package is unreleased.
