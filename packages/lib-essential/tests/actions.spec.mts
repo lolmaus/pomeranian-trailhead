@@ -73,3 +73,12 @@ test("pressSequentially preserves native effects", async ({ page }) => {
   ).pressSequentially("Hello", { delay: 1 });
   await expect(button.locator).toHaveValue("Hello");
 });
+test("type preserves native effects", async ({ page }) => {
+  await page.setContent("<textarea></textarea>");
+  const button = Element.create(page, "button, input, textarea");
+  expect(typeof (button as unknown as { [key: string]: unknown })["type"]).toBe("function");
+  await (button as unknown as { type: import("playwright-core").Locator["type"] }).type("legacy", {
+    delay: 1,
+  });
+  await expect(button.locator).toHaveValue("legacy");
+});
