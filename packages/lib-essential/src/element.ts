@@ -33,4 +33,10 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
   focus(...args: Parameters<Locator["focus"]>): ReturnType<Locator["focus"]> {
     return this.locator.focus(...args);
   }
+  /** Perform native blur, retaining Playwright waiting, options and errors.
+   * @since @pomeranian/lib-essential@Unreleased
+   */
+  blur(...args: Parameters<Locator["blur"]>): ReturnType<Locator["blur"]> {
+    return this.locator.blur(...args);
+  }
 }
