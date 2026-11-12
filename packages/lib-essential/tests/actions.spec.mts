@@ -82,3 +82,63 @@ test("type preserves native effects", async ({ page }) => {
   });
   await expect(button.locator).toHaveValue("legacy");
 });
+
+test("native cardinality, applicability and timeout errors remain visible", async ({ page }) => {
+  await page.setContent("<button>A</button><button>B</button><div>Text</div>");
+  await expect(Element.create(page, "button").click({ timeout: 100 })).rejects.toThrow(
+    "strict mode",
+  );
+  await expect(Element.create(page, "#missing").hover({ timeout: 100 })).rejects.toThrow("Timeout");
+  await expect(
+    Element.create(page, "div").pressSequentially("text", { timeout: 100 }),
+  ).resolves.toBeUndefined();
+});
+
+import { createRequire } from "node:module";
+import {
+  DomPageObject,
+  PageObject,
+  rootFixture,
+  defaultInstanceType,
+  type UnboundRoot,
+} from "@pomeranian/core";
+const require = createRequire(import.meta.url);
+const { reconstruct } = require("../../core/dist/internal/reconstruction.js") as {
+  reconstruct<T extends DomPageObject>(
+    source: T,
+    transform: (locator: import("playwright-core").Locator) => import("playwright-core").Locator,
+  ): T;
+};
+test("subclasses preserve grouping, roots, private state and reconstruction", async ({ page }) => {
+  class Button<Root extends UnboundRoot = UnboundRoot, Value = string> extends Element<Root> {
+    declare readonly [defaultInstanceType]: {
+      instance: Button;
+      parameters: { root: Root; value: Value };
+    };
+    override defaultTarget = "button";
+    #value: Value | undefined;
+    value() {
+      return this.#value;
+    }
+  }
+  class Group extends PageObject<App> {
+    Button = Button.create(this);
+  }
+  class App extends DomPageObject<App> {
+    override defaultTarget = "main";
+    Group = Group.create(this);
+  }
+  await page.setContent(
+    "<main><button>A</button><button onclick=\"this.textContent='Done'\">B</button></main>",
+  );
+  await rootFixture(App)({ page }, async (app) => {
+    const source = app.Group.Button;
+    const derived = reconstruct(source, (l) => l.nth(1));
+    expect(derived).toBeInstanceOf(Button);
+    expect(derived.root).toBe(app);
+    expect(derived.value()).toBeUndefined();
+    await derived.click();
+    await expect(derived.locator).toHaveText("Done");
+    await expect(source.locator).toHaveCount(2);
+  });
+});

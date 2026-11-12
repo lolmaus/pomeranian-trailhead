@@ -1,0 +1,70 @@
+import { DomPageObject, PageObject, rootFixture, defaultInstanceType } from '@pomeranian/core';
+import { DomPageObject as Direct } from '@pomeranian/core/dom-page-object';
+import { defaultInstanceType as directSymbol } from '@pomeranian/core/authoring';
+import { LibraryButton } from '@fixture/library';
+import type { Page, Locator } from 'playwright-core';
+import type { Target, LocatorFactoryContext } from '@pomeranian/core/target';
+type Equal<A,B> = (<T>()=>T extends A?1:2) extends (<T>()=>T extends B?1:2) ? true:false;
+type Check<T extends true> = T;
+type Identity = Check<Equal<typeof DomPageObject, typeof Direct>>;
+type SymbolIdentity = Check<Equal<typeof defaultInstanceType, typeof directSymbol>>;
+class App extends DomPageObject<App> { override defaultTarget = 'html'; appOnly = true; }
+class Bound extends LibraryButton<App, number> { #own = 1; own() { return this.#own; } }
+class Nullable extends DomPageObject<App | null> { override defaultTarget = 'button'; }
+export function contracts(page: Page, app: App) {
+ const library = LibraryButton.create(page);
+ type Default = Check<Equal<typeof library, LibraryButton>>;
+ const bound = Bound.create(app);
+ type Exact = Check<Equal<typeof bound, Bound>>;
+ type Value = Check<Equal<ReturnType<typeof bound.value>, number | undefined>>;
+ const direct: Direct = library;
+ const root: App = bound.root;
+ Nullable.create(page); Nullable.create(app);
+ rootFixture(App);
+ // @ts-expect-error root-bound objects cannot use an unrooted Page
+ Bound.create(page);
+ // @ts-expect-error protected construction
+ new DomPageObject(page, 'button');
+ // @ts-expect-error ordinary DOM objects require target
+ DomPageObject.create(page);
+ // @ts-expect-error groups have no target
+ PageObject.create(page, 'button');
+ // @ts-expect-error private generic state must retain number
+ const wrong: LibraryButton<App, string> = bound;
+ // @ts-expect-error no public parent
+ bound.parent;
+ const factory = (context: LocatorFactoryContext): Locator => {
+  // @ts-expect-error readonly factory context
+  context.scope = null;
+  return (context.scope ?? context.page).locator('button');
+ };
+ const target: Target = factory;
+ void [direct, root, wrong, target];
+}
+
+import cjs = require('@pomeranian/core');
+type MixedNominal = Check<Equal<DomPageObject, cjs.DomPageObject>>;
+// @ts-expect-error internal implementation paths are not public exports
+import type { State } from '@pomeranian/core/internal/state';
+class LocatorDefault extends DomPageObject { override defaultTarget = this.page.locator('button'); }
+class FactoryDefault extends DomPageObject { override defaultTarget = ({page}: LocatorFactoryContext) => page.locator('button'); }
+export function defaultForms(page: Page) {
+ LocatorDefault.create(page); FactoryDefault.create(page);
+ // @ts-expect-error factories must return Locator synchronously
+ DomPageObject.create(page, async ({page}) => page.locator('button'));
+ // @ts-expect-error Page is not a target
+ DomPageObject.create(page, page);
+ // @ts-expect-error factory Page results are not Locators
+ DomPageObject.create(page, ({page}) => page);
+}
+
+import {Element} from '@pomeranian/lib-essential';
+export function essentialContracts(page:Page) {
+const element=Element.create(page,'button');
+const nativeClick: import('playwright-core').Locator['click']=element.click;
+void nativeClick;
+// @ts-expect-error native click options reject unknown values
+element.click({button:"sideways"});
+// @ts-expect-error protected construction
+new Element(page,"button");
+}
