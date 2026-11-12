@@ -40,6 +40,8 @@ The read is legitimate when needed for further logic, but it is not the preferre
 
 API additions must be justified by a complete, readable operation the test author wants to perform. High-level custom actions and assertions can use native reads internally; this contract does not restrict their implementation or prohibit advanced test logic. Full action coverage does not imply full Locator API parity or authorize raw-read wrappers.
 
+The [initial essential action specification](guides/essential-milestone.md) records the approved interaction coverage, `dragTo` page-object compatibility, `TextInput.appendText` behavior and explicit follow-on work. It distinguishes approved designs from delivered APIs.
+
 ## Production construction and historical evidence
 
 The [throwaway proof](guides/factory-proof.md) demonstrates nullable versus application-bound roots, inherited factories, ordinary child fields, instance defaults, and field-based state. It uses string targets only. The production core now implements CSS/Locator/factory targets and internal reconstruction seams, documented in [construction](guides/construction.md). Public narrowing, naming, and production actions/assertions remain separate work.
