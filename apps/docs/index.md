@@ -2,6 +2,8 @@
 
 Pomeranian is being built as a typed page object framework for Playwright. Its goal is to make tests read in the language of an application while keeping ordinary class inheritance, composition, and Playwright behavior visible.
 
+Routine tests should use only Pomeranian page objects, expressing complete actions and assertions in application vocabulary. Raw-value reads and arbitrary low-level logic remain available through `.locator`; they are deliberate escape hatches rather than the intended routine test style. See the [foundational API contract](concepts.md#product-contract-complete-actions-and-assertions).
+
 For example, a page object can group related UI subjects behind meaningful names. A test can then describe an application action without repeating its DOM structure at every call site. Strong types should preserve the application-root contract when a library class is specialized by a consumer.
 
 ::: warning Unreleased development documentation

@@ -3,7 +3,14 @@
 A TypeScript page object framework for Playwright, currently under development.
 The planned public packages are `@pomeranian/core` and `@pomeranian/lib-essential`.
 This repository currently contains the development scaffold and a private testing
-harness. Public page object APIs and publication are not implemented yet.
+harness, plus implemented and locally packable core construction/target APIs.
+Essential actions/assertions and consumer publication remain separate work.
+
+The product goal is to write routine tests using only Pomeranian page objects,
+with complete, readable actions and assertions. Native raw-value reads remain
+available through `.locator` for deliberate low-level logic; the public API is
+not intended to mirror every Locator method. The [foundational API contract](apps/docs/concepts.md#product-contract-complete-actions-and-assertions)
+guides future API decisions.
 
 Product requirements and decisions live in the [project map (#2)](https://github.com/lolmaus/pomeranian-trailhead/issues/2).
 The [testing contract (#3)](https://github.com/lolmaus/pomeranian-trailhead/issues/3)
