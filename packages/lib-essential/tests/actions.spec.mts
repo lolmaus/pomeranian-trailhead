@@ -17,3 +17,12 @@ test("click preserves native effects", async ({ page }) => {
   });
   await expect(button.locator).toHaveText("clicked");
 });
+test("dblclick preserves native effects", async ({ page }) => {
+  await page.setContent("<button ondblclick=\"this.textContent='double'\">Ready</button>");
+  const button = Element.create(page, "button, input, textarea");
+  expect(typeof (button as unknown as { [key: string]: unknown })["dblclick"]).toBe("function");
+  await (
+    button as unknown as { dblclick: import("playwright-core").Locator["dblclick"] }
+  ).dblclick();
+  await expect(button.locator).toHaveText("double");
+});
