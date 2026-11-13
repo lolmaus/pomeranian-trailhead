@@ -4,7 +4,7 @@ Begin with a small real-browser scenario using the locally built production core
 
 <!-- @example examples/core.spec.mts#construction -->
 
-The app fixture establishes root identity before child fields initialize. Grouping Menu forwards the app DOM scope to its button. This core slice uses native Locator assertions; Element basic actions are available in the essential package; assertions remain separate work.
+The app fixture establishes root identity before child fields initialize. Grouping Menu forwards the app DOM scope to its button. This core slice uses native Locator assertions; Element basic and form actions are available in the essential package; assertions remain separate work.
 
 ## An independent browser scenario
 

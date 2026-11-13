@@ -94,7 +94,7 @@ test("builds site inputs and shared model from actual comments and checked guide
     const elementContent = await readFile(path.join(model.site, elementPage ?? "missing"), "utf8");
     expect(elementContent).toContain("@pomeranian/lib-essential");
     expect(elementContent).toContain("#### Deprecated");
-    expect(elementContent).toContain("Use locator.fill for replacement or pressSequentially");
+    expect(elementContent).toContain("Use fill for replacement or pressSequentially");
     const legacy = model.api.symbols.find(
       (symbol) => symbol.package === "@pomeranian/lib-essential" && symbol.name === "type",
     );

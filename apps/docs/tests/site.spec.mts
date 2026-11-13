@@ -46,3 +46,50 @@ test("built development site navigates to honest package status and generated re
   expect(await topic.text()).toContain("await page.setContent");
   expect(errors).toEqual([]);
 });
+
+test("essential form actions are available in human and AI reference", async ({ page }) => {
+  await page.goto("/api/lib-essential.html");
+  await expect(page.locator("main")).toContainText("complete native contracts");
+  const discovery = await (await page.request.get("/llms.txt")).text();
+  const packagePath = discovery.match(/\[@pomeranian\/lib-essential\]\(([^)]+)\)/)?.[1];
+  expect(packagePath).toBeDefined();
+  const packageText = await (await page.request.get(packagePath!)).text();
+  const typePaths = [...packageText.matchAll(/\]\((\/text\/types\/[^)]+)\)/g)].map(
+    (match) => match[1]!,
+  );
+  expect(typePaths.length).toBeGreaterThan(0);
+  const typeText = (
+    await Promise.all(typePaths.map(async (path) => (await page.request.get(path)).text()))
+  ).join("\n");
+  for (const method of [
+    "fill",
+    "clear",
+    "check",
+    "uncheck",
+    "setChecked",
+    "selectOption",
+    "selectText",
+  ]) {
+    const memberPath = [...typeText.matchAll(/\]\((\/text\/members\/[^)]+)\)/g)]
+      .map((match) => match[1]!)
+      .find((path) =>
+        decodeURIComponent(decodeURIComponent(path)).includes("method-instance-" + method),
+      );
+    expect(memberPath, method).toBeDefined();
+    const response = await page.request.get(memberPath!);
+    expect(response.ok()).toBe(true);
+    const member = await response.text();
+    expect(member).toContain(method);
+    expect(member).toContain("Available since @pomeranian/lib-essential@Unreleased");
+    expect(member).toContain("Parameters");
+    const source = member.match(/^Source: (\S+)/m)?.[1];
+    expect(source).toBeDefined();
+    await page.goto(source!);
+    await expect(page.locator("main")).toContainText(`Complete native ${method} action`);
+    if (method === "selectOption") {
+      expect(member).toContain("`Promise`");
+      expect(member).toContain("`string`[]");
+      await expect(page.locator("main")).toContainText("Returns the native selected option values");
+    }
+  }
+});
