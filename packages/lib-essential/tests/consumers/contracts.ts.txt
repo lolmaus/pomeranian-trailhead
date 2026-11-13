@@ -68,3 +68,29 @@ element.click({button:"sideways"});
 // @ts-expect-error protected construction
 new Element(page,"button");
 }
+
+export function formContracts(page: Page, app: App) {
+const element=LibraryButton.create(page);
+const bound=Bound.create(app);
+type fill = Check<Equal<typeof element.fill, Locator["fill"]>>;
+type Boundfill = Check<Equal<typeof bound.fill, Locator["fill"]>>;
+type clear = Check<Equal<typeof element.clear, Locator["clear"]>>;
+type Boundclear = Check<Equal<typeof bound.clear, Locator["clear"]>>;
+type check = Check<Equal<typeof element.check, Locator["check"]>>;
+type Boundcheck = Check<Equal<typeof bound.check, Locator["check"]>>;
+type uncheck = Check<Equal<typeof element.uncheck, Locator["uncheck"]>>;
+type Bounduncheck = Check<Equal<typeof bound.uncheck, Locator["uncheck"]>>;
+type setChecked = Check<Equal<typeof element.setChecked, Locator["setChecked"]>>;
+type BoundsetChecked = Check<Equal<typeof bound.setChecked, Locator["setChecked"]>>;
+type selectOption = Check<Equal<typeof element.selectOption, Locator["selectOption"]>>;
+type BoundselectOption = Check<Equal<typeof bound.selectOption, Locator["selectOption"]>>;
+type selectText = Check<Equal<typeof element.selectText, Locator["selectText"]>>;
+type BoundselectText = Check<Equal<typeof bound.selectText, Locator["selectText"]>>;
+element.fill('text'); element.clear(); element.check(); element.uncheck(); element.setChecked(true); element.selectOption(['a','b'] as const); element.selectText();
+// @ts-expect-error native fill requires value
+element.fill();
+// @ts-expect-error native checked state is boolean
+element.setChecked('yes');
+// @ts-expect-error native selection option shape
+element.selectOption({unknown:'value'});
+}

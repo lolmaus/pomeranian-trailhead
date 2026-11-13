@@ -35,6 +35,20 @@ export function contracts(page: Page, app: App) {
   equal<Equal<typeof plain.press, Locator["press"]>>();
   equal<Equal<typeof plain.pressSequentially, Locator["pressSequentially"]>>();
   equal<Equal<typeof plain.type, Locator["type"]>>();
+  equal<Equal<typeof plain.fill, Locator["fill"]>>();
+  equal<Equal<typeof bound.fill, Locator["fill"]>>();
+  equal<Equal<typeof plain.clear, Locator["clear"]>>();
+  equal<Equal<typeof bound.clear, Locator["clear"]>>();
+  equal<Equal<typeof plain.check, Locator["check"]>>();
+  equal<Equal<typeof bound.check, Locator["check"]>>();
+  equal<Equal<typeof plain.uncheck, Locator["uncheck"]>>();
+  equal<Equal<typeof bound.uncheck, Locator["uncheck"]>>();
+  equal<Equal<typeof plain.setChecked, Locator["setChecked"]>>();
+  equal<Equal<typeof bound.setChecked, Locator["setChecked"]>>();
+  equal<Equal<typeof plain.selectOption, Locator["selectOption"]>>();
+  equal<Equal<typeof bound.selectOption, Locator["selectOption"]>>();
+  equal<Equal<typeof plain.selectText, Locator["selectText"]>>();
+  equal<Equal<typeof bound.selectText, Locator["selectText"]>>();
   // @ts-expect-error protected lifecycle
   new Element(page, "button");
   // @ts-expect-error required target
