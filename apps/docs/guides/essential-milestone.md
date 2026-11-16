@@ -32,6 +32,12 @@ Assertion capabilities are independently reusable from action bundles. Named cla
 
 This selects capability placement only. Exact assertion names, negation, organization, retry/timeouts, custom/compound extension and first delivery slices remain in [the assertion API decision (#28)](https://github.com/lolmaus/pomeranian-trailhead/issues/28). Preserve complete retrying assertions on page objects; raw observations remain deliberate low-level operations through `.locator`.
 
+### Direct migration
+
+The author confirms there are no external users yet. When the approved replacement is implemented, directly remove control-specific `fill`, `clear`, `check`, `uncheck`, `setChecked`, `selectOption` and `setInputFiles` methods from `Element`; provide no deprecation bridge or forwarding compatibility aliases there. Keep the general-purpose `blur`, `click`, `dblclick`, `dispatchEvent`, `dragTo`, `focus`, `hover`, `press`, `pressSequentially`, `scrollIntoViewIfNeeded`, `selectText`, `tap` and native-deprecated `type` surface. Preserve native signatures and behavior on the new owners.
+
+Migrate internal tests, maintained examples and human/AI docs together, with a concise before/after guide showing the appropriate specialized classes or capability composition. This deliberately supersedes the initial universal ownership rule when the coordinated implementation lands; the initial delivery remains accepted under its original contract. The native deprecation of `type` is separate from this migration. This policy authorizes no package publication.
+
 ### Named native control classes
 
 The planned revision covers every native HTML input flavor with the following selected class names:
