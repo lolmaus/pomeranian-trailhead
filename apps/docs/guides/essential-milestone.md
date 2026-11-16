@@ -6,15 +6,19 @@ This is the approved product specification from [the essential action decision (
 
 The ongoing [capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42) selects the following bundle names and composition hierarchy. These are planned APIs; the complete replacement contract, migration and implementation still require that decision's final review.
 
-| Bundle          | Builds on       | Adds         |
-| --------------- | --------------- | ------------ |
-| `Fillable`      | Compatible base | `fill`       |
-| `EditableValue` | `Fillable`      | `clear`      |
-| `EditableText`  | `EditableValue` | `appendText` |
+| Bundle                 | Builds on       | Adds                    |
+| ---------------------- | --------------- | ----------------------- |
+| `Fillable`             | Compatible base | `fill`                  |
+| `EditableValue`        | `Fillable`      | `clear`                 |
+| `EditableText`         | `EditableValue` | `appendText`            |
+| `Checkable`            | Compatible base | `check`                 |
+| `CheckableUncheckable` | `Checkable`     | `uncheck`, `setChecked` |
 
-Each bundle is a capability factory returning a class that extends the preceding bundle's result. Broader bundles inherit the shared implementation: implement each operation once, rather than redeclaring it in every bundle. Separate internal factories for individual operations are not required.
+Each bundle is a capability factory returning a class that extends its compatible base or the named bundle's result. Broader bundles inherit the shared implementation: implement each operation once, rather than redeclaring it in every bundle. Separate internal factories for individual operations are not required.
 
-Public capability factories and bundles use UpperCamelCase names describing an ability or capability-qualified subject. Prefer adjective-first compounds such as `EditableValue` and `EditableText`, or concise `-able` names such as `Fillable`, over operation-style names such as `ValueEditing` and `TextEditing`. Those earlier editing names are superseded. This convention applies to capability factories and bundles; page-object class names and native action method names follow their existing conventions.
+Public capability factories and bundles use UpperCamelCase names describing an ability or capability-qualified subject. Prefer adjective-first compounds such as `EditableValue` and `EditableText`, or concise `-able` names such as `Fillable`, over operation-style names such as `ValueEditing` and `TextEditing`. Those earlier editing names are superseded. Compound names may explicitly combine abilities, as in `CheckableUncheckable`. This convention applies to capability factories and bundles; page-object class names and native action method names follow their existing conventions.
+
+`Radio` uses `Checkable`; `Checkbox` uses `CheckableUncheckable` and inherits `check` from it. The broader bundle permits both checked-state transitions through `uncheck` and `setChecked`; it does not add a toggle helper. The earlier proposed name `EditableCheckedState` is superseded by `CheckableUncheckable`.
 
 Consumers select the appropriate bundle rather than stacking overlapping bundles. Documentation must explain the inherited operations and potential member collisions; optional CLI checks must understand transitive bundle composition. `EditableText.appendText` retains the narrow text-like input/textarea behavior specified below, excluding structured values and contenteditable.
 
