@@ -26,6 +26,12 @@ Public capability factories and bundles use UpperCamelCase names describing an a
 
 Consumers select the appropriate bundle rather than stacking overlapping bundles. Documentation must explain the inherited operations and potential member collisions; optional CLI checks must understand transitive bundle composition. `EditableText.appendText` retains the narrow text-like input/textarea behavior specified below, excluding structured values and contenteditable.
 
+### Assertion capability placement
+
+Assertion capabilities are independently reusable from action bundles. Named classes include their applicable action and assertion capabilities by default as those slices are delivered; ordinary tests do not assemble assertion capabilities manually. An action bundle may reuse an assertion capability where their target applicability truly matches. For example, a radio has assertable unchecked state despite lacking an `uncheck` action, and a hidden input has assertable value state without user-editing actions. Contenteditable text must not be confused with a native input value.
+
+This selects capability placement only. Exact assertion names, negation, organization, retry/timeouts, custom/compound extension and first delivery slices remain in [the assertion API decision (#28)](https://github.com/lolmaus/pomeranian-trailhead/issues/28). Preserve complete retrying assertions on page objects; raw observations remain deliberate low-level operations through `.locator`.
+
 ### Named native control classes
 
 The planned revision covers every native HTML input flavor with the following selected class names:
