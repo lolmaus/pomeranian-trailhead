@@ -2,6 +2,22 @@
 
 This is the approved product specification from [the essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27), not an implemented API reference. `@pomeranian/lib-essential` now implements the eight basic interactions and seven native form actions and remains unreleased. Implementation tickets deliver each complete slice before its APIs are documented as available.
 
+## Selected capability bundles (planned revision)
+
+The ongoing [capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42) selects the following bundle names and composition hierarchy. These are planned APIs; the complete replacement contract, migration and implementation still require that decision's final review.
+
+| Bundle          | Builds on       | Adds         |
+| --------------- | --------------- | ------------ |
+| `Fillable`      | Compatible base | `fill`       |
+| `EditableValue` | `Fillable`      | `clear`      |
+| `EditableText`  | `EditableValue` | `appendText` |
+
+Each bundle is a capability factory returning a class that extends the preceding bundle's result. Broader bundles inherit the shared implementation: implement each operation once, rather than redeclaring it in every bundle. Separate internal factories for individual operations are not required.
+
+Public capability factories and bundles use UpperCamelCase names describing an ability or capability-qualified subject. Prefer adjective-first compounds such as `EditableValue` and `EditableText`, or concise `-able` names such as `Fillable`, over operation-style names such as `ValueEditing` and `TextEditing`. Those earlier editing names are superseded. This convention applies to capability factories and bundles; page-object class names and native action method names follow their existing conventions.
+
+Consumers select the appropriate bundle rather than stacking overlapping bundles. Documentation must explain the inherited operations and potential member collisions; optional CLI checks must understand transitive bundle composition. `EditableText.appendText` retains the narrow text-like input/textarea behavior specified below, excluding structured values and contenteditable.
+
 ## Complete operations and native compatibility
 
 Follow the [foundational API contract](../concepts.md#product-contract-complete-actions-and-assertions): routine tests express complete actions and assertions through Pomeranian page objects. Raw observations, evaluation, handles and diagnostic captures remain available through `.locator`; comprehensive action coverage does not mean wrapping the entire Locator API.
