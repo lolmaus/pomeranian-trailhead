@@ -22,6 +22,39 @@ Public capability factories and bundles use UpperCamelCase names describing an a
 
 Consumers select the appropriate bundle rather than stacking overlapping bundles. Documentation must explain the inherited operations and potential member collisions; optional CLI checks must understand transitive bundle composition. `EditableText.appendText` retains the narrow text-like input/textarea behavior specified below, excluding structured values and contenteditable.
 
+### Named native control classes
+
+The planned revision covers every native HTML input flavor with the following selected class names:
+
+| Input type       | Page-object class    |
+| ---------------- | -------------------- |
+| `text`           | `TextInput`          |
+| `search`         | `SearchInput`        |
+| `tel`            | `TelephoneInput`     |
+| `url`            | `UrlInput`           |
+| `email`          | `EmailInput`         |
+| `password`       | `PasswordInput`      |
+| `number`         | `NumberInput`        |
+| `range`          | `RangeInput`         |
+| `color`          | `ColorInput`         |
+| `date`           | `DateInput`          |
+| `month`          | `MonthInput`         |
+| `week`           | `WeekInput`          |
+| `time`           | `TimeInput`          |
+| `datetime-local` | `LocalDateTimeInput` |
+| `checkbox`       | `Checkbox`           |
+| `radio`          | `Radio`              |
+| `file`           | `FileInput`          |
+| `button`         | `ButtonInput`        |
+| `submit`         | `SubmitInput`        |
+| `reset`          | `ResetInput`         |
+| `image`          | `ImageInput`         |
+| `hidden`         | `HiddenInput`        |
+
+`SearchInput`, `TelephoneInput`, `UrlInput`, `EmailInput` and `PasswordInput` specialize `TextInput`. `TextArea` remains a separate sibling for textarea controls, sharing editing capabilities through composition. `Select` represents native select controls. `ContentEditable` composes `EditableValue` for native fill/clear behavior on contenteditable elements, without the narrow `appendText` operation or a promise to preserve rich-editor formatting/state.
+
+Names express intended subjects, not eager DOM validation or automatic target discovery. Missing/invalid input types retain native text fallback behavior. Some thin classes share an action surface; button-like and hidden classes initially add no actions beyond the general `Element` surface. These names do not approve submit/reset macros, hidden-value mutation, native picker automation or raw-read wrappers. Numeric stepping, radio-group selection and rich-editor appending retain their separate decision tickets below.
+
 ## Complete operations and native compatibility
 
 Follow the [foundational API contract](../concepts.md#product-contract-complete-actions-and-assertions): routine tests express complete actions and assertions through Pomeranian page objects. Raw observations, evaluation, handles and diagnostic captures remain available through `.locator`; comprehensive action coverage does not mean wrapping the entire Locator API.
