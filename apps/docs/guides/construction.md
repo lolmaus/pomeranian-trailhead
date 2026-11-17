@@ -10,7 +10,7 @@ The production core is implemented in this repository and can be built and packe
 
 `DomPageObject` supplies DOM targeting. `PageObject` organizes children without a DOM node. Universal actions and assertions belong to the later essential layer; use the object's native Playwright `locator` for this core slice.
 
-Inherited static `create` delegates to a protected constructor. Declare children as ordinary UpperCamelCase fields using `this` as context. Inherit constructors and factories unchanged, and initialize custom state in fields. See [library authoring](authoring.md) for generic metadata and the boundaries of compiler checks.
+Inherited static `create` delegates to the technically public constructor and finalizes the object after all concrete fields initialize. Direct `new` is unsupported because it skips finalization. Declare children as ordinary UpperCamelCase fields using `this` as context. Inherit constructors, `create` and capability composition through `with` unchanged, and initialize custom state in fields. See [library authoring](authoring.md) for generic metadata and the boundaries of compiler checks.
 
 ## Scope, root and Page
 

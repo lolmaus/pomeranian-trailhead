@@ -66,6 +66,7 @@ export function authoringContext(sourceText: string): string {
     ts.ScriptKind.TS,
   );
   const snippets = [
+    "Constructor",
     "Class",
     "Default",
     "Equal",

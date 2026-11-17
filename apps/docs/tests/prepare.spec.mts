@@ -28,6 +28,8 @@ test("builds site inputs and shared model from actual comments and checked guide
     );
     expect(model.api?.symbols.map((symbol) => symbol.name)).toEqual(
       expect.arrayContaining([
+        "Constructor",
+        "with",
         "testConfig",
         "typedStories",
         "StoryTitle",
@@ -55,6 +57,13 @@ test("builds site inputs and shared model from actual comments and checked guide
     expect(gettingStartedText).toContain("class App extends DomPageObject<App>");
     expect(gettingStartedText).toContain("](/text/installation.txt)");
     expect(gettingStartedText).not.toContain("](installation.md)");
+    for (const filename of ["guides/authoring.md", "public/text/guides/authoring.txt"]) {
+      const authoring = await readFile(path.join(model.site, filename), "utf8");
+      expect(authoring).toContain("DomPageObject.with(Text, Counting, CountLabel)");
+      expect(authoring).toContain("override get root(): Root");
+      expect(authoring).toContain("Direct `new` remains unsupported");
+      expect(authoring).toContain("this.Button");
+    }
     const parser = new MarkdownIt();
     const publicRoot = path.join(model.site, "public");
     for (const filename of await files(publicRoot)) {

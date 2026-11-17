@@ -19,7 +19,10 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
   #locator: Locator | undefined;
   #target: Target | undefined;
   #resolving = false;
-  /** Inherit the constructor; defaults are captured after subclass fields complete.
+  /** Technically public for capabilities; construct through named create/rootFixture.
+   * Inherit the constructor; defaults are captured after subclass fields complete.
+   * @remarks Changed in @pomeranian/core@Unreleased: public constructor authoring enables
+   * generic capability factories; supported construction still uses named factories.
    * @since @pomeranian/core@Unreleased
    */
   constructor(context: Page | PageObject<Root>, target?: Target, asRoot = false) {

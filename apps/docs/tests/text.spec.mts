@@ -180,9 +180,10 @@ test("replacing public text removes renamed topics and obsolete members", async 
 test("production helper context is derived from declarations and fails on missing helpers", async () => {
   const { authoringContext } = await import("../lib/prepare.mts");
   const source =
-    "export type Class = Function; type Default<I> = I; type Equal<A,B> = true; type Erased<A> = false; type IsAny<T> = false; export type Result<C extends Class> = C; export type Context<R> = R; export type TargetArguments<I> = [I];";
+    "export type Constructor<I = object> = new (...args: any[]) => I; export type Class = Function; type Default<I> = I; type Equal<A,B> = true; type Erased<A> = false; type IsAny<T> = false; export type Result<C extends Class> = C; export type Context<R> = R; export type TargetArguments<I> = [I];";
   expect(authoringContext(source)).toContain("export type Result<C extends Class> = C;");
   expect(authoringContext(source)).toContain("production authoring");
+  expect(authoringContext(source)).toContain("export type Constructor<I = object>");
   expect(() => authoringContext("export type Class = Function;")).toThrow(
     "Missing production authoring helper",
   );

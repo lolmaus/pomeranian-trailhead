@@ -40,7 +40,10 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
    * @since @pomeranian/core@Unreleased
    */
   declare readonly [defaultInstanceType]: { instance: PageObject; parameters: { root: Root } };
-  /** Inherit this constructor and initialize state in ordinary fields.
+  /** Technically public for class-factory capabilities; direct new is unsupported.
+   * Inherit this constructor and initialize state in ordinary fields.
+   * @remarks Changed in @pomeranian/core@Unreleased: public constructor authoring enables
+   * generic capability factories; supported construction still uses named factories.
    * @since @pomeranian/core@Unreleased
    */
   constructor(context: Page | PageObject<Root>, target?: Target, asRoot = false) {
@@ -67,7 +70,8 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
   get root(): Root {
     return state(this).root as Root;
   }
-  /** Apply a capability through genuine subclass construction.
+  /** Apply capabilities left to right through genuine subclass construction.
+   * Each factory receives the preceding constructor; the receiver stays unchanged.
    * Name the returned class before using create or rootFixture.
    * @since @pomeranian/core@Unreleased
    */
