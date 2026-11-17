@@ -140,3 +140,15 @@ test("source-derived authoring context includes the public capability constructo
   const source = await readFile(path.join(repoRoot, "packages/core/src/authoring.ts"), "utf8");
   expect(authoringContext(source)).toContain("export type Constructor<Instance = object>");
 });
+
+test("source-derived authoring context explains composition signature helpers", async () => {
+  const source = await readFile(path.join(repoRoot, "packages/core/src/authoring.ts"), "utf8");
+  const composition = await readFile(
+    path.join(repoRoot, "packages/core/src/page-object.ts"),
+    "utf8",
+  );
+  const rendered: string = Reflect.apply(authoringContext, undefined, [source, composition]);
+  expect(rendered).toContain("type Compose<");
+  expect(rendered).toContain("type Before<");
+  expect(rendered).toContain("type Capabilities<");
+});
