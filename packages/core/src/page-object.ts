@@ -2,6 +2,7 @@ import type { Page } from "playwright-core";
 import {
   defaultInstanceType,
   type Class,
+  type Constructor,
   type Result,
   type Context,
   type TargetArguments,
@@ -20,7 +21,7 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
   /** Inherit this constructor and initialize state in ordinary fields.
    * @since @pomeranian/core@Unreleased
    */
-  protected constructor(context: Page | PageObject<Root>, target?: Target, asRoot = false) {
+  constructor(context: Page | PageObject<Root>, target?: Target, asRoot = false) {
     const parent = context instanceof PageObject ? context : null;
     states.set(this, {
       page: parent ? parent.page : (context as Page),
@@ -43,6 +44,16 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
    */
   get root(): Root {
     return state(this).root as Root;
+  }
+  /** Apply a capability through genuine subclass construction.
+   * Name the returned class before using create or rootFixture.
+   * @since @pomeranian/core@Unreleased
+   */
+  static with<C extends Constructor<PageObject>, Added>(
+    this: C,
+    capability: (base: C) => Constructor<Added> & C,
+  ): Constructor<Added> & C {
+    return capability(this);
   }
   /** Construct a fresh concrete instance with ordinary field initialization.
    * @since @pomeranian/core@Unreleased

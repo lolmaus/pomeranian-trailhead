@@ -6,6 +6,7 @@ export type {
   RootReference,
   UnboundRoot,
   Class,
+  Constructor,
   Result,
   Context,
   TargetArguments,

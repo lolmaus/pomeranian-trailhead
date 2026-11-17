@@ -19,7 +19,13 @@ export type UnboundRoot = RootReference | null;
  * @since @pomeranian/core@Unreleased
  */
 export const defaultInstanceType: unique symbol = Symbol("default instance type");
-/** Factory receiver with a protected-constructor-compatible prototype.
+/** Constructor accepted by ordinary generic class-factory capabilities.
+ * The variadic any signature is TypeScript's required mixin constructor form;
+ * concrete factory results retain the receiver's exact constructor and metadata.
+ * @since @pomeranian/core@Unreleased
+ */
+export type Constructor<Instance = object> = new (...args: any[]) => Instance;
+/** Factory receiver with a page-object prototype.
  * @since @pomeranian/core@Unreleased
  */
 export type Class = Function & { prototype: PageObject<UnboundRoot> };

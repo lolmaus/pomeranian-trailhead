@@ -23,7 +23,7 @@ export function contracts(page: Page, app: App) {
  rootFixture(App);
  // @ts-expect-error root-bound objects cannot use an unrooted Page
  Bound.create(page);
- // @ts-expect-error protected construction
+ // Technical accessibility only; unsupported consumer construction.
  new DomPageObject(page, 'button');
  // @ts-expect-error ordinary DOM objects require target
  DomPageObject.create(page);

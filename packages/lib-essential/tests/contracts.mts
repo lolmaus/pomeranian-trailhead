@@ -49,7 +49,7 @@ export function contracts(page: Page, app: App) {
   equal<Equal<typeof bound.selectOption, Locator["selectOption"]>>();
   equal<Equal<typeof plain.selectText, Locator["selectText"]>>();
   equal<Equal<typeof bound.selectText, Locator["selectText"]>>();
-  // @ts-expect-error protected lifecycle
+  // Technically accessible; direct construction remains unsupported.
   new Element(page, "button");
   // @ts-expect-error required target
   Element.create(page);

@@ -19,10 +19,10 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
   #locator: Locator | undefined;
   #target: Target | undefined;
   #resolving = false;
-  /** Inherit the protected constructor; defaults are captured after subclass fields complete.
+  /** Inherit the constructor; defaults are captured after subclass fields complete.
    * @since @pomeranian/core@Unreleased
    */
-  protected constructor(context: Page | PageObject<Root>, target?: Target, asRoot = false) {
+  constructor(context: Page | PageObject<Root>, target?: Target, asRoot = false) {
     super(context, target, asRoot);
     state(this).scope = () => this.locator;
     state(this).finalize = () => {
