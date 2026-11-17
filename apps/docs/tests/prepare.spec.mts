@@ -4,7 +4,7 @@ import MarkdownIt from "markdown-it";
 import { files } from "../lib/html-links.mts";
 import path from "node:path";
 import { tmpdir } from "node:os";
-import { prepare, guideHistory, repoRoot } from "../lib/prepare.mts";
+import { prepare, guideHistory, repoRoot, authoringContext } from "../lib/prepare.mts";
 import { registeredSources } from "../lib/sources.mts";
 import { content } from "../lib/content.mts";
 
@@ -125,4 +125,9 @@ test("builds site inputs and shared model from actual comments and checked guide
   } finally {
     await rm(output, { recursive: true, force: true });
   }
+});
+
+test("source-derived authoring context includes the public capability constructor", async () => {
+  const source = await readFile(path.join(repoRoot, "packages/core/src/authoring.ts"), "utf8");
+  expect(authoringContext(source)).toContain("export type Constructor<Instance = object>");
 });
