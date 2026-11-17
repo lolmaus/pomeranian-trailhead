@@ -10,6 +10,28 @@ import {
 } from "./authoring.js";
 import type { Target } from "./target.js";
 import { states, state, finish } from "./internal/state.js";
+// Homomorphic tuple inference captures each contribution separately. A capability's
+// base is the original receiver intersected with every preceding contribution.
+type Compose<C, Added extends readonly unknown[]> = Added extends readonly [
+  infer Head,
+  ...infer Tail,
+]
+  ? Compose<Constructor<Head> & C, Tail>
+  : C;
+type Before<
+  Added extends readonly unknown[],
+  Index,
+  Seen extends unknown[] = [],
+> = `${Seen["length"]}` extends Index
+  ? Seen
+  : Added extends readonly [infer Head, ...infer Tail]
+    ? Before<Tail, Index, [...Seen, Head]>
+    : Seen;
+type Capabilities<C, Added extends readonly unknown[]> = {
+  [K in keyof Added]: (
+    base: Compose<C, Before<Added, K>>,
+  ) => Constructor<Added[K]> & Compose<C, Before<Added, K>>;
+};
 /** A target-independent group that shares Page and application context.
  * @since @pomeranian/core@Unreleased
  */
@@ -49,11 +71,19 @@ export class PageObject<Root extends UnboundRoot = UnboundRoot> {
    * Name the returned class before using create or rootFixture.
    * @since @pomeranian/core@Unreleased
    */
-  static with<C extends Constructor<PageObject>, Added>(
+  static with<C extends Constructor<PageObject>, const Added extends readonly unknown[]>(
     this: C,
-    capability: (base: C) => Constructor<Added> & C,
-  ): Constructor<Added> & C {
-    return capability(this);
+    ...capabilities: Capabilities<C, Added>
+  ): Compose<C, Added>;
+  static with(
+    this: Constructor<PageObject>,
+    ...capabilities: readonly unknown[]
+  ): Constructor<PageObject> {
+    let current = this;
+    for (const capability of capabilities) {
+      current = (capability as (base: Constructor<PageObject>) => Constructor<PageObject>)(current);
+    }
+    return current;
   }
   /** Construct a fresh concrete instance with ordinary field initialization.
    * @since @pomeranian/core@Unreleased
