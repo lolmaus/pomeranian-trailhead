@@ -1,10 +1,10 @@
-# Initial essential action milestone
+# Essential capability ownership and action contract
 
-This is the approved product specification from [the essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27), not an implemented API reference. `@pomeranian/lib-essential` now implements the eight basic interactions and seven native form actions and remains unreleased. Implementation tickets deliver each complete slice before its APIs are documented as available.
+This is the replacement contract approved in [the capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42). It deliberately supersedes universal action ownership from [the initial essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27). The current unreleased implementation still contains the eight basic interactions and seven native form actions on `Element`; implementation tickets below deliver the replacement before its APIs are documented as available. This specification is not an implemented API reference.
 
-## Selected capability bundles (planned revision)
+## Approved capability bundles
 
-The ongoing [capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42) selects the following bundle names and composition hierarchy. These are planned APIs; the complete replacement contract, migration and implementation still require that decision's final review.
+The approved replacement selects the following names and composition hierarchy. These APIs remain pending their implementation slices; the decision itself delivered the contract and build homes, not runtime code.
 
 | Bundle                 | Builds on       | Adds                    |
 | ---------------------- | --------------- | ----------------------- |
@@ -28,7 +28,7 @@ Consumers select the appropriate bundle rather than stacking overlapping bundles
 
 ### Public composition and construction
 
-The planned composition mechanism is public and reusable for component logic, including methods, private state and child page objects. An inherited static `PageObject.with(...)` helper uses its receiver as the base and applies capability factories from left to right. It returns the composed constructor without mutating the receiver. Ordinary consumers retain named class declarations:
+The selected composition mechanism is public and reusable for component logic, including methods, private state and child page objects. An inherited static `PageObject.with(...)` helper uses its receiver as the base and applies capability factories from left to right. It returns the composed constructor without mutating the receiver. Ordinary consumers retain named class declarations:
 
 ```ts
 // Planned authoring form, not an API available in the current implementation.
@@ -65,7 +65,7 @@ Migrate internal tests, maintained examples and human/AI docs together, with a c
 
 ### Named native control classes
 
-The planned revision covers every native HTML input flavor with the following selected class names:
+The contract covers every native HTML input flavor with the following selected class names:
 
 | Input type       | Page-object class    |
 | ---------------- | -------------------- |
@@ -100,7 +100,7 @@ Names express intended subjects, not eager DOM validation or automatic target di
 
 Follow the [foundational API contract](../concepts.md#product-contract-complete-actions-and-assertions): routine tests express complete actions and assertions through Pomeranian page objects. Raw observations, evaluation, handles and diagnostic captures remain available through `.locator`; comprehensive action coverage does not mean wrapping the entire Locator API.
 
-`Element<Root>` extends core `DomPageObject<Root>` and owns all native Locator interactions, including form actions. Universal ownership does not mean every action applies to every HTML element: Playwright retains its applicability, cardinality, waiting and error behavior.
+`Element<Root>` extends core `DomPageObject<Root>` and owns the thirteen general interactions listed in Direct migration above. Control-specific interactions belong to the corresponding bundles and named classes. Class selection expresses intent rather than proving that every operation succeeds on every live target: Playwright retains applicability, cardinality, waiting and error behavior.
 
 The initial inventory is `blur`, `check`, `clear`, `click`, `dblclick`, `dispatchEvent`, `dragTo`, `fill`, `focus`, `hover`, `press`, `pressSequentially`, `scrollIntoViewIfNeeded`, `selectOption`, `selectText`, `setChecked`, `setInputFiles`, `tap`, `type` and `uncheck`. Preserve native deprecation metadata for `type` and recommend `fill` or `pressSequentially` instead. Reconcile coverage with supported Playwright versions as they evolve.
 
@@ -116,48 +116,59 @@ Future methods may append extra positional arguments after native arguments, and
 
 ## TextInput append behavior
 
-`TextInput<Root>` extends `Element<Root>`. Its selected additional operation is `appendText(text, options?)`, returning `Promise<void>` with native `fill`-compatible options.
+`TextInput<Root>` and `TextArea<Root>` are sibling classes composing `EditableText` above `Element<Root>`. `EditableText` inherits `fill` and `clear` through `EditableValue`/`Fillable` and owns the single `appendText(text, options?)` implementation, returning `Promise<void>` with native `fill`-compatible options. Text-like flavor subclasses inherit from `TextInput`. The initial migration supplies fill/clear first; revised append ticket #37 delivers the shared append slice.
 
 The action reads the existing value internally, concatenates the supplied string at the end and updates through native `fill`, regardless of the caret or selection. It preserves existing text, not a sequence of keyboard events. Tests requiring per-character keyboard events can use inherited `pressSequentially`.
 
-Supported append targets are native text-like inputs (`text`, `search`, `email`, `password`, `tel` and `url`, including implicit text inputs) and `<textarea>`. Number/date/time and other structured-value controls, plus `contenteditable`, are excluded from this additional operation. Inherited native `fill` retains its full native applicability.
+Supported append targets are native text-like inputs (`text`, `search`, `email`, `password`, `tel` and `url`, including implicit text inputs) and `<textarea>`. Number/date/time and other structured-value controls, plus `contenteditable`, are excluded from this additional operation. Native `fill` retains its own applicability independently of the narrower append contract.
 
 The `contenteditable` exclusion is deliberate. A bounded Chromium investigation found that fill-style appending could preserve words while changing formatting: `<b>Hello</b> <i>world</i>` became `<b>Hello world!</b>`. Rich-editor-preserving operations require their own contract.
 
 Implementation must use native `fill`, without directly assigning DOM values or fabricating replacement events. Do not retry the whole mutation in a way that appends twice. Native constraints/errors remain visible, and the operation does not promise an atomic transaction against concurrent application edits.
 
-Preserve core's exact factory/root/generic and composition contracts. Use existing target and `defaultTarget` authoring without new automatic control discovery or broad default selectors. Export `Element` and `TextInput` from the package root and their defining `/element` and `/text-input` modules under the approved shared ESM/CommonJS identity contract.
+Preserve core's exact factory/root/generic and composition contracts. Use existing target and `defaultTarget` authoring without new automatic control discovery or broad default selectors. Export the selected public classes and capability factories from the package root and their explicit kebab-case defining modules under the shared ESM/CommonJS identity contract. Include declarations, maps and sources, and verify actual packed core/essential/library consumers on supported compilers and peers.
 
 ## Delivery and explicit follow-on work
 
-Deliver the package/basic interactions first. Native form actions and other interactions can then proceed independently; `TextInput.appendText` follows the form actions. Every slice includes incremental real-Chromium TDD, types, applicable stories, source comments, checked examples, package-qualified Unreleased history, packed-consumer compatibility and human/AI documentation checks. No npm publication is authorized by this specification.
+Every feature slice includes incremental real-Chromium TDD as appropriate, exact types, applicable stories, source/API comments, checked examples, migration/authoring guidance, package-qualified Unreleased history, packed-consumer compatibility and human/AI documentation checks. Current runtime APIs remain in place until their coordinated migration lands. No npm publication is authorized.
 
-Implementation homes:
+Approved implementation homes:
 
-- [Establish lib-essential Element and basic interactions (#34)](https://github.com/lolmaus/pomeranian-trailhead/issues/34).
-- [Implement Element form-control actions (#35)](https://github.com/lolmaus/pomeranian-trailhead/issues/35).
-- [Implement Element drag, touch, upload and event actions (#36)](https://github.com/lolmaus/pomeranian-trailhead/issues/36).
-- [Implement TextInput fill-style appendText (#37)](https://github.com/lolmaus/pomeranian-trailhead/issues/37).
+| Ticket                                                                                                                    | Deliverable                                                                                   | Prerequisite  |
+| ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------- |
+| [Public typed capability composition (#43)](https://github.com/lolmaus/pomeranian-trailhead/issues/43)                    | Core `.with`, constructor/type authoring, lifecycle and packed declarations                   | This decision |
+| [Essential bundle/control migration (#44)](https://github.com/lolmaus/pomeranian-trailhead/issues/44)                     | Delivered control actions move off `Element`; foundational classes and migration              | #43           |
+| [Remaining native input flavors (#45)](https://github.com/lolmaus/pomeranian-trailhead/issues/45)                         | Text-family subclasses, structured/button/hidden classes and exports                          | #44           |
+| [General Element actions and native FileInput selection (#36)](https://github.com/lolmaus/pomeranian-trailhead/issues/36) | Drag/touch/scroll/events on `Element`; `SelectableFiles`/`FileInput`                          | #43           |
+| [EditableText append for sibling controls (#37)](https://github.com/lolmaus/pomeranian-trailhead/issues/37)               | Shared append implementation and sibling adoption                                             | #44           |
+| [Optional authoring checker (#25)](https://github.com/lolmaus/pomeranian-trailhead/issues/25)                             | Supported factories/classes/bundles, original member kinds, overrides and strict checked mode | #43           |
 
-Explicit follow-on decisions, each responsible for creating implementation homes after its contract is approved:
+[Element/basic delivery (#34)](https://github.com/lolmaus/pomeranian-trailhead/issues/34) and [form-action delivery (#35)](https://github.com/lolmaus/pomeranian-trailhead/issues/35) remain accepted historical work under the initial contract. The replacement is follow-on work, not a reopening of those tickets. Assertion naming and implementation homes remain [decision #28](https://github.com/lolmaus/pomeranian-trailhead/issues/28); its inputs must use this revised ownership and taxonomy without creating artificial prerequisites for native action delivery.
 
-- [Define native MultiSelect incremental selection (#38)](https://github.com/lolmaus/pomeranian-trailhead/issues/38).
-- [Define RadioGroup selection (#39)](https://github.com/lolmaus/pomeranian-trailhead/issues/39).
-- [Define NumberInput stepping (#40)](https://github.com/lolmaus/pomeranian-trailhead/issues/40).
-- [Define rich-editor text appending (#41)](https://github.com/lolmaus/pomeranian-trailhead/issues/41).
+Explicit follow-on decisions retain responsibility for defining their own additional behavior and creating implementation homes:
 
-Further essential/integration coverage and full authoring guides remain visible on the project map.
+- [Native MultiSelect incremental selection (#38)](https://github.com/lolmaus/pomeranian-trailhead/issues/38): native option selection already belongs to `SelectableOptions`/`Select`.
+- [RadioGroup selection (#39)](https://github.com/lolmaus/pomeranian-trailhead/issues/39): individual `Radio` has `check` only; group-level selection is separate.
+- [NumberInput stepping (#40)](https://github.com/lolmaus/pomeranian-trailhead/issues/40): the native class has `EditableValue`; stepping semantics are not implied.
+- [Rich-editor text appending (#41)](https://github.com/lolmaus/pomeranian-trailhead/issues/41): `ContentEditable` has native fill/clear; formatting-preserving append remains separate.
 
-`Checkbox.toggle` was explicitly dropped because `click` already provides that interaction. Do not introduce a `Checkbox` or `Select` class merely to rename inherited actions. A future specialized class must supply meaningful additional capabilities. Reporting, narrowing, selector setup and integration contracts retain their separate tickets.
+`Checkbox.toggle` stays deliberately dropped because `click` serves that interaction. Thin named control classes are now intentionally selected for focused capability surfaces, superseding the initial restriction against classes solely for inherited native actions. Reporting, narrowing, selector setup, integrations and broader image/table coverage retain their own decisions; this contract does not add speculative helpers.
 
-## Native inventory ownership
+## Native inventory ownership and implementation status
 
 Supported minimum and repository-current Playwright: 1.64.1 (the pins coincide).
 
-| Operations                                                                       | Delivery                      |
-| -------------------------------------------------------------------------------- | ----------------------------- |
-| click, dblclick, hover, focus, blur, press, pressSequentially, type (deprecated) | Implemented Unreleased in #34 |
-| check, clear, fill, selectOption, selectText, setChecked, uncheck                | Implemented Unreleased in #35 |
-| dispatchEvent, dragTo, scrollIntoViewIfNeeded, setInputFiles, tap                | Pending #36                   |
+| Operations                                                                       | Replacement owner               | Current status / implementation home                                |
+| -------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------- |
+| click, dblclick, hover, focus, blur, press, pressSequentially, type (deprecated) | `Element`                       | Delivered in #34; retained                                          |
+| selectText                                                                       | `Element`                       | Delivered in #35; retained                                          |
+| fill                                                                             | `Fillable`                      | Currently on `Element`; migrate in #44                              |
+| clear                                                                            | `EditableValue`                 | Currently on `Element`; migrate in #44                              |
+| check                                                                            | `Checkable`                     | Currently on `Element`; migrate in #44                              |
+| uncheck, setChecked                                                              | `CheckableUncheckable`          | Currently on `Element`; migrate in #44                              |
+| selectOption                                                                     | `SelectableOptions`             | Currently on `Element`; migrate in #44                              |
+| dispatchEvent, dragTo, scrollIntoViewIfNeeded, tap                               | `Element`                       | Pending revised #36                                                 |
+| setInputFiles                                                                    | `SelectableFiles` / `FileInput` | Pending revised #36; never added to `Element` under the replacement |
+| appendText (additional operation)                                                | `EditableText`                  | Pending revised #37                                                 |
 
-This reconciles all twenty interactions in the supported Locator baseline, including deprecated type. Reads, handles, waits, captures and assertions are not interaction wrappers. Current upstream versions beyond the supported repository pin are not claimed as tested.
+The first nine rows reconcile the twenty supported-baseline Locator interactions. Reads, handles, waits, captures and assertions are not interaction wrappers. Upstream versions beyond the repository pin are not claimed as tested. Range/color native clear can reject after sanitizing the value; those classes intentionally omit it. Append's narrower validation remains explicit even though general class-wide DOM validation is not selected.

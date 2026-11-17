@@ -2,6 +2,8 @@
 
 Available since @pomeranian/core@Unreleased.
 
+The rules below describe the currently implemented core. The [approved capability revision](essential-milestone.md#public-composition-and-construction) selects public factory composition through inherited `.with(...)`, including contributed children, compatible overrides and scoped generic-library getter guidance. [Core composition delivery (#43)](https://github.com/lolmaus/pomeranian-trailhead/issues/43) must implement and verify that revision before those authoring forms become available; the current no-mixin/protected-construction rules below describe today's runtime API.
+
 Consumer classes inherit protected constructors and static `create` unchanged. Put custom state, including private fields, in instance initializers. Concrete app subclasses bind a root and additional generic arguments once; factories preserve their concrete methods and types.
 
 Design custom methods around [complete actions and assertions](../concepts.md#product-contract-complete-actions-and-assertions) that let routine tests use only Pomeranian. Custom assertions belong on page objects and should not require test-side matcher imports or extending Playwright's `expect`. Native reads can support their implementation, but do not add raw-value forwarding methods just to mirror Locator; test authors who deliberately need raw values can use `.locator`. Essential assertion APIs are still planned, so this principle does not establish an implemented assertion helper or final method spelling.
