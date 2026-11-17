@@ -86,6 +86,4 @@ export function typeEvidence(page: Page, supplied: Locator, app: App) {
   DomPageObject.create(page, page.frameLocator("iframe"));
   // @ts-expect-error Null is not an explicit target.
   DomPageObject.create(page, null);
-  // Technical accessibility only; unsupported consumer construction.
-  new DomPageObject(page, "button");
 }

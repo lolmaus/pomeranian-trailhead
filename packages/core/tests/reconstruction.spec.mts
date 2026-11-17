@@ -92,3 +92,61 @@ test("self reconstruction during initialization fails before recursion", ({ page
   }
   expect(() => Invalid.create(page, "section")).toThrow("initialization");
 });
+
+import type { Constructor } from "../src/authoring.js";
+function StatefulChildren<T extends Constructor<PageObject>>(Base: T) {
+  return class extends Base {
+    Child = DomPageObject.create(this, "button");
+    SeenRoot = this.root;
+    #count = 0;
+    increment() {
+      return ++this.#count;
+    }
+    child() {
+      return this.Child;
+    }
+  };
+}
+test("composed reconstruction replays private state and children inside the transformed scope", async ({
+  page,
+}) => {
+  class Row extends DomPageObject.with(StatefulChildren) {
+    override defaultTarget = "section";
+    concrete() {
+      return this.child();
+    }
+  }
+  await page.setContent(
+    "<section><button>A</button></section><section><button>B</button></section>",
+  );
+  const source = Row.create(page);
+  source.increment();
+  source.increment();
+  const derived = reconstruct(source, (locator) => locator.nth(1));
+  expect(derived).toBeInstanceOf(Row);
+  expect(derived.page).toBe(page);
+  expect(derived.root).toBeNull();
+  expect(derived.increment()).toBe(1);
+  expect(source.increment()).toBe(3);
+  expect(derived.Child).not.toBe(source.Child);
+  expect(derived.concrete()).toBe(derived.Child);
+  await expect(derived.Child.locator).toHaveText("B");
+  await expect(source.Child.locator).toHaveText(["A", "B"]);
+});
+test("composed designated roots reconstruct fresh root-aware children", async ({ page }) => {
+  class App extends DomPageObject.with(StatefulChildren)<App> {}
+  await page.setContent(
+    "<section><button>A</button></section><section><button>B</button></section>",
+  );
+  await rootFixture(App, "section")({ page }, async (source) => {
+    const derived = reconstruct(source, (locator) => locator.nth(1));
+    expect(derived).toBeInstanceOf(App);
+    expect(derived.page).toBe(page);
+    expect(derived.root).toBe(derived);
+    expect(derived.SeenRoot).toBe(derived);
+    expect(derived.Child.root).toBe(derived);
+    expect(source.Child.root).toBe(source);
+    expect(derived.Child).not.toBe(source.Child);
+    await expect(derived.Child.locator).toHaveText("B");
+  });
+});

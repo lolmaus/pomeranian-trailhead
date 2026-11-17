@@ -29,8 +29,6 @@ export function contracts(page: Page, app: App) {
   const wrong: number = plain.value();
   // @ts-expect-error Bound app classes require compatible rooted parents.
   Bound.create(page);
-  // Constructor visibility is technical; direct construction remains unsupported.
-  new Bound(app);
   class LocatorGroup extends PageObject {
     locator = page.locator("button");
   }

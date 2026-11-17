@@ -16,8 +16,9 @@ class Named extends PageObject.with(Tagged) {
 export function contracts(page: Page) {
   const instance = Named.create(page);
   const exact: Check<Equal<typeof instance, Named>> = true;
-  const accessible = new Named(page);
-  return [exact, instance.tag(), accessible];
+  type Parameters = ConstructorParameters<typeof Named>;
+  const context: Parameters[0] = page;
+  return [exact, instance.tag(), context];
 }
 
 import {
