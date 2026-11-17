@@ -29,3 +29,17 @@ test("a named composed class keeps its receiver and contributes real inherited m
   expect(instance.tag()).toBe("tagged");
   expect("tag" in Base.prototype).toBe(false);
 });
+
+test("flat capabilities apply left to right with the preceding constructor", () => {
+  const received: Function[] = [];
+  const produced: Function[] = [];
+  function capability<T extends Constructor>(Base: T) {
+    received.push(Base);
+    class Contribution extends Base {}
+    produced.push(Contribution);
+    return Contribution;
+  }
+  // Reflect exercises runtime arity independently of the compiler contract.
+  Reflect.apply(PageObject.with, PageObject, [capability, capability, capability]);
+  expect(received).toEqual([PageObject, produced[0], produced[1]]);
+});
