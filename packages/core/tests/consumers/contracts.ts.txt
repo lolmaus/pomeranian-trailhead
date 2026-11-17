@@ -57,3 +57,80 @@ export function defaultForms(page: Page) {
  // @ts-expect-error factory Page results are not Locators
  DomPageObject.create(page, ({page}) => page);
 }
+
+import { Composed, Concrete, LibraryApp, BoundComposed, Counting, Tagging, Dependent, Bundle } from '@fixture/library';
+import type { Constructor, UnboundRoot } from '@pomeranian/core';
+import type { Constructor as DirectConstructor } from '@pomeranian/core/authoring';
+type IsAny<T> = 0 extends 1 & T ? true : false;
+type IsNever<T> = [T] extends [never] ? true : false;
+type HelperIdentity = Check<Equal<Constructor, DirectConstructor>>;
+function First<T extends Constructor>(Base: T) { return class extends Base { first = 1; }; }
+function Middle<T extends Constructor>(Base: T) { return class extends Base { middle = 4; }; }
+function Fifth<T extends Constructor>(Base: T) { return class extends Base { fifth = 5; }; }
+function Sixth<T extends Constructor>(Base: T) { return class extends Base { sixth = 6; }; }
+function Last<T extends Constructor>(Base: T) { return class extends Base { last = 8; }; }
+class Eight extends PageObject.with(First, Tagging, Dependent, Middle, Fifth, Sixth, Counting, Last) {}
+export type ContributionProofs = [
+  Check<Equal<Eight['first'], number>>, Check<Equal<Eight['middle'], number>>,
+  Check<Equal<Eight['last'], number>>, Check<Equal<ReturnType<Eight['dependent']>, number>>,
+  Check<Equal<ReturnType<Eight['tag']>, string>>,
+  Check<Equal<IsAny<ReturnType<Eight['tag']>>, false>>,
+  Check<Equal<IsNever<ReturnType<Eight['dependent']>>, false>>
+];
+class RequiredComposed extends DomPageObject.with(Tagging, Dependent) {}
+class Own extends Eight { static own = 'own'; own = true; ownMethod() { return this.own; } }
+class Further extends Own.with(Bundle) {}
+class NullableComposed extends Composed<LibraryApp | null, number, Date> {}
+class StandaloneComposed extends Composed<null> {}
+// @ts-expect-error Missing earlier contribution.
+PageObject.with(Dependent);
+// @ts-expect-error Reversed dependency.
+PageObject.with(Dependent, Tagging);
+// @ts-expect-error Missing late requirement.
+PageObject.with(Counting, Counting, Counting, Counting, Counting, Counting, Counting, Dependent);
+export async function compositionContracts(page: Page, app: LibraryApp) {
+  const defaults = Composed.create(page);
+  const bound = BoundComposed.create(app);
+  const concrete = Concrete.create(page);
+  const eight = Eight.create(page);
+  const further = Further.create(page);
+  const standalone = StandaloneComposed.create(page);
+  const nullable = NullableComposed.create(page);
+  const proofs: [
+    Check<Equal<typeof defaults, Composed>>, Check<Equal<typeof defaults.root, UnboundRoot>>,
+    Check<Equal<ReturnType<typeof defaults.value>, string | undefined>>,
+    Check<Equal<ReturnType<typeof defaults.other>, boolean | undefined>>,
+    Check<Equal<typeof bound, BoundComposed>>, Check<Equal<typeof bound.root, LibraryApp>>,
+    Check<Equal<ReturnType<typeof bound.value>, number | undefined>>,
+    Check<Equal<ReturnType<typeof bound.other>, Date | undefined>>,
+    Check<Equal<typeof concrete, Concrete>>, Check<Equal<typeof eight, Eight>>,
+    Check<Equal<typeof further, Further>>, Check<Equal<typeof standalone.root, null>>,
+    Check<Equal<typeof nullable.root, LibraryApp | null>>,
+    Check<Equal<IsAny<typeof bound>, false>>, Check<Equal<IsNever<typeof bound>, false>>,
+    Check<Equal<IsAny<typeof bound.root>, false>>, Check<Equal<IsNever<typeof bound.root>, false>>
+  ] = [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true];
+  defaults.increment(); defaults.tag(); defaults.dependent(); defaults.child();
+  eight.first; eight.middle; eight.fifth; eight.sixth; eight.last;
+  eight.increment(); eight.tag(); eight.dependent(); further.own; further.ownMethod(); Further.own;
+  NullableComposed.create(app);
+  // @ts-expect-error Bound context cannot be Page.
+  BoundComposed.create(page);
+  // @ts-expect-error Other application root is incompatible.
+  BoundComposed.create(App.create(page, 'html'));
+  // @ts-expect-error A composed DOM object without a default needs a target.
+  RequiredComposed.create(page);
+  RequiredComposed.create(page, 'button');
+  RequiredComposed.create(page, page.locator('button'));
+  RequiredComposed.create(page, ({page}) => page.locator('button'));
+  // @ts-expect-error Group target remains forbidden.
+  Eight.create(page, 'button');
+  // @ts-expect-error Independent generic parameters remain distinct.
+  const wrong: Composed<LibraryApp, string, Date> = bound;
+  // @ts-expect-error A bound component cannot be designated as its application.
+  rootFixture(BoundComposed);
+  await rootFixture(LibraryApp)({page}, async app => {
+    const exact: Check<Equal<typeof app, LibraryApp>> = true;
+    void exact;
+  });
+  return [proofs, wrong, concrete.concrete()];
+}

@@ -7,3 +7,43 @@ export class LibraryButton<Root extends UnboundRoot = UnboundRoot, Value = strin
   value(): Value | undefined { return this.#value; }
 }
 checkLibrary<LibraryButton>()(LibraryButton);
+
+import { PageObject } from '@pomeranian/core/page-object';
+import type { Constructor } from '@pomeranian/core/authoring';
+export interface Counted { increment(): number; }
+export function Counting<T extends Constructor>(Base: T): Constructor<Counted> & T {
+  return class extends Base { #count = 0; increment() { return ++this.#count; } };
+}
+export interface Tagged { tag(): string; }
+export function Tagging<T extends Constructor>(Base: T): Constructor<Tagged> & T {
+  return class extends Base { tag() { return 'tagged'; } };
+}
+export function Dependent<T extends Constructor<Tagged>>(Base: T) {
+  return class extends Base { dependent() { return this.tag().length; } };
+}
+export function Bundle<T extends Constructor>(Base: T) { return Dependent(Tagging(Base)); }
+export interface Children { Child: DomPageObject; SeenRoot: UnboundRoot; child(): DomPageObject; }
+export function WithChildren<T extends Constructor<PageObject>>(Base: T): Constructor<Children> & T {
+  return class extends Base {
+    SeenRoot = this.root;
+    Child = DomPageObject.create(this, 'button');
+    child() { return this.Child; }
+  };
+}
+export class Composed<Root extends UnboundRoot = UnboundRoot, Value = string, Other = boolean>
+  extends DomPageObject.with(Counting, Tagging, Dependent, WithChildren)<Root> {
+  declare readonly [defaultInstanceType]: {
+    instance: Composed;
+    parameters: { root: Root; value: Value; other: Other };
+  };
+  override get root(): Root { return super.root; }
+  override defaultTarget = 'section';
+  #value: Value | undefined = undefined;
+  #other: Other | undefined = undefined;
+  value(): Value | undefined { return this.#value; }
+  other(): Other | undefined { return this.#other; }
+}
+checkLibrary<Composed>()(Composed);
+export class Concrete extends Composed { concrete() { return this.child(); } }
+export class LibraryApp extends Composed<LibraryApp, number, Date> { app = true; }
+export class BoundComposed extends Composed<LibraryApp, number, Date> {}

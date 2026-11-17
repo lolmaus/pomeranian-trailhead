@@ -2,8 +2,8 @@
 
 Run `pnpm run build && node lib/verify-consumers.mts` in the core package.
 The verifier copies these fixture sources into fresh projects outside the workspace,
-packs the actual core, installs it with strict isolated pnpm peers, compiles a
-separate generic/private-state library, packs that library, and installs its tarball
+emits and packs actual core artifacts separately with TypeScript 6.0.3 and 7.0.2, installs each with strict isolated pnpm peers, compiles a
+separate generic/private-state capability library with the matching emitter, packs that library, and installs its tarball
 in the application. No workspace alias or source import stands in for delivery.
 
 The `.ts.txt` fixtures are intentionally compiled by each consumer's installed
@@ -23,3 +23,12 @@ maps and included source files for every public module and validate every map pa
 
 Failed runs retain the temporary consumer projects and report their location.
 Successful runs remove their temporary project. This command publishes nothing.
+
+The library exports ordinary factories, a dependent bundle, a three-parameter
+composed wrapper with fresh metadata and its scoped root getter, and concrete
+rooted descendants. Each emitter is consumed on both compiler versions; exact
+factory/root/default/independent-parameter assertions include explicit non-any and
+non-never checks. Flat eight-capability and late missing-requirement contracts
+exercise the installed declarations. Runtime checks use the composed children,
+private counters, root initialization, and a mixed-format subclass. Neither a
+checker nor a TypeScript implementation is loaded by runtime imports.

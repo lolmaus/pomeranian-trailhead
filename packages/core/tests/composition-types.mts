@@ -63,22 +63,55 @@ function Last<T extends Constructor>(Base: T) {
 function Bundle<T extends Constructor>(Base: T) {
   return Dependent(Tagged(Base));
 }
+function Fifth<T extends Constructor>(Base: T) {
+  return class extends Base {
+    fifth = 5;
+  };
+}
+function Sixth<T extends Constructor>(Base: T) {
+  return class extends Base {
+    sixth = 6;
+  };
+}
+function Seventh<T extends Constructor>(Base: T) {
+  return class extends Base {
+    seventh = 7;
+  };
+}
 class Eight extends PageObject.with(
   First,
   Tagged,
   Dependent,
   Middle,
-  Bundle,
-  First,
-  Tagged,
+  Fifth,
+  Sixth,
+  Seventh,
   Last,
 ) {}
+export type ContributionProofs = [
+  Check<Equal<ReturnType<Named["tag"]>, string>>,
+  Check<Equal<ReturnType<Eight["dependent"]>, number>>,
+  Check<Equal<Eight["first"], number>>,
+  Check<Equal<Eight["middle"], number>>,
+  Check<Equal<Eight["last"], number>>,
+  Check<Equal<IsAny<ReturnType<Eight["tag"]>>, false>>,
+  Check<Equal<IsNever<ReturnType<Eight["dependent"]>>, false>>,
+];
 class Three extends DomPageObject.with(Tagged, Dependent, Located) {}
 class Own extends Eight {
   static own = "static";
   own = true;
+  ownMethod() {
+    return this.own;
+  }
 }
-class Further extends Own.with(Bundle, Last) {}
+class Further extends Own.with(
+  (Base) =>
+    class extends Base {
+      further = true;
+    },
+) {}
+class Bundled extends PageObject.with(Bundle) {}
 // @ts-expect-error Required tag is absent.
 PageObject.with(Dependent);
 // @ts-expect-error Order is significant.
@@ -121,6 +154,7 @@ class WrongApp extends PageObject<WrongApp> {
   incompatible = true;
 }
 export async function fullContracts(page: Page, app: App, wrong: WrongApp, locator: Locator) {
+  Bundled.create(page).dependent();
   const eight = Eight.create(page);
   const three = Three.create(page, "button");
   const further = Further.create(page);
@@ -163,12 +197,17 @@ export async function fullContracts(page: Page, app: App, wrong: WrongApp, locat
     true,
     true,
   ];
+  eight.fifth;
+  eight.sixth;
+  eight.seventh;
   eight.first;
   eight.middle;
   eight.last;
   eight.tag();
   eight.dependent();
   further.own;
+  further.ownMethod();
+  further.further;
   Further.own;
   Nullable.create(app);
   Generic.create(page, locator);

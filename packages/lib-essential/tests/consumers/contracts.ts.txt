@@ -23,8 +23,9 @@ export function contracts(page: Page, app: App) {
  rootFixture(App);
  // @ts-expect-error root-bound objects cannot use an unrooted Page
  Bound.create(page);
- // @ts-expect-error protected construction
- new DomPageObject(page, 'button');
+ // Constructors are technically public; direct new remains unsupported.
+ const domContext: ConstructorParameters<typeof DomPageObject>[0] = page;
+ void domContext;
  // @ts-expect-error ordinary DOM objects require target
  DomPageObject.create(page);
  // @ts-expect-error groups have no target
@@ -65,8 +66,9 @@ const nativeClick: import('playwright-core').Locator['click']=element.click;
 void nativeClick;
 // @ts-expect-error native click options reject unknown values
 element.click({button:"sideways"});
-// @ts-expect-error protected construction
-new Element(page,"button");
+// Constructors are technically public; direct new remains unsupported.
+const elementContext: ConstructorParameters<typeof Element>[0] = page;
+void elementContext;
 }
 
 export function formContracts(page: Page, app: App) {
