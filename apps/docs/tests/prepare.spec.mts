@@ -64,6 +64,14 @@ test("builds site inputs and shared model from actual comments and checked guide
       expect(authoring).toContain("Direct `new` remains unsupported");
       expect(authoring).toContain("this.Button");
     }
+    for (const filename of [
+      "reference/authoring-helpers.md",
+      "public/text/reference/authoring-helpers.txt",
+    ]) {
+      const helpers = await readFile(path.join(model.site, filename), "utf8");
+      expect(helpers).toContain("type Compose<");
+      expect(helpers).toContain("type Capabilities<");
+    }
     const parser = new MarkdownIt();
     const publicRoot = path.join(model.site, "public");
     for (const filename of await files(publicRoot)) {
@@ -147,8 +155,11 @@ test("source-derived authoring context explains composition signature helpers", 
     path.join(repoRoot, "packages/core/src/page-object.ts"),
     "utf8",
   );
-  const rendered: string = Reflect.apply(authoringContext, undefined, [source, composition]);
+  const rendered = authoringContext(source, composition);
   expect(rendered).toContain("type Compose<");
   expect(rendered).toContain("type Before<");
   expect(rendered).toContain("type Capabilities<");
+  expect(() => authoringContext(source, "")).toThrow(
+    "Missing production composition helper: Compose",
+  );
 });

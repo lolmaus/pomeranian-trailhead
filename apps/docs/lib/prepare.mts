@@ -57,7 +57,7 @@ export function guideHistory(
   }
 }
 
-export function authoringContext(sourceText: string): string {
+export function authoringContext(sourceText: string, compositionText?: string): string {
   const source = ts.createSourceFile(
     "authoring.ts",
     sourceText,
@@ -82,8 +82,24 @@ export function authoringContext(sourceText: string): string {
     if (!declaration) throw new Error(`Missing production authoring helper: ${name}`);
     return `## ${name}\n\n\`\`\`ts\n${declaration.getText(source)}\n\`\`\`\n`;
   });
+  if (compositionText !== undefined) {
+    const composition = ts.createSourceFile(
+      "page-object.ts",
+      compositionText,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+    for (const name of ["Compose", "Before", "Capabilities"]) {
+      const declaration = composition.statements.find(
+        (item) => ts.isTypeAliasDeclaration(item) && item.name.text === name,
+      );
+      if (!declaration) throw new Error(`Missing production composition helper: ${name}`);
+      snippets.push(`## ${name}\n\n\`\`\`ts\n${declaration.getText(composition)}\n\`\`\`\n`);
+    }
+  }
   return (
-    "# Production authoring helper context\n\nThese declarations come directly from the production authoring module. Result reads the instance/default and complete independent parameter metadata through defaultInstanceType. RootReference defines the Page and nullable root structural boundary; UnboundRoot is RootReference | null. Internal helper names referenced by public factory signatures explain the computation; their appearance here does not create additional package exports. Read the [authoring guide](../guides/authoring.md) for supported conventions and compiler-only limits.\n\n" +
+    "# Production authoring helper context\n\nThese declarations come directly from the production authoring and page-object modules. Constructor supports ordinary generic class factories; Compose, Before and Capabilities explain the accumulated-base tuple fold behind inherited with. Result reads the instance/default and complete independent parameter metadata through defaultInstanceType. RootReference defines the Page and nullable root structural boundary; UnboundRoot is RootReference | null. Internal helper names referenced by public factory signatures explain the computation; their appearance here does not create additional package exports. Read the [authoring guide](../guides/authoring.md) for supported conventions and compiler-only limits.\n\n" +
     snippets.join("\n")
   );
 }
@@ -197,6 +213,7 @@ export async function prepare(output: string) {
       document: content(
         authoringContext(
           await readFile(path.join(repoRoot, "packages/core/src/authoring.ts"), "utf8"),
+          await readFile(path.join(repoRoot, "packages/core/src/page-object.ts"), "utf8"),
         ),
       ),
     });
