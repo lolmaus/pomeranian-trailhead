@@ -26,6 +26,29 @@ Public capability factories and bundles use UpperCamelCase names describing an a
 
 Consumers select the appropriate bundle rather than stacking overlapping bundles. Documentation must explain the inherited operations and potential member collisions; optional CLI checks must understand transitive bundle composition. `EditableText.appendText` retains the narrow text-like input/textarea behavior specified below, excluding structured values and contenteditable.
 
+### Public composition and construction
+
+The planned composition mechanism is public and reusable for component logic, including methods, private state and child page objects. An inherited static `PageObject.with(...)` helper uses its receiver as the base and applies capability factories from left to right. It returns the composed constructor without mutating the receiver. Ordinary consumers retain named class declarations:
+
+```ts
+// Planned authoring form, not an API available in the current implementation.
+class SearchField extends Element.with(EditableText, Loading) {}
+```
+
+Here `Loading` illustrates a consumer-defined capability. Each capability factory accepts a compatible constructor and returns a class extending it; bundles can build directly on other bundles. Base requirements describe the object features needed by the implementation, such as DOM access, rather than proving a live target's HTML type. Context-only capabilities can support grouping page objects too. Classes declare intended capabilities, and native actions retain their own applicability, waiting and error behavior.
+
+Keep targets live: input types and matched elements can change after creation, and disabled/readonly/missing state is not a reason to remove methods from the class surface. Preserve operation-specific native label retargeting without rewriting `.locator` to another subject automatically. Native-supported custom controls retain their native behavior; broader component-library adaptations are not implied by a control class name.
+
+Constructors may become technically public where needed for the typed factory pattern, but direct `new` is unsupported. Consumers use inherited `create` or the root fixture; construction finalizes after concrete fields initialize. Preserve field-based state/children, root availability before child initialization, late `defaultTarget` capture and fresh concrete reconstruction without copying accumulated state or children.
+
+Reusable generic composed classes retain complete fresh `defaultInstanceType` metadata and use a forwarding `root` getter where required to preserve the exact declared root type. This is generic library-author boilerplate, not a requirement for every mixin, ordinary page object or concrete subclass. Concrete descendants inherit the getter. Documentation and checked examples must show when it is needed; the bounded compiler proof recovered exact root typing with `override get root(): Root { return super.root; }` rather than a consumer cast.
+
+Capability-contributed children are a key feature. Ordinary compatible field overrides customize them, and shared methods access the final child through `this`. Inherited field initializers still run before replacements, so document initialization side effects and captured-child hazards. Normal `override` declarations also express intentional method collision resolution; a forwarding method calling `super` explicitly selects the outer implementation. They do not automatically combine implementations or waive compatibility requirements.
+
+Collision checks belong to the optional standalone CLI, with no runtime collision guard or additional allow-annotation API. Checked mode must inspect original contributions, signatures and member kinds, recognize transitive bundles and compatible overrides, and report unsupported/unverifiable cases explicitly. Successful strict compiler checks are also required for a checked safety claim. Unchecked consumers retain ordinary JavaScript precedence and its known generic-intersection typing limitations; core/essential runtime imports must not require the checker or compiler implementation.
+
+The combined prototype provides bounded compiler, real-Chromium lifecycle, reconstruction and packed-declaration evidence. It implements only one/two-capability overloads, which is not a selected shipping ceiling. Production delivery still needs the intended flat-list surface and dependent requirements verified, the actual core/essential packages checked, and full CLI/source/compiler-version coverage established before those guarantees are claimed.
+
 ### Assertion capability placement
 
 Assertion capabilities are independently reusable from action bundles. Named classes include their applicable action and assertion capabilities by default as those slices are delivered; ordinary tests do not assemble assertion capabilities manually. An action bundle may reuse an assertion capability where their target applicability truly matches. For example, a radio has assertable unchecked state despite lacking an `uncheck` action, and a hidden input has assertable value state without user-editing actions. Contenteditable text must not be confused with a native input value.
