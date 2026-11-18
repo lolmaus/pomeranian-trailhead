@@ -14,6 +14,7 @@ Control actions have complete native contracts: parameters, options, results, ap
 | ------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------- |
 | `fill`                                                                                            | `Fillable`                                     | Inherited through `EditableValue` by `TextInput`, `TextArea`, `ContentEditable` |
 | `clear`                                                                                           | `EditableValue` (builds on `Fillable`)         | `TextInput`, `TextArea`, `ContentEditable`                                      |
+| `appendText`                                                                                      | `EditableText` (builds on `EditableValue`)     | `TextInput`, `TextArea`                                                         |
 | `check`                                                                                           | `Checkable`                                    | `Radio`; inherited through `CheckableUncheckable` by `Checkbox`                 |
 | `uncheck`, `setChecked`                                                                           | `CheckableUncheckable` (builds on `Checkable`) | `Checkbox`                                                                      |
 | `selectOption`                                                                                    | `SelectableOptions`                            | `Select`                                                                        |
@@ -35,9 +36,25 @@ Alternatively, give a named custom component only the capabilities it needs. A c
 
 All six controls require explicit targets unless an application subclass declares `defaultTarget`. Names express intended subjects rather than eagerly proving DOM type. Native fill can act on supported structured inputs, labels retarget only for native-supported operations, and readonly/disabled/missing state retains native waiting. A control's `.locator` still identifies its original target, including a label. DOM replacements and type changes are evaluated when each action runs. Explicitly applying `CheckableUncheckable` to a radio does not make native unchecking valid.
 
+## Appending native text
+
+Added in @pomeranian/lib-essential@Unreleased: `EditableText` composes `EditableValue` (and therefore `Fillable`) and owns `appendText(text, options?): Promise<void>`. `TextInput` and `TextArea` now compose this bundle as siblings. Existing fill/clear calls retain their native behavior. Custom components that need append should select `EditableText` once instead of stacking it with either ancestor bundle.
+
+Append reads the current native value internally, concatenates the suffix at the end regardless of selection or caret, and calls native `fill` with the supplied options. It retains fill's native constraints, waiting and errors; it does not promise per-character keyboard events. The read and fill are not atomic against concurrent application changes: an edit or target replacement between them can change or overwrite the result. The operation does not retry the whole read/append/fill mutation.
+
+Native fill options include `force`, `timeout`, `signal` and deprecated `noWaitAfter` (which has no effect at the supported pin). The timeout applies to each stage independently, rather than imposing a single total budget. The signal cancels either stage; force affects native fill's actionability checks and does not bypass append's supported-target check.
+
+The live target must be a native text/search/email/password/tel/url input (including implicit or invalid types resolving to text) or textarea. Structured controls such as number/date, contenteditable, labels and other elements are explicitly rejected for append. Inherited native fill/clear keep their own broader applicability, including native label retargeting; append does not discover a label's associated control. `.locator` and explicit targets/defaultTarget retain their original meaning. Check happens at action time, so a class name does not cache or guarantee a DOM type.
+
+The checked form example above appends a surname after selection without replacing the existing name. Standalone textarea and application-bound subclass examples use the same implementation:
+
+<!-- @example examples/essential.spec.mts#append -->
+
+For a custom base or generic library wrapper, the checked authoring example above selects `EditableText`. Preserve fresh `defaultInstanceType` metadata for root/default/extra parameters and the forwarding root getter when needed. Future `SearchInput`, `TelephoneInput`, `UrlInput`, `EmailInput` and `PasswordInput` classes in #45 inherit this behavior through `TextInput`. `ContentEditable` deliberately remains on `EditableValue`; rich-editor formatting preservation belongs to #41.
+
 ## Composition safety and customization
 
-Use the broadest required bundle once: `EditableValue` already includes `Fillable`, and `CheckableUncheckable` already includes `Checkable`. Stacking overlapping bundles creates redundant contributions and can cause member collisions. Ordinary JavaScript precedence applies; composition performs no runtime collision check. Compatible `override` methods can explicitly call `super`, but do not automatically combine competing implementations.
+Use the broadest required bundle once: `EditableText` already includes `EditableValue` and `Fillable`, `EditableValue` includes `Fillable`, and `CheckableUncheckable` already includes `Checkable`. Stacking overlapping bundles creates redundant contributions and can cause member collisions. Ordinary JavaScript precedence applies; composition performs no runtime collision check. Compatible `override` methods can explicitly call `super`, but do not automatically combine competing implementations.
 
 Capabilities can contribute children and shared behavior. Compatible child overrides customize the final child read through `this`; inherited initializers still run, and previously captured children retain their original identity and side effects. See the checked [child customization examples](../guides/authoring.md#contributed-children-and-initialization). Reusable generic composed wrappers declare fresh metadata for all independent parameters and, where required, a forwarding root getter as shown above. Concrete descendants inherit those contracts.
 
@@ -45,11 +62,11 @@ Strict compiler proofs cover tested factory/default/root/generic contracts and r
 
 ## Package entry points and remaining work
 
-Every delivered class and factory is exported from `@pomeranian/lib-essential` and its explicit kebab-case defining module, for example `/text-input`, `/text-area`, `/content-editable`, `/fillable`, `/editable-value`, `/checkable`, `/checkable-uncheckable` and `/selectable-options`. `/element`, `/checkbox`, `/radio` and `/select` complete the inventory. Root/direct ESM and CommonJS exports share the same runtime identities. Included sources, declarations and maps support debugging; source/dist implementation paths are not public imports.
+Every delivered class and factory is exported from `@pomeranian/lib-essential` and its explicit kebab-case defining module, for example `/text-input`, `/text-area`, `/content-editable`, `/fillable`, `/editable-value`, `/editable-text`, `/checkable`, `/checkable-uncheckable` and `/selectable-options`. `/element`, `/checkbox`, `/radio` and `/select` complete the inventory. Root/direct ESM and CommonJS exports share the same runtime identities. Included sources, declarations and maps support debugging; source/dist implementation paths are not public imports.
 
 Build core and essential before packing; installed consumers use both tarballs with aligned consumer-supplied playwright-core and runner or standalone playwright peers. The verified minimum/current Playwright pins coincide at 1.64.1; TypeScript consumer checks cover 6.0.3 and 7.0.2. No automatic selectors or npm publication are introduced.
 
-Remaining native input flavors (#45), general/file interactions (#36), and shared `EditableText.appendText` (#37) remain pending. No `appendText`, `setInputFiles`, `dragTo`, `dispatchEvent`, `tap` or `scrollIntoViewIfNeeded` wrapper is delivered here. See the complete [essential action contract](../guides/essential-milestone.md).
+Remaining native input flavors (#45) and general/file interactions (#36) remain pending. No `setInputFiles`, `dragTo`, `dispatchEvent`, `tap` or `scrollIntoViewIfNeeded` wrapper is delivered here. See the complete [essential action contract](../guides/essential-milestone.md).
 
 Available since @pomeranian/lib-essential@Unreleased.
 

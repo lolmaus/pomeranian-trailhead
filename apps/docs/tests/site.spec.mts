@@ -69,6 +69,7 @@ test("essential form actions are available in human and AI reference", async ({ 
     "setChecked",
     "selectOption",
     "selectText",
+    "appendText",
   ]) {
     const memberPath = [...typeText.matchAll(/\]\((\/text\/members\/[^)]+)\)/g)]
       .map((match) => match[1]!)
@@ -85,7 +86,15 @@ test("essential form actions are available in human and AI reference", async ({ 
     const source = member.match(/^Source: (\S+)/m)?.[1];
     expect(source).toBeDefined();
     await page.goto(source!);
-    await expect(page.locator("main")).toContainText(`Complete native ${method} action`);
+    if (method === "appendText") {
+      await expect(page.locator("main")).toContainText("through native fill");
+      await expect(page.locator("main")).toContainText("not atomic");
+      expect(member).toContain("`Promise`");
+      expect(member).toContain("`void`");
+      expect(member).toContain("timeout");
+    } else {
+      await expect(page.locator("main")).toContainText(`Complete native ${method} action`);
+    }
     if (method === "selectOption") {
       expect(member).toContain("`Promise`");
       expect(member).toContain("`string`[]");

@@ -34,7 +34,7 @@ Compose the generic constructor first, then apply the wrapper's type arguments i
 
 Available since @pomeranian/lib-essential@Unreleased.
 
-The essential package supplies reusable Locator-based factories and six foundational controls. Use `EditableValue` once for fill/clear rather than stacking it with `Fillable`; use `CheckableUncheckable` once for check/uncheck/setChecked. Factories also work above a custom DOM component base. The [essential migration and authoring guide](../api/lib-essential.md#migration-from-universal-element-actions) includes checked generic metadata/root-getter and custom-base examples. Control class names express intent, with native applicability evaluated per action on the live target. Assertions remain independently composable under #28.
+The essential package supplies reusable Locator-based factories and six foundational controls. Use `EditableText` once for fill/clear/appendText rather than stacking it with `EditableValue` or `Fillable`; choose `EditableValue` for fill/clear without append; use `CheckableUncheckable` once for check/uncheck/setChecked. Factories also work above a custom DOM component base. The [essential migration and authoring guide](../api/lib-essential.md#migration-from-universal-element-actions) includes checked generic metadata/root-getter and custom-base examples. Control class names express intent, with native applicability evaluated per action on the live target. Assertions remain independently composable under #28.
 
 ## Contributed children and initialization
 

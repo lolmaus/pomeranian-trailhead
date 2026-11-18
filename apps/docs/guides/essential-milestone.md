@@ -1,10 +1,10 @@
 # Essential capability ownership and action contract
 
-This is the replacement contract approved in [the capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42). It deliberately supersedes universal action ownership from [the initial essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27). The unreleased implementation now supplies the five action bundles and six foundational controls described in the [delivered API reference](../api/lib-essential.md). This specification also describes pending append, file and additional-flavor slices; their contracts are not availability claims.
+This is the replacement contract approved in [the capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42). It deliberately supersedes universal action ownership from [the initial essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27). The unreleased implementation now supplies the six action bundles and six foundational controls described in the [delivered API reference](../api/lib-essential.md). This specification also describes pending file and additional-flavor slices; their contracts are not availability claims.
 
 ## Approved capability bundles
 
-The approved replacement selects the following names and composition hierarchy. `Fillable`, `EditableValue`, `Checkable`, `CheckableUncheckable` and `SelectableOptions` are delivered. `EditableText` and `SelectableFiles` remain pending their separate slices.
+The approved replacement selects the following names and composition hierarchy. `Fillable`, `EditableValue`, `EditableText`, `Checkable`, `CheckableUncheckable` and `SelectableOptions` are delivered. `SelectableFiles` remains pending its separate slice.
 
 | Bundle                 | Builds on       | Adds                    |
 | ---------------------- | --------------- | ----------------------- |
@@ -118,15 +118,15 @@ Future methods may append extra positional arguments after native arguments, and
 
 ## TextInput append behavior
 
-`TextInput<Root>` and `TextArea<Root>` are sibling classes currently composing `EditableValue` above `Element<Root>`; #37 will replace that bundle with `EditableText`. `EditableText` inherits `fill` and `clear` through `EditableValue`/`Fillable` and owns the single `appendText(text, options?)` implementation, returning `Promise<void>` with native `fill`-compatible options. Text-like flavor subclasses inherit from `TextInput`. The initial migration supplies fill/clear first; revised append ticket #37 delivers the shared append slice.
+Added in @pomeranian/lib-essential@Unreleased: `TextInput<Root>` and `TextArea<Root>` are sibling classes composing `EditableText` above `Element<Root>`. `EditableText` inherits `fill` and `clear` through `EditableValue`/`Fillable` and owns the single `appendText(text, options?)` implementation, returning `Promise<void>` with native `fill`-compatible options. Text-like flavor subclasses inherit from `TextInput`. The shared append slice is delivered in #37; the additional named flavor subclasses remain #45.
 
 The action reads the existing value internally, concatenates the supplied string at the end and updates through native `fill`, regardless of the caret or selection. It preserves existing text, not a sequence of keyboard events. Tests requiring per-character keyboard events can use inherited `pressSequentially`.
 
-Supported append targets are native text-like inputs (`text`, `search`, `email`, `password`, `tel` and `url`, including implicit text inputs) and `<textarea>`. Number/date/time and other structured-value controls, plus `contenteditable`, are excluded from this additional operation. Native `fill` retains its own applicability independently of the narrower append contract.
+Supported append targets are native text-like inputs (`text`, `search`, `email`, `password`, `tel` and `url`, including implicit text inputs and invalid types resolving to text) and `<textarea>`. Number/date/time and other structured-value controls, plus `contenteditable`, are excluded from this additional operation. Native `fill` retains its own applicability independently of the narrower append contract.
 
 The `contenteditable` exclusion is deliberate. A bounded Chromium investigation found that fill-style appending could preserve words while changing formatting: `<b>Hello</b> <i>world</i>` became `<b>Hello world!</b>`. Rich-editor-preserving operations require their own contract.
 
-Implementation must use native `fill`, without directly assigning DOM values or fabricating replacement events. Do not retry the whole mutation in a way that appends twice. Native constraints/errors remain visible, and the operation does not promise an atomic transaction against concurrent application edits.
+Implementation must use native `fill`, without directly assigning DOM values or fabricating replacement events. Do not retry the whole mutation in a way that appends twice. Native constraints/errors remain visible. The read and fill are not atomic against concurrent application edits or target replacements. The custom append precondition rejects labels themselves without automatic associated-control discovery; inherited native actions retain native retargeting.
 
 Preserve core's exact factory/root/generic and composition contracts. Use existing target and `defaultTarget` authoring without new automatic control discovery or broad default selectors. Export the selected public classes and capability factories from the package root and their explicit kebab-case defining modules under the shared ESM/CommonJS identity contract. Include declarations, maps and sources, and verify actual packed core/essential/library consumers on supported compilers and peers.
 
@@ -173,6 +173,6 @@ Supported minimum and repository-current Playwright: 1.64.1 (the pins coincide).
 | selectOption                                                                     | `SelectableOptions`             | Delivered in #44                                                    |
 | dispatchEvent, dragTo, scrollIntoViewIfNeeded, tap                               | `Element`                       | Pending revised #36                                                 |
 | setInputFiles                                                                    | `SelectableFiles` / `FileInput` | Pending revised #36; never added to `Element` under the replacement |
-| appendText (additional operation)                                                | `EditableText`                  | Pending revised #37                                                 |
+| appendText (additional operation)                                                | `EditableText`                  | Delivered in #37                                                    |
 
 The first nine rows reconcile the twenty supported-baseline Locator interactions. Reads, handles, waits, captures and assertions are not interaction wrappers. Upstream versions beyond the repository pin are not claimed as tested. Range/color native clear can reject after sanitizing the value; those classes intentionally omit it. Append's narrower validation remains explicit even though general class-wide DOM validation is not selected.

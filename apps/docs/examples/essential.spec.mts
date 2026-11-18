@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 // #region essential
 import { DomPageObject, PageObject, rootFixture } from "@pomeranian/core";
-import { Element, TextInput, Checkbox, Select } from "@pomeranian/lib-essential";
+import { Element, TextInput, TextArea, Checkbox, Select } from "@pomeranian/lib-essential";
 class Menu extends PageObject<App> {
   Continue = Element.create(this, "button");
 }
@@ -35,31 +35,33 @@ test("complete form actions need no raw reads", async ({ page }) => {
   await form.Name.selectText();
   await form.Name.clear();
   await form.Name.fill("Grace");
+  await form.Name.selectText();
+  await form.Name.appendText(" Hopper");
   await form.Agree.check();
   await form.Agree.uncheck();
   await form.Agree.setChecked(true);
   await form.Choice.selectOption("b");
-  await expect(form.Name.locator).toHaveValue("Grace");
+  await expect(form.Name.locator).toHaveValue("Grace Hopper");
   await expect(form.Agree.locator).toBeChecked();
   await expect(form.Choice.locator).toHaveValue("b");
 });
 // #endregion forms
 
 // #region essential-authoring
-import { EditableValue } from "@pomeranian/lib-essential/editable-value";
+import { EditableText } from "@pomeranian/lib-essential/editable-text";
 import { checkLibrary, defaultInstanceType, type UnboundRoot } from "@pomeranian/core/authoring";
 
 class CustomComponent extends DomPageObject {
   componentName = "Search";
 }
-class EditableComponent extends CustomComponent.with(EditableValue) {
+class EditableComponent extends CustomComponent.with(EditableText) {
   override defaultTarget = "input";
 }
 class LibraryField<
   Root extends UnboundRoot = UnboundRoot,
   Value = string,
   Extra = boolean,
-> extends Element.with(EditableValue)<Root> {
+> extends Element.with(EditableText)<Root> {
   declare readonly [defaultInstanceType]: {
     instance: LibraryField;
     parameters: { root: Root; value: Value; extra: Extra };
@@ -88,7 +90,8 @@ test("essential capabilities support custom bases and generic library authoring"
   const custom = EditableComponent.create(page);
   expect(custom.componentName).toBe("Search");
   await custom.fill("custom");
-  await expect(custom.locator).toHaveValue("custom");
+  await custom.appendText(" text");
+  await expect(custom.locator).toHaveValue("custom text");
   const plain = LibraryField.create(page);
   const value: string | undefined = plain.value();
   const extra: boolean | undefined = plain.extra();
@@ -101,6 +104,26 @@ test("essential capabilities support custom bases and generic library authoring"
     expect(root).toBe(app);
     expect([value, extra]).toEqual([undefined, undefined]);
     await bound.clear();
-    await expect(bound.locator).toHaveValue("");
+    await bound.appendText("bound");
+    await expect(bound.locator).toHaveValue("bound");
   });
 });
+
+// #region append
+class Search extends TextInput<App> {
+  override defaultTarget = "input[type=search]";
+}
+test("standalone and app-bound controls append native text", async ({ page }) => {
+  await page.setContent("<main><input type=search value=Hello><textarea>First</textarea></main>");
+  const notes = TextArea.create(page, "textarea");
+  await notes.appendText("\nSecond", { timeout: 1000 });
+  await expect(notes.locator).toHaveValue("First\nSecond");
+  await rootFixture(App)({ page }, async (app) => {
+    const search = Search.create(app);
+    await search.selectText();
+    await search.appendText(" world");
+    await expect(search.locator).toHaveValue("Hello world");
+    expect(search.root).toBe(app);
+  });
+});
+// #endregion append
