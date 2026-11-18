@@ -159,3 +159,22 @@ test("append rejects untyped non-string arguments instead of coercing", async ({
     await expect(field.locator).toHaveValue("old");
   }
 });
+
+test("force forwards native readonly behavior instead of normal waiting", async ({ page }) => {
+  await page.setContent("<input readonly value=old>");
+  const field = essential.TextInput.create(page, "input");
+  await field.locator.fill("oldx", { force: true, timeout: 100 });
+  const native = await field.locator.inputValue();
+  await page.setContent("<input readonly value=old>");
+  await field.appendText("x", { force: true, timeout: 100 });
+  await expect(field.locator).toHaveValue(native);
+});
+
+test("abort signal cancels the preliminary missing-target read", async ({ page }) => {
+  const controller = new AbortController();
+  controller.abort();
+  const field = essential.TextInput.create(page, "input");
+  await expect(field.appendText("x", { signal: controller.signal, timeout: 100 })).rejects.toThrow(
+    /abort/i,
+  );
+});
