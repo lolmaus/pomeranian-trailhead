@@ -19,7 +19,17 @@ export function EditableText<T extends Constructor<{ readonly locator: Locator }
     async appendText(...args: Parameters<Locator["fill"]>): Promise<void> {
       const [text, options] = args;
       const locator = this.locator;
-      const value = await locator.inputValue(
+      const value = await locator.evaluate(
+        (node) => {
+          if (node.tagName === "TEXTAREA") return (node as HTMLTextAreaElement).value;
+          if (node.tagName === "INPUT") {
+            const input = node as HTMLInputElement;
+            if (["text", "search", "email", "password", "tel", "url"].includes(input.type))
+              return input.value;
+          }
+          throw new Error("appendText requires a native text-like input or textarea");
+        },
+        undefined,
         options?.timeout === undefined ? {} : { timeout: options.timeout },
       );
       await locator.fill(value + text, options);

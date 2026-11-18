@@ -15,3 +15,94 @@ test("append rejects structured values before mutation", async ({ page }) => {
   await expect(text.appendText("3")).rejects.toThrow("appendText");
   await expect(text.locator).toHaveValue("12");
 });
+
+for (const type of ["text", "search", "email", "password", "tel", "url", "", "nonsense"]) {
+  test(`append accepts resolved native ${type || "implicit"} text`, async ({ page }) => {
+    await page.setContent(`<input type="${type}" value="old">`);
+    const field = essential.TextInput.create(page, "input");
+    await field.appendText("new", { timeout: 500 });
+    await expect(field.locator).toHaveValue("oldnew");
+  });
+}
+
+test("textarea appends after selection and preserves newlines and empty suffix", async ({
+  page,
+}) => {
+  await page.setContent("<textarea>first</textarea>");
+  const field = essential.TextArea.create(page, "textarea");
+  await field.selectText();
+  await field.appendText("\nsecond");
+  await field.appendText("");
+  await expect(field.locator).toHaveValue("first\nsecond");
+  await field.clear();
+  await field.appendText("start");
+  await expect(field.locator).toHaveValue("start");
+});
+
+for (const target of [
+  "<input type=date>",
+  "<input type=checkbox>",
+  "<select></select>",
+  "<div contenteditable>old</div>",
+  "<label for=x>Label</label><input id=x>",
+  "<button>old</button>",
+]) {
+  test(`reject unsupported target ${target}`, async ({ page }) => {
+    await page.setContent(target);
+    const field = essential.TextInput.create(page, "body > :first-child");
+    await expect(field.appendText("x")).rejects.toThrow("appendText");
+  });
+}
+
+test("native targets remain live across type changes and replacements", async ({ page }) => {
+  await page.setContent("<input id=x value=old>");
+  const field = essential.TextInput.create(page, "#x");
+  await field.appendText("1");
+  await field.locator.evaluate((n) => ((n as HTMLInputElement).type = "number"));
+  await expect(field.appendText("2")).rejects.toThrow("appendText");
+  await field.locator.evaluate((n) => (n.outerHTML = "<textarea id=x>area</textarea>"));
+  await field.appendText("2");
+  await expect(field.locator).toHaveValue("area2");
+});
+
+for (const attribute of ["disabled", "readonly"]) {
+  test(`native waiting for ${attribute} recovery mutates once`, async ({ page }) => {
+    await page.setContent(
+      `<input ${attribute} value=old oninput="this.dataset.events=String(Number(this.dataset.events||0)+1)">`,
+    );
+    const field = essential.TextInput.create(page, "input");
+    let done = false;
+    const action = field.appendText("new").then(() => {
+      done = true;
+    });
+    let probes = 0;
+    await expect
+      .poll(() => {
+        expect(done).toBe(false);
+        return ++probes;
+      })
+      .toBeGreaterThanOrEqual(3);
+    await field.locator.evaluate((n, attr) => n.removeAttribute(attr), attribute);
+    await action;
+    await expect(field.locator).toHaveValue("oldnew");
+    await expect(field.locator).toHaveAttribute("data-events", "1");
+  });
+}
+
+test("native bounded errors and missing-target waiting", async ({ page }) => {
+  const field = essential.TextInput.create(page, "input");
+  await expect(field.appendText("x", { timeout: 100 })).rejects.toThrow();
+  const pending = field.appendText("late");
+  await page.locator("body").evaluate((n) => (n.innerHTML = "<input value=old>"));
+  await pending;
+  await expect(field.locator).toHaveValue("oldlate");
+  await field.locator.evaluate((n) => n.setAttribute("readonly", ""));
+  await expect(field.appendText("x", { timeout: 100 })).rejects.toThrow();
+  await field.locator.evaluate((n) => {
+    n.removeAttribute("readonly");
+    n.setAttribute("disabled", "");
+  });
+  await expect(field.appendText("x", { timeout: 100 })).rejects.toThrow();
+  await page.setContent("<input><input>");
+  await expect(field.appendText("x", { timeout: 100 })).rejects.toThrow("strict mode");
+});
