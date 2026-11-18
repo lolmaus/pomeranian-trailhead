@@ -17,7 +17,7 @@ export function EditableText<T extends Constructor<{ readonly locator: Locator }
      * @param text Text to append after the current value, ignoring caret and selection.
      * @param options Native fill options: force bypasses actionability checks,
      * timeout applies independently to the preliminary read and native fill (not a
-     * shared total budget), signal cancels native fill, and deprecated noWaitAfter
+     * shared total budget), signal cancels both stages, and deprecated noWaitAfter
      * has no effect at the supported Playwright pin.
      * @since @pomeranian/lib-essential@Unreleased
      */
@@ -35,7 +35,10 @@ export function EditableText<T extends Constructor<{ readonly locator: Locator }
           throw new Error("appendText requires a native text-like input or textarea");
         },
         undefined,
-        options?.timeout === undefined ? {} : { timeout: options.timeout },
+        {
+          ...(options?.timeout === undefined ? {} : { timeout: options.timeout }),
+          ...(options?.signal === undefined ? {} : { signal: options.signal }),
+        },
       );
       await locator.fill(value + text, options);
     }
