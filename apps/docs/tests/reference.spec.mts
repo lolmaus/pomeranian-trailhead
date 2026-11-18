@@ -428,7 +428,7 @@ test("root re-exports retain defining-module history and rendered documentation"
       defining,
       "/** Read the canonical value.\n * @since @pomeranian/aliases@Unreleased\n */\nexport function read(): number { return 42; }\n",
     );
-    await writeFile(aggregate, 'export { read } from "./defining.mts";\n');
+    await writeFile(aggregate, 'export { read, read as renamed } from "./defining.mts";\n');
     const model = await reference(
       [
         { package: "@pomeranian/aliases", export: ".", entry: aggregate, status: "fixture" },
@@ -451,6 +451,20 @@ test("root re-exports retain defining-module history and rendered documentation"
       );
       expect(markdown).toContain("Read the canonical value");
     }
+    const pages = await Promise.all(
+      (await files(path.join(output, "out/reference")))
+        .filter((file) => file.endsWith(".md"))
+        .map(async (file) => ({
+          path: path.relative(path.join(output, "out/reference"), file),
+          document: { markdown: await readFile(file, "utf8") },
+        })),
+    );
+    expect(() =>
+      textArtifacts(
+        pages,
+        model.symbols.map((symbol) => ({ ...symbol, html: "/" + symbol.html })),
+      ),
+    ).not.toThrow();
   } finally {
     await rm(output, { recursive: true, force: true });
   }

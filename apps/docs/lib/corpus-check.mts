@@ -140,7 +140,12 @@ export function corpusCheck(
       .replace(/\.html$/, ".md");
     if (!pages.some((item) => item.path === page))
       throw new Error(`Missing symbol document: ${symbol.key}`);
-    checkSourcePayload(symbol, artifacts.get(page) ?? "");
+    // An alias keeps its public name, but its page and source payload belong to
+    // the defining declaration (including renamed re-exports).
+    const definition = symbol.aliasOf
+      ? symbols.find((candidate) => candidate.key === symbol.aliasOf)!
+      : symbol;
+    checkSourcePayload(definition, artifacts.get(page) ?? "");
   }
   const targets = new Map<string, Set<string>>();
   const artifactNames = new Set<string>();

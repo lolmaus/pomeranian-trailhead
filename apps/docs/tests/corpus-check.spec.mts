@@ -23,6 +23,18 @@ const symbols = [
   },
 ];
 
+test("renamed public re-exports validate the canonical declaration's signature", () => {
+  const canonical = { ...symbols[0]!, signatures: 1, history: ["Available since core@1.0.0"] };
+  const alias = { ...canonical, key: "renamed", name: "renamed", aliasOf: "read" };
+  const documents = [
+    {
+      path: "api.md",
+      document: { markdown: "# read\n\n> **read**(): `string`\n\nAvailable since core@1.0.0\n" },
+    },
+  ];
+  expect(() => textArtifacts(documents, [canonical, alias])).not.toThrow();
+});
+
 test("corpus rejects omitted canonical documents and independently detects omitted payload", () => {
   const output = textArtifacts(pages, symbols);
   output.delete("api.md");
