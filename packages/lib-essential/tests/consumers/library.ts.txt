@@ -8,3 +8,14 @@ export class LibraryButton<Root extends UnboundRoot = UnboundRoot, Value = strin
   value(): Value | undefined { return this.#value; }
 }
 checkLibrary<LibraryButton>()(LibraryButton);
+import {TextInput} from '@pomeranian/lib-essential/text-input';
+export class LibraryField<Root extends UnboundRoot=UnboundRoot,Value=string,Extra=boolean> extends TextInput<Root> {
+ declare readonly [defaultInstanceType]: {instance: LibraryField;parameters:{root:Root;value:Value;extra:Extra}};
+ override get root():Root {return super.root;}
+ override defaultTarget='input';
+ #value:Value|undefined=undefined;
+ #extra:Extra|undefined=undefined;
+ value():Value|undefined{return this.#value;}
+ extra():Extra|undefined{return this.#extra;}
+}
+checkLibrary<LibraryField>()(LibraryField);

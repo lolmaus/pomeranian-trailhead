@@ -122,3 +122,26 @@ editable.appendText('x');
 // @ts-expect-error Element no longer has fill
 Element.create(page,'input').fill('x');
 }
+import {LibraryField} from '@fixture/library';
+import {Fillable as DirectFillable} from '@pomeranian/lib-essential/fillable';
+export function libraryFields(page:Page,app:App) {
+const field=LibraryField.create(page);type Default=Check<Equal<typeof field,LibraryField>>;
+class BoundField extends LibraryField<App,number,Date> {}
+const bound=BoundField.create(app);
+type Exact=Check<Equal<typeof bound,BoundField>>;
+type Root=Check<Equal<typeof bound.root,App>>;
+type Value=Check<Equal<ReturnType<typeof bound.value>,number|undefined>>;
+type Extra=Check<Equal<ReturnType<typeof bound.extra>,Date|undefined>>;
+type DefaultValue=Check<Equal<ReturnType<typeof field.value>,string|undefined>>;
+type DefaultExtra=Check<Equal<ReturnType<typeof field.extra>,boolean|undefined>>;
+class Independent extends Direct.with(DirectFillable) {}
+Independent.create(page,'input').fill('x');
+// @ts-expect-error root-bound generic field rejects Page
+BoundField.create(page);
+// @ts-expect-error independently retained private generic parameter
+const wrong:LibraryField<App,string,Date>=bound;
+// @ts-expect-error grouping base lacks locator
+PageObject.with(Checkable);
+// @ts-expect-error grouping base lacks locator
+PageObject.with(SelectableOptions);
+}

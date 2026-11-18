@@ -67,3 +67,30 @@ test("controls preserve intent surfaces and live native targets", async ({ page 
   await page.locator("#later").evaluate((n) => ((n as HTMLInputElement).type = "checkbox"));
   await expect(missing.fill("wrong", { timeout: 150 })).rejects.toThrow();
 });
+
+test("control root fixtures initialize capability children and retain native label retargeting", async ({
+  page,
+}) => {
+  const { rootFixture } = await import("@pomeranian/core");
+  class App extends essential.TextInput<App> {
+    override defaultTarget = "#text";
+    Agree = essential.Checkbox.create(this.root, ({ page }) => page.locator("#check"));
+  }
+  await page.setContent(
+    "<label for=text>Name</label><input id=text><input id=check type=checkbox>",
+  );
+  await rootFixture(App)({ page }, async (app) => {
+    expect(app.root).toBe(app);
+    expect(app.Agree.root).toBe(app);
+    await app.fill("root");
+    await expect(app.locator).toHaveValue("root");
+    await app.Agree.check();
+    await expect(app.Agree.locator).toBeChecked();
+  });
+  const label = essential.TextInput.create(page, "label");
+  const query = label.locator;
+  await label.fill("retargeted");
+  await expect(page.locator("#text")).toHaveValue("retargeted");
+  await expect(label.locator).toHaveJSProperty("tagName", "LABEL");
+  expect(label.locator).toBe(query);
+});
