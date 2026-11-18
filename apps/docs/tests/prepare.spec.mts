@@ -28,6 +28,17 @@ test("builds site inputs and shared model from actual comments and checked guide
     );
     expect(model.api?.symbols.map((symbol) => symbol.name)).toEqual(
       expect.arrayContaining([
+        "Fillable",
+        "EditableValue",
+        "Checkable",
+        "CheckableUncheckable",
+        "SelectableOptions",
+        "TextInput",
+        "TextArea",
+        "Checkbox",
+        "Radio",
+        "Select",
+        "ContentEditable",
         "Constructor",
         "with",
         "testConfig",
