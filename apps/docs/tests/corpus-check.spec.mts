@@ -67,3 +67,56 @@ test("website-compatible Unicode, code, duplicate and explicit heading anchors r
   for (const id of ["cafe-usage", "repeat", "repeat-1", "custom-owner"])
     expect(html).toContain(`id="${id}"`);
 });
+
+test("source expectations reject renderer omissions before publication", () => {
+  const expected = [
+    {
+      ...symbols[0]!,
+      signatures: 2,
+      history: ["Available since core@1.0.0"],
+      payload: {
+        comments: ["Both overloads are documented.", "read('é');"],
+        signatures: 2,
+        getter: false,
+        setter: false,
+      },
+    },
+  ];
+  const complete = [
+    {
+      path: "api.md",
+      document: {
+        markdown:
+          "# read\n\n> **read**(): `string`\n\n> **read**(`key`): `string`\n\nBoth overloads are documented.\n\nAvailable since core@1.0.0\n\n```ts\nread('é');\n```\n",
+      },
+    },
+  ];
+  expect(() => textArtifacts(complete, expected)).not.toThrow();
+  const omittedOverload = [
+    {
+      path: "api.md",
+      document: {
+        markdown: complete[0]!.document.markdown.replace("> **read**(`key`): `string`\n\n", ""),
+      },
+    },
+  ];
+  expect(() => textArtifacts(omittedOverload, expected)).toThrow("Missing API signatures");
+  const omittedExample = [
+    {
+      path: "api.md",
+      document: {
+        markdown: complete[0]!.document.markdown.replace("```ts\nread('é');\n```\n", ""),
+      },
+    },
+  ];
+  expect(() => textArtifacts(omittedExample, expected)).toThrow("Missing API payload");
+  const omittedHistory = [
+    {
+      path: "api.md",
+      document: {
+        markdown: complete[0]!.document.markdown.replace("Available since core@1.0.0", ""),
+      },
+    },
+  ];
+  expect(() => textArtifacts(omittedHistory, expected)).toThrow("Missing API history");
+});

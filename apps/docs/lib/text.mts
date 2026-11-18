@@ -1,5 +1,6 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { ApiPayload } from "./reference.mts";
 import MarkdownIt from "markdown-it";
 import { corpusCheck } from "./corpus-check.mts";
 
@@ -89,6 +90,9 @@ export interface TextSymbol {
   html: string;
   parent: string | null;
   aliasOf?: string;
+  signatures?: number;
+  history?: string[];
+  payload?: ApiPayload;
 }
 
 export interface TextPage {

@@ -213,6 +213,47 @@ test("reference exposes generic, overloaded, protected and inherited symbols acr
     expect(artifacts.get(memberPath)).toContain("Scalar overload");
     expect(artifacts.get(memberPath)).toContain("Sequence overload");
     expect(artifacts.get(memberPath)).toContain("Type Parameters");
+    expect(map?.payload?.comments).toContain("Sequence overload.");
+    expect(map?.payload?.comments.some((comment) => comment.includes('widget.map("value");'))).toBe(
+      true,
+    );
+    const canonicalMap = map!.html.replace(/\.html$/, ".md");
+    const omittedOverload = pages.map((page) => {
+      if (page.path !== canonicalMap) return page;
+      const lastSignature = page.document.markdown.lastIndexOf("## Call Signature");
+      const context = page.document.markdown.indexOf("## Context", lastSignature);
+      return {
+        ...page,
+        document: {
+          markdown:
+            page.document.markdown.slice(0, lastSignature) + page.document.markdown.slice(context),
+        },
+      };
+    });
+    expect(() => textArtifacts(omittedOverload, model.symbols)).toThrow("Missing API signatures");
+    const omittedDescription = pages.map((page) =>
+      page.path === canonicalMap
+        ? {
+            ...page,
+            document: { markdown: page.document.markdown.replace("Sequence overload.", "") },
+          }
+        : page,
+    );
+    expect(() => textArtifacts(omittedDescription, model.symbols)).toThrow("Missing API payload");
+    const omittedExample = pages.map((page) =>
+      page.path === canonicalMap
+        ? {
+            ...page,
+            document: {
+              markdown: page.document.markdown.replace(
+                /```ts\nconst widget = new Widget\(\);\nwidget.map\("value"\);\n```/,
+                "",
+              ),
+            },
+          }
+        : page,
+    );
+    expect(() => textArtifacts(omittedExample, model.symbols)).toThrow("Missing API payload");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

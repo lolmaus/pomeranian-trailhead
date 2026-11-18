@@ -15,6 +15,66 @@ function payload(markdown: string): string {
   );
 }
 
+function meaning(markdown: string): string {
+  return parser
+    .parse(markdown, {})
+    .flatMap((token) =>
+      token.children
+        ? token.children
+            .filter((child) => ["text", "code_inline"].includes(child.type))
+            .map((child) => child.content)
+        : ["fence", "code_block"].includes(token.type)
+          ? [token.content]
+          : [],
+    )
+    .join(" ")
+    .replaceAll("[", " ")
+    .replaceAll("]", " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function checkSourcePayload(symbol: TextSymbol, markdown: string) {
+  const expected = symbol.payload;
+  const count = expected?.signatures ?? symbol.signatures ?? 0;
+  const name = symbol.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const signature =
+    symbol.kind === "Constructor"
+      ? /^\*\*new [^*]+\*\*.*\(/
+      : new RegExp(`^(?:\\*\\*${name}\\*\\*|${name})[^\\n]*\\(`);
+  const actual = parser
+    .parse(markdown, {})
+    .filter(
+      (token) =>
+        token.type === "inline" && signature.test(token.content.replace(/^(?:`[^`]+`\s+)*/, "")),
+    ).length;
+  if (actual < count)
+    throw new Error(`Missing API signatures for ${symbol.key}: expected ${count}, found ${actual}`);
+  const rendered = meaning(markdown);
+  for (const history of symbol.history ?? [])
+    if (!rendered.includes(meaning(history)))
+      throw new Error(`Missing API history for ${symbol.key}: ${history}`);
+  for (const fragment of expected?.comments ?? []) {
+    const text = meaning(fragment);
+    if (text && !rendered.includes(text))
+      throw new Error(`Missing API payload for ${symbol.key}: ${text}`);
+  }
+  if (
+    expected?.getter &&
+    !parser
+      .parse(markdown, {})
+      .some((token) => token.type === "inline" && token.content.startsWith("**get** **"))
+  )
+    throw new Error(`Missing API getter for ${symbol.key}`);
+  if (
+    expected?.setter &&
+    !parser
+      .parse(markdown, {})
+      .some((token) => token.type === "inline" && token.content.startsWith("**set** **"))
+  )
+    throw new Error(`Missing API setter for ${symbol.key}`);
+}
+
 // Mirrors VitePress's default slug rules, including duplicate-heading suffixes.
 function anchors(markdown: string): Set<string> {
   const result = new Set<string>();
@@ -80,6 +140,7 @@ export function corpusCheck(
       .replace(/\.html$/, ".md");
     if (!pages.some((item) => item.path === page))
       throw new Error(`Missing symbol document: ${symbol.key}`);
+    checkSourcePayload(symbol, artifacts.get(page) ?? "");
   }
   const targets = new Map<string, Set<string>>();
   const artifactNames = new Set<string>();

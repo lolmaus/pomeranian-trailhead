@@ -28,6 +28,14 @@ export interface Source {
   referenceName?: string;
 }
 
+export interface ApiPayload {
+  /** Source comment fragments, captured independently of Markdown rendering. */
+  comments: string[];
+  signatures: number;
+  getter: boolean;
+  setter: boolean;
+}
+
 export interface SymbolEntry {
   key: string;
   name: string;
@@ -41,6 +49,7 @@ export interface SymbolEntry {
   parent: string | null;
   reflectionId: number;
   aliasOf?: string;
+  payload?: ApiPayload;
   sources: { file: string; line: number }[];
 }
 
@@ -199,6 +208,52 @@ export async function reference(sources: Source[], output: string) {
     }
     if (symbol) symbol.history.push(...history);
   }
+  // Capture expected meaning before the renderer has any opportunity to omit it.
+  for (const symbol of symbols) {
+    const declaration = project.getReflectionById(symbol.reflectionId);
+    if (
+      !(declaration instanceof DeclarationReflection) ||
+      declaration instanceof ReferenceReflection
+    )
+      continue;
+    const comments: string[] = [];
+    for (const reflection of Object.values(project.reflections)) {
+      if (ownerByReflection[reflection.id] !== symbol.key || !reflection.comment) continue;
+      // Check public declarations and their native signature/parameter comments.
+      // Anonymous details inside conditional or referenced types are not separate
+      // native comment sections and remain represented by their type expression.
+      if (
+        reflection !== declaration &&
+        reflection.parent !== declaration &&
+        !(
+          reflection.parent?.parent === declaration &&
+          reflection.kindOf(ReflectionKind.Parameter | ReflectionKind.TypeParameter)
+        )
+      )
+        continue;
+      // Referenced dependency types can contain comments which native TypeDoc
+      // intentionally summarizes rather than expanding into this package's page.
+      if (reflection.comment.sourcePath?.includes("/node_modules/")) continue;
+      const groups = [
+        reflection.comment.summary,
+        ...reflection.comment.blockTags.map((tag) => tag.content),
+      ];
+      for (const parts of groups) {
+        // Resolved inline links can change their display name; surrounding prose
+        // and code still carry independent expectations without copying a renderer.
+        for (const part of parts)
+          if (part.kind === "text" || part.kind === "code") {
+            if (part.text.trim()) comments.push(part.text);
+          }
+      }
+    }
+    symbol.payload = {
+      comments: [...new Set(comments)],
+      signatures: declaration.signatures?.length ?? 0,
+      getter: !!declaration.getSignature,
+      setter: !!declaration.setSignature,
+    };
+  }
   for (const symbol of symbols) {
     const reflection = project.getReflectionById(symbol.reflectionId);
     if (!(reflection instanceof ReferenceReflection)) continue;
@@ -210,6 +265,7 @@ export async function reference(sources: Source[], output: string) {
     symbol.kind = canonical.kind;
     symbol.signatures = canonical.signatures;
     symbol.sources = canonical.sources;
+    if (canonical.payload) symbol.payload = canonical.payload;
   }
   for (const symbol of symbols) {
     if (
