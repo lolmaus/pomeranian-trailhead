@@ -2,6 +2,7 @@ import type { Locator } from "playwright-core";
 import { DomPageObject } from "@pomeranian/core/dom-page-object";
 import { defaultInstanceType, type UnboundRoot } from "@pomeranian/core/authoring";
 /** A DOM element with native Playwright interactions.
+ * @remarks Changed in @pomeranian/lib-essential@Unreleased: control-specific actions moved to reusable capabilities and foundational controls; Element retains general actions.
  * @since @pomeranian/lib-essential@Unreleased
  */
 export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObject<Root> {
@@ -59,54 +60,6 @@ export class Element<Root extends UnboundRoot = UnboundRoot> extends DomPageObje
    */
   type(...args: Parameters<Locator["type"]>): ReturnType<Locator["type"]> {
     return this.locator.type(...args);
-  }
-  /** Complete native fill action, retaining applicability, options, waiting and errors.
-   * Raw observations remain available through .locator.
-   *
-   * @since @pomeranian/lib-essential@Unreleased
-   */
-  fill(...args: Parameters<Locator["fill"]>): ReturnType<Locator["fill"]> {
-    return this.locator.fill(...args);
-  }
-  /** Complete native clear action, retaining applicability, options, waiting and errors.
-   * Raw observations remain available through .locator.
-   *
-   * @since @pomeranian/lib-essential@Unreleased
-   */
-  clear(...args: Parameters<Locator["clear"]>): ReturnType<Locator["clear"]> {
-    return this.locator.clear(...args);
-  }
-  /** Complete native check action, retaining applicability, options, waiting and errors.
-   * Raw observations remain available through .locator.
-   *
-   * @since @pomeranian/lib-essential@Unreleased
-   */
-  check(...args: Parameters<Locator["check"]>): ReturnType<Locator["check"]> {
-    return this.locator.check(...args);
-  }
-  /** Complete native uncheck action, retaining applicability, options, waiting and errors.
-   * Raw observations remain available through .locator.
-   *
-   * @since @pomeranian/lib-essential@Unreleased
-   */
-  uncheck(...args: Parameters<Locator["uncheck"]>): ReturnType<Locator["uncheck"]> {
-    return this.locator.uncheck(...args);
-  }
-  /** Complete native setChecked action, retaining applicability, options, waiting and errors.
-   * Raw observations remain available through .locator.
-   *
-   * @since @pomeranian/lib-essential@Unreleased
-   */
-  setChecked(...args: Parameters<Locator["setChecked"]>): ReturnType<Locator["setChecked"]> {
-    return this.locator.setChecked(...args);
-  }
-  /** Complete native selectOption action, retaining applicability, options, waiting and errors.
-   * Raw observations remain available through .locator.
-   * Returns the native selected option values; routine tests may ignore them.
-   * @since @pomeranian/lib-essential@Unreleased
-   */
-  selectOption(...args: Parameters<Locator["selectOption"]>): ReturnType<Locator["selectOption"]> {
-    return this.locator.selectOption(...args);
   }
   /** Complete native selectText action, retaining applicability, options, waiting and errors.
    * Raw observations remain available through .locator.

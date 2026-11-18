@@ -18,6 +18,61 @@
       "types": "./dist/element.d.ts",
       "import": "./dist/element.mjs",
       "require": "./dist/element.js"
+    },
+    "./fillable": {
+      "types": "./dist/fillable.d.ts",
+      "import": "./dist/fillable.mjs",
+      "require": "./dist/fillable.js"
+    },
+    "./editable-value": {
+      "types": "./dist/editable-value.d.ts",
+      "import": "./dist/editable-value.mjs",
+      "require": "./dist/editable-value.js"
+    },
+    "./checkable": {
+      "types": "./dist/checkable.d.ts",
+      "import": "./dist/checkable.mjs",
+      "require": "./dist/checkable.js"
+    },
+    "./checkable-uncheckable": {
+      "types": "./dist/checkable-uncheckable.d.ts",
+      "import": "./dist/checkable-uncheckable.mjs",
+      "require": "./dist/checkable-uncheckable.js"
+    },
+    "./selectable-options": {
+      "types": "./dist/selectable-options.d.ts",
+      "import": "./dist/selectable-options.mjs",
+      "require": "./dist/selectable-options.js"
+    },
+    "./text-input": {
+      "types": "./dist/text-input.d.ts",
+      "import": "./dist/text-input.mjs",
+      "require": "./dist/text-input.js"
+    },
+    "./text-area": {
+      "types": "./dist/text-area.d.ts",
+      "import": "./dist/text-area.mjs",
+      "require": "./dist/text-area.js"
+    },
+    "./checkbox": {
+      "types": "./dist/checkbox.d.ts",
+      "import": "./dist/checkbox.mjs",
+      "require": "./dist/checkbox.js"
+    },
+    "./radio": {
+      "types": "./dist/radio.d.ts",
+      "import": "./dist/radio.mjs",
+      "require": "./dist/radio.js"
+    },
+    "./select": {
+      "types": "./dist/select.d.ts",
+      "import": "./dist/select.mjs",
+      "require": "./dist/select.js"
+    },
+    "./content-editable": {
+      "types": "./dist/content-editable.d.ts",
+      "import": "./dist/content-editable.mjs",
+      "require": "./dist/content-editable.js"
     }
   },
   "scripts": {

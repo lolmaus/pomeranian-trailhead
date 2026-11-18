@@ -1,7 +1,8 @@
-import { Element } from '@pomeranian/lib-essential/element';
+import { Element, EditableValue, CheckableUncheckable, SelectableOptions } from '@pomeranian/lib-essential';
 import { defaultInstanceType, checkLibrary, type UnboundRoot } from '@pomeranian/core/authoring';
-export class LibraryButton<Root extends UnboundRoot = UnboundRoot, Value = string> extends Element<Root> {
+export class LibraryButton<Root extends UnboundRoot = UnboundRoot, Value = string> extends Element.with(EditableValue, CheckableUncheckable, SelectableOptions)<Root> {
   declare readonly [defaultInstanceType]: { instance: LibraryButton; parameters: { root: Root; value: Value } };
+  override get root(): Root { return super.root; }
   override defaultTarget = 'button';
   #value: Value | undefined = undefined;
   value(): Value | undefined { return this.#value; }

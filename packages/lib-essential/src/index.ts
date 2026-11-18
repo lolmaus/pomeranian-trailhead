@@ -1,1 +1,12 @@
 export { Element } from "./element.js";
+export { Fillable } from "./fillable.js";
+export { EditableValue } from "./editable-value.js";
+export { Checkable } from "./checkable.js";
+export { CheckableUncheckable } from "./checkable-uncheckable.js";
+export { SelectableOptions } from "./selectable-options.js";
+export { TextInput } from "./text-input.js";
+export { TextArea } from "./text-area.js";
+export { Checkbox } from "./checkbox.js";
+export { Radio } from "./radio.js";
+export { Select } from "./select.js";
+export { ContentEditable } from "./content-editable.js";

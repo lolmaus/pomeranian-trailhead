@@ -1,4 +1,4 @@
-import { Element } from "../src/element.js";
+import { Element, EditableValue, CheckableUncheckable, SelectableOptions } from "../src/index.js";
 import { DomPageObject } from "@pomeranian/core";
 import type { Locator, Page } from "playwright-core";
 import { defaultInstanceType, type UnboundRoot } from "@pomeranian/core/authoring";
@@ -7,11 +7,18 @@ type Equal<A, B> =
 function equal<T extends true>(): T {
   return true as T;
 }
-class Button<Root extends UnboundRoot = UnboundRoot, Value = string> extends Element<Root> {
+class Button<Root extends UnboundRoot = UnboundRoot, Value = string> extends Element.with(
+  EditableValue,
+  CheckableUncheckable,
+  SelectableOptions,
+)<Root> {
   declare readonly [defaultInstanceType]: {
     instance: Button;
     parameters: { root: Root; value: Value };
   };
+  override get root(): Root {
+    return super.root;
+  }
   override defaultTarget = "button";
   value: Value | undefined;
 }
@@ -35,17 +42,17 @@ export function contracts(page: Page, app: App) {
   equal<Equal<typeof plain.press, Locator["press"]>>();
   equal<Equal<typeof plain.pressSequentially, Locator["pressSequentially"]>>();
   equal<Equal<typeof plain.type, Locator["type"]>>();
-  equal<Equal<typeof plain.fill, Locator["fill"]>>();
   equal<Equal<typeof bound.fill, Locator["fill"]>>();
-  equal<Equal<typeof plain.clear, Locator["clear"]>>();
+  equal<Equal<typeof bound.fill, Locator["fill"]>>();
   equal<Equal<typeof bound.clear, Locator["clear"]>>();
-  equal<Equal<typeof plain.check, Locator["check"]>>();
+  equal<Equal<typeof bound.clear, Locator["clear"]>>();
   equal<Equal<typeof bound.check, Locator["check"]>>();
-  equal<Equal<typeof plain.uncheck, Locator["uncheck"]>>();
+  equal<Equal<typeof bound.check, Locator["check"]>>();
   equal<Equal<typeof bound.uncheck, Locator["uncheck"]>>();
-  equal<Equal<typeof plain.setChecked, Locator["setChecked"]>>();
+  equal<Equal<typeof bound.uncheck, Locator["uncheck"]>>();
   equal<Equal<typeof bound.setChecked, Locator["setChecked"]>>();
-  equal<Equal<typeof plain.selectOption, Locator["selectOption"]>>();
+  equal<Equal<typeof bound.setChecked, Locator["setChecked"]>>();
+  equal<Equal<typeof bound.selectOption, Locator["selectOption"]>>();
   equal<Equal<typeof bound.selectOption, Locator["selectOption"]>>();
   equal<Equal<typeof plain.selectText, Locator["selectText"]>>();
   equal<Equal<typeof bound.selectText, Locator["selectText"]>>();
@@ -81,3 +88,92 @@ export const interactionOwners = {
   setInputFiles: 36,
   tap: 36,
 } satisfies Partial<Record<Exclude<keyof Locator, "toString">, number>>;
+
+import {
+  TextInput,
+  TextArea,
+  Checkbox,
+  Radio,
+  Select,
+  ContentEditable,
+  Fillable,
+  Checkable,
+} from "../src/index.js";
+import { PageObject, checkLibrary, rootFixture } from "@pomeranian/core";
+export function controlContracts(page: Page, app: App) {
+  const text = TextInput.create(page, "input");
+  const area = TextArea.create(page, "textarea");
+  const checkbox = Checkbox.create(page, "input");
+  const radio = Radio.create(page, "input");
+  const select = Select.create(page, "select");
+  const editable = ContentEditable.create(page, "div");
+  equal<Equal<typeof text, TextInput>>();
+  equal<Equal<typeof area, TextArea>>();
+  equal<Equal<typeof checkbox, Checkbox>>();
+  equal<Equal<typeof radio, Radio>>();
+  equal<Equal<typeof select, Select>>();
+  equal<Equal<typeof editable, ContentEditable>>();
+  equal<Equal<typeof text.fill, Locator["fill"]>>();
+  equal<Equal<typeof area.clear, Locator["clear"]>>();
+  equal<Equal<typeof checkbox.setChecked, Locator["setChecked"]>>();
+  equal<Equal<typeof radio.check, Locator["check"]>>();
+  equal<Equal<typeof select.selectOption, Locator["selectOption"]>>();
+  equal<Equal<typeof editable.clear, Locator["clear"]>>();
+  class BoundText extends TextInput<App> {
+    override defaultTarget = "input";
+  }
+  const bound = BoundText.create(app);
+  equal<Equal<typeof bound, BoundText>>();
+  equal<Equal<typeof bound.root, App>>();
+  class Nullable extends TextArea<App | null> {
+    override defaultTarget = "textarea";
+  }
+  const nullable = Nullable.create(page);
+  equal<Equal<typeof nullable.root, App | null>>();
+  class Alone extends ContentEditable<null> {
+    override defaultTarget = "div";
+  }
+  const alone = Alone.create(page);
+  equal<Equal<typeof alone.root, null>>();
+  class Custom extends DomPageObject {
+    component = true;
+  }
+  class Independent extends Custom.with(Fillable) {}
+  Independent.create(page, "input").fill("x");
+  class Checked extends DomPageObject.with(Checkable) {}
+  Checked.create(page, "input").check();
+  checkLibrary<TextInput>()(TextInput);
+  checkLibrary<TextArea>()(TextArea);
+  checkLibrary<Checkbox>()(Checkbox);
+  checkLibrary<Radio>()(Radio);
+  checkLibrary<Select>()(Select);
+  checkLibrary<ContentEditable>()(ContentEditable);
+  // @ts-expect-error Grouping bases lack Locator.
+  PageObject.with(Fillable);
+  // @ts-expect-error Grouping bases lack Locator.
+  PageObject.with(EditableValue);
+  // @ts-expect-error Grouping bases lack Locator.
+  PageObject.with(Checkable);
+  // @ts-expect-error Grouping bases lack Locator.
+  PageObject.with(CheckableUncheckable);
+  // @ts-expect-error Grouping bases lack Locator.
+  PageObject.with(SelectableOptions);
+  // @ts-expect-error Root-bound control rejects unrooted page.
+  BoundText.create(page);
+  // @ts-expect-error Target remains required.
+  TextInput.create(page);
+  // @ts-expect-error Radio is check-only.
+  radio.uncheck();
+  // @ts-expect-error Radio is check-only.
+  radio.setChecked(false);
+  // @ts-expect-error Contenteditable has no append contract.
+  editable.appendText("x");
+  // @ts-expect-error Element does not expose control mutations.
+  Element.create(page, "input").fill("x");
+  class ControlRoot extends TextInput<ControlRoot> {
+    override defaultTarget = "input";
+    app = true;
+  }
+  rootFixture(ControlRoot);
+  return [text, area, checkbox, radio, select, editable];
+}

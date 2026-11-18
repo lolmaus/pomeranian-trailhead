@@ -96,3 +96,29 @@ element.setChecked('yes');
 // @ts-expect-error native selection option shape
 element.selectOption({unknown:'value'});
 }
+
+import {TextInput,TextArea,Checkbox,Radio,Select,ContentEditable,Fillable,EditableValue,Checkable,CheckableUncheckable,SelectableOptions} from '@pomeranian/lib-essential';
+export function controls(page:Page,app:App) {
+const text=TextInput.create(page,'input'), area=TextArea.create(page,'textarea'), checkbox=Checkbox.create(page,'input'), radio=Radio.create(page,'input'), select=Select.create(page,'select'), editable=ContentEditable.create(page,'div');
+type Exact=[Check<Equal<typeof text,TextInput>>,Check<Equal<typeof area,TextArea>>,Check<Equal<typeof checkbox,Checkbox>>,Check<Equal<typeof radio,Radio>>,Check<Equal<typeof select,Select>>,Check<Equal<typeof editable,ContentEditable>>];
+class BoundText extends TextInput<App> {override defaultTarget='input';}
+const bound=BoundText.create(app); type Root=Check<Equal<typeof bound.root,App>>;
+class Independent extends Direct.with(Fillable,Checkable,SelectableOptions) {}
+Independent.create(page,'input').fill('x');
+// @ts-expect-error grouping base lacks locator
+PageObject.with(Fillable);
+// @ts-expect-error grouping base lacks locator
+PageObject.with(EditableValue);
+// @ts-expect-error grouping base lacks locator
+PageObject.with(CheckableUncheckable);
+// @ts-expect-error required explicit target
+TextInput.create(page);
+// @ts-expect-error exact root context
+BoundText.create(page);
+// @ts-expect-error radio has no uncheck
+radio.uncheck();
+// @ts-expect-error contenteditable has no append
+editable.appendText('x');
+// @ts-expect-error Element no longer has fill
+Element.create(page,'input').fill('x');
+}
