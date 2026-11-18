@@ -112,7 +112,10 @@ test("builds site inputs and shared model from actual comments and checked guide
       "private workspace API",
     );
     const element = model.api.symbols.find(
-      (symbol) => symbol.package === "@pomeranian/lib-essential" && symbol.name === "Element",
+      (symbol) =>
+        symbol.package === "@pomeranian/lib-essential" &&
+        symbol.name === "Element" &&
+        !symbol.aliasOf,
     );
     expect(element).toBeDefined();
     const elementPage = element?.html
@@ -127,7 +130,10 @@ test("builds site inputs and shared model from actual comments and checked guide
       (symbol) => symbol.package === "@pomeranian/lib-essential",
     );
     const elementMembers = essential.filter((symbol) => symbol.parent === element?.key);
-    expect(elementMembers.map((symbol) => symbol.name)).not.toContain("fill");
+    const elementNames = elementMembers.map((symbol) => symbol.name);
+    expect(elementNames).toEqual(expect.arrayContaining(["selectText", "type", "click"]));
+    for (const name of ["fill", "clear", "check", "uncheck", "setChecked", "selectOption"])
+      expect(elementNames).not.toContain(name);
     for (const [name, methods] of [
       ["TextInput", ["fill", "clear"]],
       ["TextArea", ["fill", "clear"]],
