@@ -73,6 +73,11 @@
       "types": "./dist/content-editable.d.ts",
       "import": "./dist/content-editable.mjs",
       "require": "./dist/content-editable.js"
+    },
+    "./editable-text": {
+      "types": "./dist/editable-text.d.ts",
+      "import": "./dist/editable-text.mjs",
+      "require": "./dist/editable-text.js"
     }
   },
   "scripts": {

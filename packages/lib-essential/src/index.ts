@@ -10,3 +10,4 @@ export { Checkbox } from "./checkbox.js";
 export { Radio } from "./radio.js";
 export { Select } from "./select.js";
 export { ContentEditable } from "./content-editable.js";
+export { EditableText } from "./editable-text.js";
