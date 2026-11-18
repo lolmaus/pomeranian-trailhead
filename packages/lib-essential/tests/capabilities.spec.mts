@@ -43,7 +43,17 @@ test("controls preserve intent surfaces and live native targets", async ({ page 
   await page.setContent(
     "<input id=t disabled><textarea></textarea><div contenteditable></div><input type=checkbox><input type=radio><select><option>A</option></select>",
   );
-  const fill = text.fill("ready");
+  let filled = false;
+  const fill = text.fill("ready").then(() => {
+    filled = true;
+  });
+  let disabledProbes = 0;
+  await expect
+    .poll(() => {
+      expect(filled).toBe(false);
+      return ++disabledProbes;
+    })
+    .toBeGreaterThanOrEqual(3);
   await page.locator("#t").evaluate((n) => n.removeAttribute("disabled"));
   await fill;
   await expect(text.locator).toHaveValue("ready");
@@ -60,7 +70,17 @@ test("controls preserve intent surfaces and live native targets", async ({ page 
   expect("appendText" in ContentEditable.create(page, "[contenteditable]")).toBe(false);
   expect(TextArea.prototype instanceof TextInput).toBe(false);
   const missing = TextInput.create(page, "#later");
-  const pending = missing.fill("late");
+  let appeared = false;
+  const pending = missing.fill("late").then(() => {
+    appeared = true;
+  });
+  let missingProbes = 0;
+  await expect
+    .poll(() => {
+      expect(appeared).toBe(false);
+      return ++missingProbes;
+    })
+    .toBeGreaterThanOrEqual(3);
   await page.locator("body").evaluate((n) => n.insertAdjacentHTML("beforeend", "<input id=later>"));
   await pending;
   await expect(missing.locator).toHaveValue("late");
