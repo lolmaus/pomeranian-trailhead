@@ -3,6 +3,22 @@ export default {
   description: "Readable, typed page objects for Playwright. Development documentation.",
   base: "/",
   cleanUrls: false,
+  // Markdown in public is downloaded verbatim, not a second set of website pages.
+  srcExclude: ["public/**"],
+  transformHead({ pageData }) {
+    const links = [["link", { rel: "describedby", href: "/llms.txt" }]];
+    if (pageData.relativePath && pageData.relativePath !== "404.md") {
+      links.push([
+        "link",
+        {
+          rel: "alternate",
+          type: "text/markdown",
+          href: "/" + pageData.relativePath.split("/").map(encodeURIComponent).join("/"),
+        },
+      ]);
+    }
+    return links;
+  },
   themeConfig: {
     nav: [
       { text: "Introduction", link: "/" },

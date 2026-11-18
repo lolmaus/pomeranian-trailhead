@@ -9,6 +9,9 @@ parser.block.ruler.before("fence", "reject-unchecked-code-import", (state, line)
   const indent = state.sCount[line];
   if (start === undefined || shift === undefined || indent === undefined) return false;
   if (indent - state.blkIndent >= 4) return false;
+  if (state.level > 0 && state.src.startsWith(":::", start + shift)) {
+    throw new Error("Unsupported nested container");
+  }
   if (state.src.startsWith("<<<", start + shift)) {
     throw new Error("Unsupported raw code import; include a checked example region instead");
   }

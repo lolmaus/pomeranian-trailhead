@@ -7,6 +7,7 @@ import { reference } from "./reference.mts";
 import { registeredSources, type RegisteredSource } from "./sources.mts";
 import { files } from "./html-links.mts";
 import { textArtifacts, replaceTextAssets } from "./text.mts";
+import { canonicalReference } from "./canonical-reference.mts";
 
 export const docsRoot = fileURLToPath(new URL("..", import.meta.url));
 export const repoRoot = path.resolve(docsRoot, "../..");
@@ -143,7 +144,7 @@ async function helperContext() {
   );
 }
 
-export async function prepare(output: string) {
+export async function prepare(output: string, referenceMode: "check" | "refresh" = "check") {
   await mkdir(output, { recursive: true });
   const scratch = await mkdtemp(path.join(output, ".prepare-"));
   const site = path.join(output, "site");
@@ -178,6 +179,7 @@ export async function prepare(output: string) {
       }
     }
     guideHistory(pages, api, sources);
+    const expectedReference = new Map<string, string>();
     for (const file of await files(path.join(scratch, "api/reference"))) {
       if (!file.endsWith(".md")) continue;
       const name =
@@ -200,23 +202,27 @@ export async function prepare(output: string) {
         relative === "index.md"
           ? "\n\nGenerated reference includes unreleased production packages and private development infrastructure. The development URL segment is retained for existing links.\n"
           : referenceNotice(production ? "production" : "development", owners[0]?.package);
-      pages.push({ path: name, origin: "reference", document: content(markdown + notice) });
+      expectedReference.set(name.slice("reference/".length), content(markdown + notice).markdown);
     }
-    pages.push({
-      path: "reference/prototype-helpers.md",
-      origin: "reference",
-      document: content(await helperContext()),
-    });
-    pages.push({
-      path: "reference/authoring-helpers.md",
-      origin: "reference",
-      document: content(
+    expectedReference.set("prototype-helpers.md", content(await helperContext()).markdown);
+    expectedReference.set(
+      "authoring-helpers.md",
+      content(
         authoringContext(
           await readFile(path.join(repoRoot, "packages/core/src/authoring.ts"), "utf8"),
           await readFile(path.join(repoRoot, "packages/core/src/page-object.ts"), "utf8"),
         ),
-      ),
-    });
+      ).markdown,
+    );
+    // The comparison runs before publishing anything. Website and raw Markdown
+    // both consume the tracked files, never a second generated reference tree.
+    const canonical =
+      referenceMode === "refresh"
+        ? expectedReference
+        : await canonicalReference(path.join(docsRoot, "reference"), expectedReference, "check");
+    for (const [name, markdown] of canonical) {
+      pages.push({ path: `reference/${name}`, origin: "reference", document: content(markdown) });
+    }
     const generatedSite = path.join(scratch, "site");
     const names = new Set<string>();
     for (const page of pages) {
@@ -233,6 +239,11 @@ export async function prepare(output: string) {
     );
     for (const symbol of api.symbols) symbol.html = `/reference/development/${symbol.html}`;
     const artifacts = textArtifacts(pages, api.symbols);
+    // A failed parser, link or coverage check must not replace the last valid
+    // canonical inputs. Refresh only after the entire corpus has been validated.
+    if (referenceMode === "refresh") {
+      await canonicalReference(path.join(docsRoot, "reference"), expectedReference, "refresh");
+    }
     const model = { schemaVersion: 1, pages, api };
     await writeFile(path.join(scratch, "api/api-model.json"), JSON.stringify(api, null, 2) + "\n");
     await writeFile(

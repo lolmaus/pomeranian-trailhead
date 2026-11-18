@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
+import { installReferenceRouter } from "./reference-router.mts";
 import {
   Application,
   DeclarationReflection,
@@ -15,6 +16,7 @@ import {
 } from "typedoc";
 
 const docsRoot = fileURLToPath(new URL("..", import.meta.url));
+const repositoryRoot = path.resolve(docsRoot, "../..");
 
 export interface Source {
   package: string;
@@ -75,6 +77,7 @@ export async function reference(sources: Source[], output: string) {
     readme: "none",
     excludePrivate: true,
     excludeProtected: false,
+    gitRevision: "main",
     disableSources: sources.every((source) => source.status === "fixture"),
     out: path.join(output, "reference"),
     docsRoot: path.join(output, "reference"),
@@ -151,7 +154,7 @@ export async function reference(sources: Source[], output: string) {
       protected: reflection.flags.isProtected,
       history: [],
       sources: (reflection.sources ?? []).map((source) => ({
-        file: source.fullFileName,
+        file: normalizePath(path.relative(repositoryRoot, source.fullFileName)),
         line: source.line,
       })),
     };
@@ -218,6 +221,10 @@ export async function reference(sources: Source[], output: string) {
     }
   }
   const renderer = app.renderer as MarkdownRenderer;
+  installReferenceRouter(
+    renderer,
+    new Map(symbols.map((symbol) => [symbol.reflectionId, symbol.key])),
+  );
   renderer.on(MarkdownRendererEvent.END, () => {
     for (const symbol of symbols) {
       const model = project.getReflectionById(symbol.reflectionId);

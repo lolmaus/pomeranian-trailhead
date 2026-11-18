@@ -11,7 +11,8 @@
     "test:unit": "playwright test --config playwright.unit.config.mts",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
-    "typecheck": "node ../../packages/core/lib/build.mts && node ../../packages/lib-essential/lib/build.mts && node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.fixtures.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.prototype.json && node ../../packages/core/prototypes/factory-typing/run.mjs --types-only"
+    "typecheck": "node ../../packages/core/lib/build.mts && node ../../packages/lib-essential/lib/build.mts && node ../../node_modules/typescript/bin/tsc --project tsconfig.node.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.fixtures.json && node ../../node_modules/typescript/bin/tsc --project tsconfig.prototype.json && node ../../packages/core/prototypes/factory-typing/run.mjs --types-only",
+    "generate": "node lib/cli.mts refresh"
   },
   "dependencies": {
     "@pomeranian/core": "workspace:*",

@@ -139,6 +139,8 @@ test("reference exposes generic, overloaded, protected and inherited symbols acr
       (symbol) => symbol.name === "map" && symbol.package === "@pomeranian/proof-core",
     );
     expect(map?.signatures).toBe(2);
+    expect(map?.html).toMatch(/\.html$/);
+    expect(map?.html).not.toContain("#");
     expect(model.symbols.some((symbol) => symbol.name === "transform" && symbol.protected)).toBe(
       true,
     );
@@ -169,6 +171,30 @@ test("reference exposes generic, overloaded, protected and inherited symbols acr
     expect(markdown).toContain("Available since @pomeranian/proof-core@Unreleased");
     expect(markdown).toContain("readonly");
     expect(markdown).toContain("root");
+    expect(markdown).not.toContain("Getter documentation");
+    expect(markdown).not.toContain("Static collision fixture");
+    expect(markdown).toContain("Owner type parameters");
+    expect(markdown).toContain("Root");
+    const members = model.symbols.filter((symbol) =>
+      ["Method", "Property", "Accessor", "Constructor"].includes(symbol.kind),
+    );
+    expect(members.every((symbol) => !symbol.html.includes("#"))).toBe(true);
+    expect(new Set(members.map((symbol) => symbol.html)).size).toBe(members.length);
+    const accessor = model.symbols.find((symbol) => symbol.name === "title" && !symbol.inherited)!;
+    const accessorMarkdown = await readFile(
+      path.join(directory, "reference", accessor.html.replace(/\.html$/, ".md")),
+      "utf8",
+    );
+    expect(accessorMarkdown).toContain("Getter documentation");
+    expect(accessorMarkdown).toContain("Setter documentation");
+    const owner = model.symbols.find((symbol) => symbol.key === map?.parent)!;
+    const ownerMarkdown = await readFile(
+      path.join(directory, "reference", owner.html.replace(/\.html$/, ".md")),
+      "utf8",
+    );
+    expect(ownerMarkdown).not.toContain("Scalar overload");
+    expect(ownerMarkdown).toContain("## map {#map}");
+
     const pages = await Promise.all(
       (await files(path.join(directory, "reference")))
         .filter((file) => file.endsWith(".md"))
@@ -183,15 +209,58 @@ test("reference exposes generic, overloaded, protected and inherited symbols acr
     );
     const inherited = model.symbols.find((symbol) => symbol.name === "map" && symbol.inherited);
     expect(inherited).toBeDefined();
-    const chunk = artifacts.get(
-      `text/members/${encodeURIComponent(inherited?.key ?? "missing")}.txt`,
+    const memberPath = inherited?.html.replace(/\.html$/, ".md") ?? "missing";
+    expect(artifacts.get(memberPath)).toContain("Scalar overload");
+    expect(artifacts.get(memberPath)).toContain("Sequence overload");
+    expect(artifacts.get(memberPath)).toContain("Type Parameters");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("anonymous constructor type details remain in their owning type alias", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "pomeranian-constructor-type-"));
+  try {
+    const entry = path.join(directory, "api.mts");
+    await writeFile(
+      entry,
+      "/** Construct an instance.\n * @since @pomeranian/constructor@Unreleased\n */\nexport type Constructor<Instance = object> = new (...args: unknown[]) => Instance;\n",
     );
-    expect(chunk).toContain("Scalar overload");
-    expect(chunk).toContain("Sequence overload");
-    expect(chunk).toContain("Type Parameters");
-    expect(
-      artifacts.get(`text/types/${encodeURIComponent(inherited?.parent ?? "missing")}.txt`),
-    ).toContain("map");
+    const model = await reference(
+      [{ package: "@pomeranian/constructor", entry, status: "fixture" }],
+      path.join(directory, "out"),
+    );
+    const owner = model.symbols.find((symbol) => symbol.name === "Constructor");
+    expect(owner).toBeDefined();
+    const markdown = await readFile(
+      path.join(directory, "out/reference", owner!.html.replace(/\.html$/, ".md")),
+      "utf8",
+    );
+    expect(markdown).toContain("Construct an instance");
+    expect(markdown).toContain("Instance");
+    expect(markdown).toContain("args");
+    expect(model.symbols.some((symbol) => symbol.name === "__type")).toBe(false);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("source provenance uses repository-relative paths and the main branch", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "pomeranian-source-links-"));
+  try {
+    const model = await reference(
+      sources.map((source) => ({ ...source, status: "development" })),
+      directory,
+    );
+    const member = model.symbols.find((symbol) => symbol.name === "map" && !symbol.inherited);
+    const markdown = await readFile(
+      path.join(directory, "reference", member!.html.replace(/\.html$/, ".md")),
+      "utf8",
+    );
+    expect(markdown).toContain(
+      "https://github.com/lolmaus/pomeranian-trailhead/blob/main/apps/docs/fixtures/core.mts#L",
+    );
+    expect(member?.sources[0]?.file).toBe("apps/docs/fixtures/core.mts");
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
@@ -227,10 +296,15 @@ test("rich reference builds with valid symbol routes and stable identities", asy
       (symbol) => symbol.name === "Widget" && symbol.package === "@pomeranian/proof-core",
     );
     if (!widget) throw new Error("Fixture Widget missing");
-    const html = await readFile(
-      path.join(site, ".vitepress/dist", widget.html.split("#")[0] ?? ""),
-      "utf8",
-    );
+    const html = (
+      await Promise.all(
+        first.symbols
+          .filter((symbol) => symbol.key === widget.key || symbol.parent === widget.key)
+          .map((symbol) =>
+            readFile(path.join(site, ".vitepress/dist", symbol.html.split("#")[0] ?? ""), "utf8"),
+          ),
+      )
+    ).join("\n");
     for (const expected of [
       "Scalar overload",
       "Sequence overload",

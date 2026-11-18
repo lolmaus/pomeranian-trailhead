@@ -6,6 +6,11 @@ test("built development site navigates to honest package status and generated re
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
+  await expect(page.locator('head link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
+    "href",
+    "/index.md",
+  );
+  await expect(page.locator('head link[rel="describedby"]')).toHaveAttribute("href", "/llms.txt");
   await expect(page.getByRole("heading", { name: /^Pomeranian/, level: 1 })).toBeVisible();
   await expect(page.locator("main")).toContainText("no published Pomeranian consumer package");
   await page.getByRole("link", { name: "API reference", exact: true }).first().click();
@@ -25,80 +30,54 @@ test("built development site navigates to honest package status and generated re
   ).toContainText("await page.setContent");
   await page.goto("/guides/factory-proof.html#accepted-typedoc-limitation");
   await expect(page.locator("main")).toContainText("accepted, unfixed limitation");
-  const discovery = await page.request.get("/llms.txt");
-  expect(discovery.ok()).toBe(true);
-  const discoveryText = await discovery.text();
-  expect(discoveryText).toContain("/text/getting-started.txt");
-  const packagePath = discoveryText.match(/\[@pomeranian\/core\]\(([^)]+)\)/)?.[1];
-  expect(packagePath).toBeDefined();
-  const packageResponse = await page.request.get(packagePath ?? "/missing-core-text");
-  expect(packageResponse.ok()).toBe(true);
-  const packageText = await packageResponse.text();
-  const typePath = packageText.match(/\]\((\/text\/types\/[^)]+)\)/)?.[1];
-  expect(typePath).toBeDefined();
-  const typeResponse = await page.request.get(typePath ?? "/missing-type-text");
-  expect(typeResponse.ok()).toBe(true);
-  const memberPath = (await typeResponse.text()).match(/\]\((\/text\/members\/[^)]+)\)/)?.[1];
-  expect(memberPath).toBeDefined();
-  expect((await page.request.get(memberPath ?? "/missing-member-text")).ok()).toBe(true);
-  const topic = await page.request.get("/text/getting-started.txt");
-  expect(topic.ok()).toBe(true);
-  expect(await topic.text()).toContain("await page.setContent");
   expect(errors).toEqual([]);
 });
 
-test("essential form actions are available in human and AI reference", async ({ page }) => {
-  await page.goto("/api/lib-essential.html");
-  await expect(page.locator("main")).toContainText("complete native contracts");
-  const discovery = await (await page.request.get("/llms.txt")).text();
-  const packagePath = discovery.match(/\[@pomeranian\/lib-essential\]\(([^)]+)\)/)?.[1];
-  expect(packagePath).toBeDefined();
-  const packageText = await (await page.request.get(packagePath!)).text();
-  const typePaths = [...packageText.matchAll(/\]\((\/text\/types\/[^)]+)\)/g)].map(
-    (match) => match[1]!,
-  );
-  expect(typePaths.length).toBeGreaterThan(0);
-  const typeText = (
-    await Promise.all(typePaths.map(async (path) => (await page.request.get(path)).text()))
-  ).join("\n");
-  for (const method of [
-    "fill",
-    "clear",
-    "check",
-    "uncheck",
-    "setChecked",
-    "selectOption",
-    "selectText",
-    "appendText",
-  ]) {
-    const memberPath = [...typeText.matchAll(/\]\((\/text\/members\/[^)]+)\)/g)]
-      .map((match) => match[1]!)
-      .find((path) =>
-        decodeURIComponent(decodeURIComponent(path)).includes("method-instance-" + method),
-      );
-    expect(memberPath, method).toBeDefined();
-    const response = await page.request.get(memberPath!);
-    expect(response.ok()).toBe(true);
-    const member = await response.text();
-    expect(member).toContain(method);
-    expect(member).toContain("Available since @pomeranian/lib-essential@Unreleased");
-    expect(member).toContain("Parameters");
-    const source = member.match(/^Source: (\S+)/m)?.[1];
-    expect(source).toBeDefined();
-    await page.goto(source!);
-    if (method === "appendText") {
-      await expect(page.locator("main")).toContainText("through native fill");
-      await expect(page.locator("main")).toContainText("not atomic");
-      expect(member).toContain("`Promise`");
-      expect(member).toContain("`void`");
-      expect(member).toContain("timeout");
-    } else {
-      await expect(page.locator("main")).toContainText(`Complete native ${method} action`);
-    }
-    if (method === "selectOption") {
-      expect(member).toContain("`Promise`");
-      expect(member).toContain("`string`[]");
-      await expect(page.locator("main")).toContainText("Returns the native selected option values");
-    }
+test("discovery leads to shared Markdown, a single member, and all bundle levels", async ({
+  request,
+}) => {
+  async function markdown(url: string) {
+    const response = await request.get(url);
+    expect(response.ok(), url).toBe(true);
+    const body = await response.text();
+    expect(body, url).not.toMatch(/<!doctype html|<html[ >]/i);
+    expect(body, url).toMatch(/^#/m);
+    return body;
   }
+  const discovery = await markdown("/llms.txt");
+  expect(discovery).not.toContain("/text/");
+  const packagePath = discovery.match(
+    /\[@pomeranian\/lib-essential[^\]]*\]\((\/indexes\/packages\/[^)]+)\)/,
+  )?.[1];
+  expect(packagePath).toBeDefined();
+  const packageText = await markdown(packagePath!);
+  const links = (value: string) => [...value.matchAll(/\]\(([^)]+)\)/g)].map((match) => match[1]!);
+  const textInputPath = links(packageText).find(
+    (url) => /TextInput/i.test(decodeURIComponent(url)) && url.endsWith(".md"),
+  );
+  expect(textInputPath).toBeDefined();
+  const typeText = await markdown(textInputPath!);
+  const appendPath = links(typeText).find(
+    (url) => /appendText/i.test(decodeURIComponent(url)) && url.split("#")[0] !== textInputPath,
+  );
+  expect(appendPath).toBeDefined();
+  const member = await markdown(
+    new URL(appendPath!, "http://127.0.0.1:4173" + textInputPath).pathname,
+  );
+  expect(member).toContain("appendText");
+  expect(member).toContain("not atomic");
+  expect(member).toContain("@pomeranian/lib-essential@Unreleased");
+  expect(member).toContain("timeout");
+  expect(member).toContain("Promise");
+  expect(member).not.toContain("Complete native uncheck action");
+  const guide = await markdown("/getting-started.md");
+  expect(guide).toContain("await page.setContent");
+  const full = await markdown("/llms-full.txt");
+  expect(full).toContain("await page.setContent");
+  expect(full).toContain("appendText");
+  const bundleLinks = [...links(discovery), ...links(packageText)].filter((url) =>
+    url.includes("/bundles/"),
+  );
+  expect(bundleLinks.length).toBeGreaterThan(0);
+  for (const url of bundleLinks) await markdown(url);
 });

@@ -61,15 +61,15 @@ test("builds site inputs and shared model from actual comments and checked guide
       "ownerByReflection",
     );
     const discovery = await readFile(path.join(model.site, "public/llms.txt"), "utf8");
-    expect(discovery).toContain("/text/getting-started.txt");
+    expect(discovery).toContain("/getting-started.md");
     const gettingStartedText = await readFile(
-      path.join(model.site, "public/text/getting-started.txt"),
+      path.join(model.site, "public/getting-started.md"),
       "utf8",
     );
     expect(gettingStartedText).toContain("class App extends DomPageObject<App>");
-    expect(gettingStartedText).toContain("](/text/installation.txt)");
+    expect(gettingStartedText).toContain("](/installation.md)");
     expect(gettingStartedText).not.toContain("](installation.md)");
-    for (const filename of ["guides/authoring.md", "public/text/guides/authoring.txt"]) {
+    for (const filename of ["guides/authoring.md", "public/guides/authoring.md"]) {
       const authoring = await readFile(path.join(model.site, filename), "utf8");
       expect(authoring).toContain("DomPageObject.with(Text, Counting, CountLabel)");
       expect(authoring).toContain("override get root(): Root");
@@ -78,7 +78,7 @@ test("builds site inputs and shared model from actual comments and checked guide
     }
     for (const filename of [
       "reference/authoring-helpers.md",
-      "public/text/reference/authoring-helpers.txt",
+      "public/reference/authoring-helpers.md",
     ]) {
       const helpers = await readFile(path.join(model.site, filename), "utf8");
       expect(helpers).toContain("type Compose<");
@@ -87,13 +87,13 @@ test("builds site inputs and shared model from actual comments and checked guide
     const parser = new MarkdownIt();
     const publicRoot = path.join(model.site, "public");
     for (const filename of await files(publicRoot)) {
-      if (!filename.endsWith(".txt")) continue;
+      if (!/\.(?:md|txt)$/.test(filename)) continue;
       const tokens = parser.parse(await readFile(filename, "utf8"), {});
       for (const token of tokens.flatMap((item) => item.children ?? [])) {
         if (token.type !== "link_open") continue;
         const href = token.attrGet("href") ?? "";
         if (/^(?:[a-z][\w+.-]*:|\/\/)/i.test(href)) continue;
-        expect(href, `text link in ${filename}`).toMatch(/^\/text\//);
+        expect(href, `Markdown link in ${filename}`).toMatch(/^\//);
         const target = decodeURIComponent(href.split(/[?#]/)[0] ?? "");
         await expect(access(path.join(publicRoot, target))).resolves.toBeUndefined();
       }
@@ -125,8 +125,17 @@ test("builds site inputs and shared model from actual comments and checked guide
       .replace(/\.html$/, ".md");
     const elementContent = await readFile(path.join(model.site, elementPage ?? "missing"), "utf8");
     expect(elementContent).toContain("@pomeranian/lib-essential");
-    expect(elementContent).toContain("#### Deprecated");
-    expect(elementContent).toContain("Use fill for replacement or pressSequentially");
+    expect(elementContent).toContain("type");
+    const legacyMethod = model.api.symbols.find(
+      (symbol) => symbol.parent === element?.key && symbol.name === "type",
+    );
+    const legacyPage = legacyMethod?.html
+      .split("#")[0]
+      ?.replace(/^\//, "")
+      .replace(/\.html$/, ".md");
+    const legacyContent = await readFile(path.join(model.site, legacyPage ?? "missing"), "utf8");
+    expect(legacyContent).toContain("Deprecated");
+    expect(legacyContent).toContain("Use fill for replacement or pressSequentially");
     const essential = model.api.symbols.filter(
       (symbol) => symbol.package === "@pomeranian/lib-essential",
     );
@@ -163,7 +172,7 @@ test("builds site inputs and shared model from actual comments and checked guide
       if (name !== "TextInput" && name !== "TextArea")
         expect(members.map((symbol) => symbol.name)).not.toContain("appendText");
     }
-    for (const filename of ["api/lib-essential.md", "public/text/api/lib-essential.txt"]) {
+    for (const filename of ["api/lib-essential.md", "public/api/lib-essential.md"]) {
       const guide = await readFile(path.join(model.site, filename), "utf8");
       expect(guide).toContain("appendText");
       expect(guide).toContain("not atomic");

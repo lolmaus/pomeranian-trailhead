@@ -1,6 +1,7 @@
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import MarkdownIt from "markdown-it";
+import { corpusCheck } from "./corpus-check.mts";
 
 const markdownParser = new MarkdownIt();
 const textHref = (filename: string) => "/" + filename.split("/").map(encodeURIComponent).join("/");
@@ -43,7 +44,7 @@ function rebaseLinks(markdown: string, source: string, pageNames: Set<string>): 
     replacements.push({
       start,
       end: parsed.pos,
-      value: textHref(`text/${page.replace(/\.md$/, ".txt")}`) + suffix,
+      value: textHref(page) + suffix,
     });
   }
   for (let index = 0; index < markdown.length; index++) {
@@ -80,7 +81,7 @@ function rebaseLinks(markdown: string, source: string, pageNames: Set<string>): 
   return result;
 }
 
-interface TextSymbol {
+export interface TextSymbol {
   key: string;
   name: string;
   package: string;
@@ -90,100 +91,182 @@ interface TextSymbol {
   aliasOf?: string;
 }
 
-// Markdown is the canonical text representation: signatures, overloads, examples,
-// history and tables survive without a second independently authored summary.
-function memberText(markdown: string, symbol: TextSymbol): string {
-  if (!["Method", "Property", "Accessor", "Constructor"].includes(symbol.kind)) return markdown;
-  const lines = markdown.split("\n");
-  let fenced = false;
-  const headings: { index: number; level: number; title: string }[] = [];
-  for (const [index, line] of lines.entries()) {
-    if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
-    if (fenced) continue;
-    const heading = /^(#{2,3}) (.*)$/.exec(line);
-    if (heading) headings.push({ index, level: heading[1]?.length ?? 0, title: heading[2] ?? "" });
-  }
-  const matches = headings.filter(
-    (heading) => heading.title.replace(/\\/g, "").replace(/\(\)$/, "") === symbol.name,
-  );
-  // Collision anchors can vary across renderer versions. A full page is safer
-  // than silently dropping a static/instance overload when ownership is ambiguous.
-  if (matches.length !== 1) return markdown;
-  const start = matches[0];
-  if (!start) return markdown;
-  const end =
-    headings.find((heading) => heading.index > start.index && heading.level <= start.level)
-      ?.index ?? lines.length;
-  const contextEnd =
-    headings.find((heading) =>
-      ["Constructors", "Properties", "Accessors", "Methods"].includes(heading.title),
-    )?.index ?? 0;
-  return [
-    ...lines.slice(0, Math.min(contextEnd, start.index)),
-    ...lines.slice(start.index, end),
-  ].join("\n");
+export interface TextPage {
+  path: string;
+  document: { markdown: string };
 }
 
-export function textArtifacts(
-  pages: { path: string; document: { markdown: string } }[],
-  symbols: TextSymbol[],
-): Map<string, string> {
+const segment = encodeURIComponent;
+const symbolPage = (symbol: TextSymbol) =>
+  decodeURIComponent(symbol.html.split(/[?#]/)[0] ?? "")
+    .replace(/^\//, "")
+    .replace(/\.html$/, ".md");
+function title(markdown: string, fallback: string): string {
+  const tokens = markdownParser.parse(markdown, {});
+  const heading = tokens.findIndex((token) => token.type === "heading_open");
+  return (
+    tokens[heading + 1]?.children
+      ?.filter((token) => ["text", "code_inline"].includes(token.type))
+      .map((token) => token.content)
+      .join("") || fallback
+  ).replace(/[\\[\]]/g, "\\$&");
+}
+function description(markdown: string): string {
+  const tokens = markdownParser.parse(markdown, {});
+  const paragraph = tokens.findIndex((token) => token.type === "paragraph_open");
+  return paragraph < 0
+    ? "Complete reference documentation."
+    : (
+        tokens[paragraph + 1]?.children
+          ?.filter((token) => ["text", "code_inline"].includes(token.type))
+          .map((token) => token.content)
+          .join("") || "Complete documentation."
+      )
+        .replace(/\s+/g, " ")
+        .slice(0, 180);
+}
+
+export function textArtifacts(pages: TextPage[], symbols: TextSymbol[]): Map<string, string> {
   const output = new Map<string, string>();
-  const href = textHref;
+  function publish(name: string, markdown: string) {
+    if ([...output.keys()].some((key) => key.toLowerCase() === name.toLowerCase()))
+      throw new Error(`Duplicate resource path: ${name}`);
+    output.set(name, markdown);
+  }
   const pageNames = new Set(pages.map((page) => page.path));
-  const topics: string[] = [];
+  const names = new Set<string>();
   for (const page of pages) {
-    const target = `text/${page.path.replace(/\.md$/, ".txt")}`;
-    output.set(target, rebaseLinks(page.document.markdown, page.path, pageNames));
-    topics.push(`- [${page.path}](${href(target)})`);
+    const key = page.path.toLowerCase();
+    if (names.has(key)) throw new Error(`Duplicate canonical document: ${page.path}`);
+    names.add(key);
+    publish(page.path, rebaseLinks(page.document.markdown, page.path, pageNames));
   }
-  const memberPath = (symbol: TextSymbol) => `text/members/${encodeURIComponent(symbol.key)}.txt`;
-  const link = (symbol: TextSymbol) => `- [${symbol.name}](${href(memberPath(symbol))})`;
   for (const symbol of symbols) {
-    const [html, anchor] = symbol.html.split("#");
-    const page = pages.find((item) => `/${item.path.replace(/\.md$/, ".html")}` === html);
-    if (!page) throw new Error(`Missing text source for ${symbol.key}: ${symbol.html}`);
-    output.set(
-      memberPath(symbol),
-      `# ${symbol.name}\n\nSource: ${symbol.html}\n${anchor ? `Member anchor: ${anchor}\n` : ""}\n${memberText(rebaseLinks(page.document.markdown, page.path, pageNames), symbol)}`,
-    );
-    if (["Class", "Interface", "TypeAlias"].includes(symbol.kind)) {
-      output.set(
-        `text/types/${encodeURIComponent(symbol.key)}.txt`,
-        `# ${symbol.name}\n\n${link(symbol)}\n${symbols
-          .filter((child) => child.parent === (symbol.aliasOf ?? symbol.key))
-          .map(link)
-          .join("\n")}\n`,
-      );
-    }
+    if (!pageNames.has(symbolPage(symbol)))
+      throw new Error(`Missing canonical source for ${symbol.key}: ${symbol.html}`);
   }
-  const packages = [...new Set(symbols.map((symbol) => symbol.package))];
+  const ordered = [...pages].sort((a, b) => a.path.localeCompare(b.path, "en"));
+  const link = (page: TextPage) =>
+    `- [${title(page.document.markdown, page.path)}](${textHref(page.path)}): ${description(page.document.markdown)}`;
+  const symbolLink = (symbol: TextSymbol) =>
+    `- [${symbol.name}](${textHref(symbolPage(symbol))}${symbol.html.includes("#") ? "#" + symbol.html.split("#")[1] : ""}): ${symbol.kind} in ${symbol.package}.`;
+  const packages = [...new Set(symbols.map((symbol) => symbol.package))].sort();
+  const sections = [
+    ...new Set(
+      ordered.map(
+        (page) => (page.path.includes("/") ? page.path.split("/")[0] : "topics") ?? "topics",
+      ),
+    ),
+  ].sort();
+  const canonical = ordered.filter(
+    (page) =>
+      !symbols.some(
+        (symbol) =>
+          symbol.aliasOf &&
+          symbolPage(symbol) === page.path &&
+          !symbols.some((other) => !other.aliasOf && symbolPage(other) === page.path),
+      ),
+  );
+  function bundle(name: string, scope: string, documents: TextPage[]) {
+    const body = documents
+      .map(
+        (page) =>
+          `<!-- BEGIN DOCUMENT: ${textHref(page.path)} -->\n\nSource: [${page.path}](${textHref(page.path)})\n\n${output.get(page.path)}\n\n<!-- END DOCUMENT: ${textHref(page.path)} -->`,
+      )
+      .join("\n\n");
+    const value = `# ${scope}\n\nScope: ${documents.length} canonical documents. Each document appears once. Links lead to independently retrievable canonical Markdown. Clients may truncate large responses; request individual documents when needed.\n\n${body}\n`;
+    publish(name, value);
+    return `- [${scope}](${textHref(name)}): ${documents.length} documents; ${Buffer.byteLength(value, "utf8")} UTF-8 bytes.`;
+  }
+  const bundleLinks: string[] = [];
+  const typeLinks: string[] = [];
+  for (const section of sections) {
+    const documents = canonical.filter(
+      (page) => (page.path.includes("/") ? page.path.split("/")[0] : "topics") === section,
+    );
+    const listing = documents.map(link).join("\n");
+    publish(`indexes/topics/${segment(section)}.md`, `# ${section} topics\n\n${listing}\n`);
+    bundleLinks.push(
+      bundle(`bundles/sections/${segment(section)}.md`, `${section} section`, documents),
+    );
+  }
   for (const name of packages) {
-    output.set(
-      `text/packages/${encodeURIComponent(name)}.txt`,
-      `# ${name}\n\n${symbols
-        .filter((symbol) => symbol.package === name)
-        .map((symbol) =>
-          ["Class", "Interface", "TypeAlias"].includes(symbol.kind)
-            ? `- [${symbol.name}](${href(`text/types/${encodeURIComponent(symbol.key)}.txt`)})\n${link(symbol)}`
-            : link(symbol),
-        )
+    const members = symbols.filter((symbol) => symbol.package === name);
+    const memberPages = new Set(members.map(symbolPage));
+    publish(
+      `indexes/packages/${segment(name)}.md`,
+      `# ${name}\n\n${members.map(symbolLink).join("\n")}\n`,
+    );
+    bundleLinks.push(
+      bundle(
+        `bundles/packages/${segment(name)}.md`,
+        `${name} package`,
+        canonical.filter((page) => memberPages.has(page.path)),
+      ),
+    );
+  }
+  for (const symbol of symbols.filter(
+    (item) => !item.aliasOf && ["Class", "Interface", "TypeAlias"].includes(item.kind),
+  )) {
+    publish(
+      `indexes/types/${segment(symbol.key)}.md`,
+      `# ${symbol.name}\n\n${symbolLink(symbol)}\n\n## Members\n\n${symbols
+        .filter((child) => child.parent === symbol.key)
+        .map(symbolLink)
         .join("\n")}\n`,
     );
+    typeLinks.push(
+      `- [${symbol.name}](${textHref(`indexes/types/${segment(symbol.key)}.md`)}): Type overview and inherited member links.`,
+    );
   }
-  output.set(
+  publish("indexes/types.md", `# Types\n\n${typeLinks.join("\n")}\n`);
+  bundleLinks.push(bundle("llms-full.txt", "Complete documentation", canonical));
+  publish("indexes/bundles.md", `# Complete bundles\n\n${bundleLinks.join("\n")}\n`);
+  publish(
     "llms.txt",
-    `# Pomeranian development documentation\n\nComplete generated Markdown text, including API context and checked examples.\n\n${topics.join("\n")}\n\n## Packages\n\n${packages.map((name) => `- [${name}](${href(`text/packages/${encodeURIComponent(name)}.txt`)})`).join("\n")}\n`,
+    `# Pomeranian development documentation\n\n> Shared documentation for Pomeranian development, with checked examples and complete API reference.\n\nStart with a topic or package, then follow canonical Markdown links for member context. Large bundles can exceed client context limits; individual documents and smaller bundles retain the same content.\n\n## Topics\n\n${ordered
+      .filter((page) => !page.path.startsWith("reference/"))
+      .map(link)
+      .join(
+        "\n",
+      )}\n\n## Packages\n\n${packages.map((name) => `- [${name}](${textHref(`indexes/packages/${segment(name)}.md`)}): Package API and member index.`).join("\n")}\n\n## Types\n\n- [Type overviews](/indexes/types.md): Class and interface context with inherited member links.\n\n## Topic indexes\n\n${sections.map((section) => `- [${section}](${textHref(`indexes/topics/${segment(section)}.md`)}): Complete ${section} topic index.`).join("\n")}\n\n## Bundles\n\n- [Bundle sizes and scope](/indexes/bundles.md): Section, package, and full corpus downloads.\n${bundleLinks.join("\n")}\n`,
   );
+  corpusCheck(pages, symbols, output);
   return output;
 }
 
+function safeAsset(name: string): boolean {
+  return (
+    !name.startsWith(".") &&
+    !path.posix.isAbsolute(name) &&
+    !name.split("/").some((part) => !part || part === ".." || part.startsWith(".")) &&
+    !name.includes("\\")
+  );
+}
+
 export async function replaceTextAssets(directory: string, artifacts: Map<string, string>) {
+  for (const name of artifacts.keys())
+    if (!safeAsset(name)) throw new Error(`Unsafe text asset: ${name}`);
+  const manifest = path.join(directory, ".text-assets.json");
+  let previous: string[] = [];
+  try {
+    previous = JSON.parse(await readFile(manifest, "utf8")) as string[];
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+  }
+  for (const name of previous) {
+    if (!safeAsset(name)) throw new Error(`Unsafe previous text asset: ${name}`);
+    if (!artifacts.has(name)) await rm(path.join(directory, name), { force: true });
+  }
   await rm(path.join(directory, "text"), { recursive: true, force: true });
-  await rm(path.join(directory, "llms.txt"), { force: true });
+  for (const name of ["indexes", "bundles"])
+    await rm(path.join(directory, name), { recursive: true, force: true });
+  for (const name of ["llms.txt", "llms-full.txt"])
+    await rm(path.join(directory, name), { force: true });
   for (const [name, text] of artifacts) {
     const target = path.join(directory, name);
     await mkdir(path.dirname(target), { recursive: true });
     await writeFile(target, text);
   }
+  await writeFile(manifest, JSON.stringify([...artifacts.keys()].sort()));
 }

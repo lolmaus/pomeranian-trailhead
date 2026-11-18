@@ -72,3 +72,10 @@ test("normalizes labelled callouts without interpreting fenced examples", () => 
   expect(() => content("::: imaginary\nLost meaning\n:::\n")).toThrow("Unsupported container");
   expect(() => content("::: note\nMissing end\n")).toThrow("Unclosed container");
 });
+
+test("rejects nested containers while preserving nested literal code", () => {
+  for (const source of ["> ::: note\n> Meaning\n> :::\n", "- ::: warning\n  Meaning\n  :::\n"])
+    expect(() => content(source)).toThrow("Unsupported nested container");
+  for (const source of ["> ```md\n> ::: note\n> ```\n", "- `::: note`\n"])
+    expect(content(source).markdown).toBe(source);
+});

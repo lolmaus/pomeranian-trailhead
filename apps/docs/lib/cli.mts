@@ -37,18 +37,21 @@ async function run(args: string[]) {
 async function main() {
   const command = process.argv[2];
   const args = process.argv.slice(3);
+  const refreshIndex = args.indexOf("--refresh-reference");
+  const refreshReference = command === "refresh" || refreshIndex >= 0;
+  if (refreshIndex >= 0) args.splice(refreshIndex, 1);
   const outputFlag = args.indexOf("--out");
   const output =
     outputFlag < 0 ? path.join(docsRoot, ".generated") : path.resolve(args[outputFlag + 1] ?? "");
   if (outputFlag >= 0) args.splice(outputFlag, 2);
   const site = path.join(output, "site");
   const vitepress = path.join(docsRoot, "node_modules/vitepress/bin/vitepress.js");
-  if (command === "generate" || command === "build") {
+  if (command === "generate" || command === "build" || command === "refresh") {
     if (args.length) throw new Error(`Unexpected arguments: ${args.join(" ")}`);
     await mkdir(output, { recursive: true });
     await rm(path.join(output, "ready.json"), { force: true });
     await run([path.join(repoRoot, "packages/core/lib/build.mts")]);
-    await prepare(output);
+    await prepare(output, refreshReference ? "refresh" : "check");
     const digest = createHash("sha256")
       .update(await readFile(path.join(output, "content-model.json")))
       .digest("hex");
@@ -86,7 +89,11 @@ async function main() {
         cwd: repoRoot,
         ignoreInitial: true,
         ignored: (filename) =>
-          ignored.test(filename) || path.resolve(repoRoot, filename).startsWith(output + path.sep),
+          ignored.test(filename) ||
+          path
+            .resolve(repoRoot, filename)
+            .startsWith(path.join(docsRoot, "reference") + path.sep) ||
+          path.resolve(repoRoot, filename).startsWith(output + path.sep),
       },
     );
     await new Promise<void>((resolve, reject) => {
@@ -102,7 +109,7 @@ async function main() {
         while (dirty && !interrupted) {
           dirty = false;
           try {
-            await run([self, "generate", "--out", output]);
+            await run([self, "generate", "--refresh-reference", "--out", output]);
             if (!interrupted) console.log("Documentation regenerated successfully.");
           } catch (error) {
             console.error(

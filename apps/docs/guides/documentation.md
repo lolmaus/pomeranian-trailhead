@@ -1,6 +1,6 @@
 # Author documentation
 
-Human HTML and the later AI corpus share one source tree. Author guides in `apps/docs`; keep API comments in their owning package. Do not edit `.generated` files. The website currently uses the standard VitePress theme. Branding and layout are separate work.
+Human HTML and agent-readable Markdown share one content pipeline. Author guides in `apps/docs`; keep API comments in their owning package. Canonical API Markdown in `apps/docs/reference` is generated, committed for GitHub access, and used as website input. Do not edit it by hand or edit `.generated` files. The website currently uses the standard VitePress theme. Branding and layout are separate work.
 
 ## Supported text-first Markdown
 
@@ -55,7 +55,26 @@ Registration rejects unregistered production workspaces, undocumented export sub
 
 `docs:build` writes `.generated/content-model.json` and `.generated/api/api-model.json`. Schema version 1 retains resolved Markdown, structural tokens, headings, links, exact included examples, package status, stable symbol/member identities, parent/inheritance and visibility context, source provenance, rendered HTML routes, grouped signatures, package history, and a complete reflection-to-owner map. Declaration identities use the owning package, registered public export subpath, explicit namespace/declaration path, kind, and static/instance identity. TypeDoc's conditional entrypoint wrappers do not alter existing declaration keys when another package is registered; HTML routes remain separate mappings. Register distinct export subpaths for multiple entries in one package rather than relying on source filenames. The serialized TypeDoc reflection graph preserves generic types, overloads, getter/setter comments, examples, and symbol links for the next exporter. Reflection IDs are local references, not stable output identities.
 
-No `.txt` corpus is produced in this ticket. The following exporter will consume these shared sources and mappings; default module-member Markdown pages must not be mistaken for separate method/property chunks.
+## Canonical reference workflow
+
+After changing an API signature, comment, registered export, or source-derived helper, run `pnpm docs:generate`. Commit the resulting `apps/docs/reference/**/*.md` alongside the source. Methods, properties, accessors and constructors have canonical pages with owning-type and generic context; overloads stay together, inherited members remain discoverable, and export aliases point to the defining document.
+
+`docs:build` and `docs:check` regenerate expected reference in scratch space and compare the complete file set and UTF-8 bytes before publishing. Missing, changed or surplus pages fail with paths and the refresh command. Checking never silently repairs stale reference. `docs:dev` refreshes during source edits, writing only changed bytes. Generated API Markdown is exempt from formatting because it is byte-checked against TypeDoc output.
+
+## Six retrieval levels
+
+1. `/llms.txt`: small discovery following the [llms.txt proposal](https://llmstxt.org/), with title, summary, guidance and descriptive H2 link lists.
+2. Individual topics: clean `.md` at the same paths as HTML pages, with checked examples and callouts resolved. No per-page `.txt` twins.
+3. Topic, package and type indexes: summaries linking canonical documents and inherited members.
+4. Individual member pages: independently retrievable Markdown shared with the website, with overloads and links to owning/generic context.
+5. Section and package bundles under `/bundles/`: complete documents with clear boundaries and source links.
+6. `/llms-full.txt`: the entire substantive corpus, each canonical document once; indexes and other bundles are not recursively included.
+
+HTML advertises Markdown with `rel="alternate" type="text/markdown"` and discovery with `rel="describedby"`. Published Markdown links to Markdown resources; external links and code remain literal. API source links lead to TypeScript on GitHub. All outputs use the shared content model, not HTML scraping or separate AI prose.
+
+Bundle listings state scope and UTF-8 byte size. Clients may truncate large responses; server output remains complete. Prefer a topic/member for focused tasks, section/package bundles for broader work, and full corpus only when needed. Aggregate links resolve to canonical Markdown targets so repeated headings across documents remain unambiguous.
+
+Discovery/index/bundle outputs stay ignored in `.generated`; canonical API Markdown is the deliberate exception. Checks cover source-model completeness, discovery reachability, links/anchors, path collisions and stale files. Production-preview tests retrieve actual resources and reject HTML fallbacks.
 
 TypeDoc and its Markdown/VitePress integration are pinned to the accepted compatibility-proof versions. Its TypeScript 6 dependency is local to docs tooling. All project/tooling and maintained-example checks still use TypeScript 7. VitePress is invoked through its CLI and uses plain JavaScript configuration, avoiding unrelated framework declaration incompatibilities in project checking without weakening shared TypeScript options.
 

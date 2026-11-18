@@ -136,10 +136,15 @@ test("actual Turbo graph selects docs for source changes and invalidates its bui
     expect(
       coreTestGraph.tasks.find((task) => task.taskId === "@pomeranian/core#test")?.dependencies,
     ).toContain("@pomeranian/core#build");
+    const beforeReference = buildHash();
+    write("apps/docs/reference/type.md", "# Canonical API reference\n");
+    const docs = commit();
+    expect(selected(base, docs)).toEqual(["@repo/docs"]);
+    expect(buildHash()).not.toBe(beforeReference);
     const beforeEssential = buildHash();
     write("packages/lib-essential/source.mts", "export const value = 2;\n");
     const essential = commit();
-    expect(selected(base, essential)).toEqual(["@pomeranian/lib-essential", "@repo/docs"]);
+    expect(selected(docs, essential)).toEqual(["@pomeranian/lib-essential", "@repo/docs"]);
     expect(buildHash()).not.toBe(beforeEssential);
     const before = buildHash();
     write("packages/test-support/source.mts", "export const value = 2;\n");
