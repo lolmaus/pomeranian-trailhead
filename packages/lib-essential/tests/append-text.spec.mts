@@ -149,3 +149,13 @@ test("independent EditableText composition inherits fill/clear and sibling contr
   expect("appendText" in essential.Element.create(page, "input")).toBe(false);
   expect("appendText" in essential.ContentEditable.create(page, "input")).toBe(false);
 });
+
+test("append rejects untyped non-string arguments instead of coercing", async ({ page }) => {
+  await page.setContent("<input value=old>");
+  const field = essential.TextInput.create(page, "input");
+  for (const value of [undefined, 3, null]) {
+    await expect(field.locator.fill(value as unknown as string)).rejects.toThrow();
+    await expect(field.appendText(value as unknown as string)).rejects.toThrow();
+    await expect(field.locator).toHaveValue("old");
+  }
+});
