@@ -177,3 +177,42 @@ export function controlContracts(page: Page, app: App) {
   rootFixture(ControlRoot);
   return [text, area, checkbox, radio, select, editable];
 }
+
+import { EditableText } from "../src/index.js";
+export function appendContracts(page: Page, app: App) {
+  const text = TextInput.create(page, "input");
+  equal<Equal<typeof text.appendText, Locator["fill"]>>();
+  equal<Equal<typeof TextArea.prototype.appendText, Locator["fill"]>>();
+  class Custom extends DomPageObject.with(EditableText) {}
+  const custom = Custom.create(page, "input");
+  equal<Equal<typeof custom.appendText, Locator["fill"]>>();
+  class Field<
+    Root extends UnboundRoot = UnboundRoot,
+    Value = string,
+    Extra = boolean,
+  > extends TextInput<Root> {
+    declare readonly [defaultInstanceType]: {
+      instance: Field;
+      parameters: { root: Root; value: Value; extra: Extra };
+    };
+    override get root(): Root {
+      return super.root;
+    }
+    override defaultTarget = "input";
+    value: Value | undefined;
+    extra: Extra | undefined;
+  }
+  class Bound extends Field<App, number, Date> {}
+  const bound = Bound.create(app);
+  equal<Equal<typeof bound, Bound>>();
+  equal<Equal<typeof bound.value, number | undefined>>();
+  equal<Equal<typeof bound.extra, Date | undefined>>();
+  // @ts-expect-error append requires text
+  text.appendText();
+  // @ts-expect-error append accepts string only
+  text.appendText(123);
+  // @ts-expect-error native options only
+  text.appendText("x", { keyboard: true });
+  // @ts-expect-error grouping bases lack Locator
+  PageObject.with(EditableText);
+}

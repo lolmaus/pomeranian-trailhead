@@ -106,3 +106,46 @@ test("native bounded errors and missing-target waiting", async ({ page }) => {
   await page.setContent("<input><input>");
   await expect(field.appendText("x", { timeout: 100 })).rejects.toThrow("strict mode");
 });
+
+test("append retains native sanitization, maxlength and force behavior without keyboard events", async ({
+  page,
+}) => {
+  await page.setContent(
+    "<input id=append maxlength=4 value=ab><input id=native maxlength=4 value=ab>",
+  );
+  await page.evaluate(() => {
+    (window as unknown as { keys: number }).keys = 0;
+    document.addEventListener("keydown", () => {
+      (window as unknown as { keys: number }).keys++;
+    });
+  });
+  const append = essential.TextInput.create(page, "#append");
+  await append.selectText();
+  await append.appendText("cdef\ng", { force: true, timeout: 500 });
+  await page.locator("#native").fill("abcdef\ng", { force: true, timeout: 500 });
+  expect(await append.locator.inputValue()).toBe(await page.locator("#native").inputValue());
+  expect(await page.evaluate(() => (window as unknown as { keys: number }).keys)).toBe(0);
+});
+
+test("independent EditableText composition inherits fill/clear and sibling controls stay separate", async ({
+  page,
+}) => {
+  const { DomPageObject } = await import("@pomeranian/core");
+  class Custom extends DomPageObject.with(essential.EditableText) {}
+  class ValueOnly extends DomPageObject.with(essential.EditableValue) {}
+  class Search extends essential.TextInput {
+    override defaultTarget = "input";
+  }
+  await page.setContent("<input>");
+  const custom = Custom.create(page, "input");
+  await custom.fill("a");
+  await custom.appendText("b");
+  await expect(custom.locator).toHaveValue("ab");
+  await custom.clear();
+  await Search.create(page).appendText("subclass");
+  await expect(custom.locator).toHaveValue("subclass");
+  expect(essential.TextArea.prototype instanceof essential.TextInput).toBe(false);
+  expect("appendText" in ValueOnly.create(page, "input")).toBe(false);
+  expect("appendText" in essential.Element.create(page, "input")).toBe(false);
+  expect("appendText" in essential.ContentEditable.create(page, "input")).toBe(false);
+});

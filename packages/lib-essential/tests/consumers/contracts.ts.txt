@@ -145,3 +145,21 @@ PageObject.with(Checkable);
 // @ts-expect-error grouping base lacks locator
 PageObject.with(SelectableOptions);
 }
+
+import {EditableText} from '@pomeranian/lib-essential/editable-text';
+export function appendContracts(page:Page,app:App) {
+ const field=LibraryField.create(page);type Signature=Check<Equal<typeof field.appendText,Locator['fill']>>;
+ class BoundAppend extends LibraryField<App,number,Date> {}
+ const bound=BoundAppend.create(app);type Exact=Check<Equal<typeof bound,BoundAppend>>;
+ type Root=Check<Equal<typeof bound.root,App>>;
+ type Value=Check<Equal<ReturnType<typeof bound.value>,number|undefined>>;
+ type Extra=Check<Equal<ReturnType<typeof bound.extra>,Date|undefined>>;
+ class Independent extends Direct.with(EditableText) {}
+ Independent.create(page,'input').appendText('x',{force:true,timeout:100});
+ // @ts-expect-error grouping base lacks locator
+ PageObject.with(EditableText);
+ // @ts-expect-error append string required
+ field.appendText();
+ // @ts-expect-error native option contract
+ field.appendText('x',{delay:2});
+}
