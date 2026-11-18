@@ -1,10 +1,10 @@
 # Essential capability ownership and action contract
 
-This is the replacement contract approved in [the capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42). It deliberately supersedes universal action ownership from [the initial essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27). The current unreleased implementation still contains the eight basic interactions and seven native form actions on `Element`; implementation tickets below deliver the replacement before its APIs are documented as available. This specification is not an implemented API reference.
+This is the replacement contract approved in [the capability ownership and sharing decision (#42)](https://github.com/lolmaus/pomeranian-trailhead/issues/42). It deliberately supersedes universal action ownership from [the initial essential action decision (#27)](https://github.com/lolmaus/pomeranian-trailhead/issues/27). The unreleased implementation now supplies the five action bundles and six foundational controls described in the [delivered API reference](../api/lib-essential.md). This specification also describes pending append, file and additional-flavor slices; their contracts are not availability claims.
 
 ## Approved capability bundles
 
-The approved replacement selects the following names and composition hierarchy. These APIs remain pending their implementation slices; the decision itself delivered the contract and build homes, not runtime code.
+The approved replacement selects the following names and composition hierarchy. `Fillable`, `EditableValue`, `Checkable`, `CheckableUncheckable` and `SelectableOptions` are delivered. `EditableText` and `SelectableFiles` remain pending their separate slices.
 
 | Bundle                 | Builds on       | Adds                    |
 | ---------------------- | --------------- | ----------------------- |
@@ -31,8 +31,8 @@ Consumers select the appropriate bundle rather than stacking overlapping bundles
 The selected composition mechanism is public and reusable for component logic, including methods, private state and child page objects. An inherited static `PageObject.with(...)` helper uses its receiver as the base and applies capability factories from left to right. It returns the composed constructor without mutating the receiver. Ordinary consumers retain named class declarations:
 
 ```ts
-// Planned authoring form, not an API available in the current implementation.
-class SearchField extends Element.with(EditableText, Loading) {}
+// EditableValue is delivered; Loading is a consumer-defined capability.
+class SearchField extends Element.with(EditableValue, Loading) {}
 ```
 
 Here `Loading` illustrates a consumer-defined capability. Each capability factory accepts a compatible constructor and returns a class extending it; bundles can build directly on other bundles. Base requirements describe the object features needed by the implementation, such as DOM access, rather than proving a live target's HTML type. Context-only capabilities can support grouping page objects too. Classes declare intended capabilities, and native actions retain their own applicability, waiting and error behavior.
@@ -43,7 +43,7 @@ Keep targets live: input types and matched elements can change after creation, a
 
 Changed in @pomeranian/core@Unreleased: essential classes inherit technically public constructors for generic capability factories; direct construction remains unsupported.
 
-Core constructors are technically public for the typed factory pattern, but direct `new` is unsupported. Core composition is implemented; see the checked [authoring examples](authoring.md). Essential action migration remains separate in #44. Consumers declare a named class extending the composed base, then use that class's inherited `create` or the root fixture. Direct `Base.with(...).create()` is outside supported checked authoring: the tested computed factory result loses its added methods in the inferred type. Construction finalizes after concrete fields initialize. Preserve field-based state/children, root availability before child initialization, late `defaultTarget` capture and fresh concrete reconstruction without copying accumulated state or children.
+Core constructors are technically public for the typed factory pattern, but direct `new` is unsupported. Core composition is implemented; see the checked [authoring examples](authoring.md). Essential action migration is delivered in #44; the API page includes checked composition and migration examples. Consumers declare a named class extending the composed base, then use that class's inherited `create` or the root fixture. Direct `Base.with(...).create()` is outside supported checked authoring: the tested computed factory result loses its added methods in the inferred type. Construction finalizes after concrete fields initialize. Preserve field-based state/children, root availability before child initialization, late `defaultTarget` capture and fresh concrete reconstruction without copying accumulated state or children.
 
 Reusable generic composed classes retain complete fresh `defaultInstanceType` metadata and use a forwarding `root` getter where required to preserve the exact declared root type. This is generic library-author boilerplate, not a requirement for every mixin, ordinary page object or concrete subclass. Concrete descendants inherit the getter. Documentation and checked examples must show when it is needed; the bounded compiler proof recovered exact root typing with `override get root(): Root { return super.root; }` rather than a consumer cast.
 
@@ -51,7 +51,7 @@ Capability-contributed children are a key feature. Ordinary compatible field ove
 
 Collision checks belong to the optional standalone CLI, with no runtime collision guard or additional allow-annotation API. Checked mode must inspect original contributions, signatures and member kinds, recognize transitive bundles and compatible overrides, and report unsupported/unverifiable cases explicitly. Successful strict compiler checks are also required for a checked safety claim. Unchecked consumers retain ordinary JavaScript precedence and its known generic-intersection typing limitations; core/essential runtime imports must not require the checker or compiler implementation.
 
-The combined prototype provides bounded compiler, real-Chromium lifecycle, reconstruction and packed-declaration evidence. It implements only one/two-capability overloads, which is not a selected shipping ceiling. Production delivery still needs the intended flat-list surface and dependent requirements verified, the actual core/essential packages checked, and full CLI/source/compiler-version coverage established before those guarantees are claimed.
+The combined prototype provides bounded compiler, real-Chromium lifecycle, reconstruction and packed-declaration evidence. It implements only one/two-capability overloads, which is not a selected shipping ceiling. Core #43 delivers the flat-list surface and dependent requirements, and essential #44 checks actual composed controls and packed consumers. Full optional CLI/source checking remains #25; do not claim its guarantees from compiler checks alone.
 
 ### Assertion capability placement
 
@@ -118,7 +118,7 @@ Future methods may append extra positional arguments after native arguments, and
 
 ## TextInput append behavior
 
-`TextInput<Root>` and `TextArea<Root>` are sibling classes composing `EditableText` above `Element<Root>`. `EditableText` inherits `fill` and `clear` through `EditableValue`/`Fillable` and owns the single `appendText(text, options?)` implementation, returning `Promise<void>` with native `fill`-compatible options. Text-like flavor subclasses inherit from `TextInput`. The initial migration supplies fill/clear first; revised append ticket #37 delivers the shared append slice.
+`TextInput<Root>` and `TextArea<Root>` are sibling classes currently composing `EditableValue` above `Element<Root>`; #37 will replace that bundle with `EditableText`. `EditableText` inherits `fill` and `clear` through `EditableValue`/`Fillable` and owns the single `appendText(text, options?)` implementation, returning `Promise<void>` with native `fill`-compatible options. Text-like flavor subclasses inherit from `TextInput`. The initial migration supplies fill/clear first; revised append ticket #37 delivers the shared append slice.
 
 The action reads the existing value internally, concatenates the supplied string at the end and updates through native `fill`, regardless of the caret or selection. It preserves existing text, not a sequence of keyboard events. Tests requiring per-character keyboard events can use inherited `pressSequentially`.
 
@@ -132,7 +132,9 @@ Preserve core's exact factory/root/generic and composition contracts. Use existi
 
 ## Delivery and explicit follow-on work
 
-Every feature slice includes incremental real-Chromium TDD as appropriate, exact types, applicable stories, source/API comments, checked examples, migration/authoring guidance, package-qualified Unreleased history, packed-consumer compatibility and human/AI documentation checks. Current runtime APIs remain in place until their coordinated migration lands. No npm publication is authorized.
+Changed in @pomeranian/lib-essential@Unreleased: five reusable action bundles and six foundational controls replace universal Element control-action ownership, with no compatibility forwarding. The [API guide](../api/lib-essential.md) provides the complete delivered-owner table and checked before/after migration.
+
+Every feature slice includes incremental real-Chromium TDD as appropriate, exact types, applicable stories, source/API comments, checked examples, migration/authoring guidance, package-qualified Unreleased history, packed-consumer compatibility and human/AI documentation checks. The coordinated control-action migration has landed; additional methods remain in their named follow-on tickets. No npm publication is authorized.
 
 Approved implementation homes:
 
@@ -164,11 +166,11 @@ Supported minimum and repository-current Playwright: 1.64.1 (the pins coincide).
 | -------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------- |
 | click, dblclick, hover, focus, blur, press, pressSequentially, type (deprecated) | `Element`                       | Delivered in #34; retained                                          |
 | selectText                                                                       | `Element`                       | Delivered in #35; retained                                          |
-| fill                                                                             | `Fillable`                      | Currently on `Element`; migrate in #44                              |
-| clear                                                                            | `EditableValue`                 | Currently on `Element`; migrate in #44                              |
-| check                                                                            | `Checkable`                     | Currently on `Element`; migrate in #44                              |
-| uncheck, setChecked                                                              | `CheckableUncheckable`          | Currently on `Element`; migrate in #44                              |
-| selectOption                                                                     | `SelectableOptions`             | Currently on `Element`; migrate in #44                              |
+| fill                                                                             | `Fillable`                      | Delivered in #44                                                    |
+| clear                                                                            | `EditableValue`                 | Delivered in #44                                                    |
+| check                                                                            | `Checkable`                     | Delivered in #44                                                    |
+| uncheck, setChecked                                                              | `CheckableUncheckable`          | Delivered in #44                                                    |
+| selectOption                                                                     | `SelectableOptions`             | Delivered in #44                                                    |
 | dispatchEvent, dragTo, scrollIntoViewIfNeeded, tap                               | `Element`                       | Pending revised #36                                                 |
 | setInputFiles                                                                    | `SelectableFiles` / `FileInput` | Pending revised #36; never added to `Element` under the replacement |
 | appendText (additional operation)                                                | `EditableText`                  | Pending revised #37                                                 |

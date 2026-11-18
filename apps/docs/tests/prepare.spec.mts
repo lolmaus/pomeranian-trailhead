@@ -123,6 +123,38 @@ test("builds site inputs and shared model from actual comments and checked guide
     expect(elementContent).toContain("@pomeranian/lib-essential");
     expect(elementContent).toContain("#### Deprecated");
     expect(elementContent).toContain("Use fill for replacement or pressSequentially");
+    const essential = model.api.symbols.filter(
+      (symbol) => symbol.package === "@pomeranian/lib-essential",
+    );
+    const elementMembers = essential.filter((symbol) => symbol.parent === element?.key);
+    expect(elementMembers.map((symbol) => symbol.name)).not.toContain("fill");
+    for (const [name, methods] of [
+      ["TextInput", ["fill", "clear"]],
+      ["TextArea", ["fill", "clear"]],
+      ["ContentEditable", ["fill", "clear"]],
+      ["Checkbox", ["check", "uncheck", "setChecked"]],
+      ["Radio", ["check"]],
+      ["Select", ["selectOption"]],
+    ] as const) {
+      const owner = essential.find(
+        (symbol) => symbol.name === name && symbol.kind === "Class" && !symbol.aliasOf,
+      );
+      expect(owner, name).toBeDefined();
+      const members = essential.filter((symbol) => symbol.parent === owner?.key);
+      for (const method of methods) {
+        const inherited = members.find((symbol) => symbol.name === method);
+        expect(inherited, `${name}.${method}`).toBeDefined();
+        expect(inherited?.inherited, `${name}.${method}`).toBe(true);
+        expect(inherited?.history).toContain(
+          "Available since @pomeranian/lib-essential@Unreleased",
+        );
+      }
+      if (name === "Radio") {
+        expect(members.map((symbol) => symbol.name)).not.toContain("uncheck");
+        expect(members.map((symbol) => symbol.name)).not.toContain("setChecked");
+      }
+      expect(members.map((symbol) => symbol.name)).not.toContain("appendText");
+    }
     const legacy = model.api.symbols.find(
       (symbol) => symbol.package === "@pomeranian/lib-essential" && symbol.name === "type",
     );

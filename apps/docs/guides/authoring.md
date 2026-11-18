@@ -30,6 +30,12 @@ Compose the generic constructor first, then apply the wrapper's type arguments i
 
 `checkLibrary` verifies result/default conformance. TypeScript checks incompatible root contexts, target arguments, capability requirements and exact factory results. It does not prohibit technically public construction. Its constructor comparison is coarse: constructor bivariance, erased generic parameters and structural typing leave unsupported source forms that the compiler can accept.
 
+## Essential action bundles
+
+Available since @pomeranian/lib-essential@Unreleased.
+
+The essential package supplies reusable Locator-based factories and six foundational controls. Use `EditableValue` once for fill/clear rather than stacking it with `Fillable`; use `CheckableUncheckable` once for check/uncheck/setChecked. Factories also work above a custom DOM component base. The [essential migration and authoring guide](../api/lib-essential.md#migration-from-universal-element-actions) includes checked generic metadata/root-getter and custom-base examples. Control class names express intent, with native applicability evaluated per action on the live target. Assertions remain independently composable under #28.
+
 ## Contributed children and initialization
 
 <!-- @example examples/composition.spec.mts#capability-children -->

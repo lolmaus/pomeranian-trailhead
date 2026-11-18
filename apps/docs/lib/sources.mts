@@ -75,10 +75,24 @@ export function assertSources(
 
 export async function registeredSources(repo: string): Promise<RegisteredSource[]> {
   const sources: RegisteredSource[] = [
-    ...["index", "element"].map((module): RegisteredSource => ({
+    ...[
+      "index",
+      "element",
+      "fillable",
+      "editable-value",
+      "checkable",
+      "checkable-uncheckable",
+      "selectable-options",
+      "text-input",
+      "text-area",
+      "checkbox",
+      "radio",
+      "select",
+      "content-editable",
+    ].map((module): RegisteredSource => ({
       package: "@pomeranian/lib-essential",
       workspace: "packages/lib-essential",
-      export: module === "index" ? "." : "./element",
+      export: module === "index" ? "." : `./${module}`,
       entry: path.join(repo, `packages/lib-essential/src/${module}.ts`),
       status: "production",
       guides: ["api/lib-essential.md", "guides/essential-milestone.md"],
