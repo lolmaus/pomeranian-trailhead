@@ -30,6 +30,7 @@ test("builds site inputs and shared model from actual comments and checked guide
       expect.arrayContaining([
         "Fillable",
         "EditableValue",
+        "EditableText",
         "Checkable",
         "CheckableUncheckable",
         "SelectableOptions",
@@ -135,8 +136,8 @@ test("builds site inputs and shared model from actual comments and checked guide
     for (const name of ["fill", "clear", "check", "uncheck", "setChecked", "selectOption"])
       expect(elementNames).not.toContain(name);
     for (const [name, methods] of [
-      ["TextInput", ["fill", "clear"]],
-      ["TextArea", ["fill", "clear"]],
+      ["TextInput", ["fill", "clear", "appendText"]],
+      ["TextArea", ["fill", "clear", "appendText"]],
       ["ContentEditable", ["fill", "clear"]],
       ["Checkbox", ["check", "uncheck", "setChecked"]],
       ["Radio", ["check"]],
@@ -159,7 +160,15 @@ test("builds site inputs and shared model from actual comments and checked guide
         expect(members.map((symbol) => symbol.name)).not.toContain("uncheck");
         expect(members.map((symbol) => symbol.name)).not.toContain("setChecked");
       }
-      expect(members.map((symbol) => symbol.name)).not.toContain("appendText");
+      if (name !== "TextInput" && name !== "TextArea")
+        expect(members.map((symbol) => symbol.name)).not.toContain("appendText");
+    }
+    for (const filename of ["api/lib-essential.md", "public/text/api/lib-essential.txt"]) {
+      const guide = await readFile(path.join(model.site, filename), "utf8");
+      expect(guide).toContain("appendText");
+      expect(guide).toContain("not atomic");
+      expect(guide).toContain("/editable-text");
+      expect(guide).toContain('await form.Name.appendText(" Hopper")');
     }
     const legacy = model.api.symbols.find(
       (symbol) => symbol.package === "@pomeranian/lib-essential" && symbol.name === "type",

@@ -80,6 +80,7 @@ export async function registeredSources(repo: string): Promise<RegisteredSource[
       "element",
       "fillable",
       "editable-value",
+      "editable-text",
       "checkable",
       "checkable-uncheckable",
       "selectable-options",
