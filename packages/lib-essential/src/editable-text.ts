@@ -14,10 +14,15 @@ export function EditableText<T extends Constructor<{ readonly locator: Locator }
      * Options, waiting, constraints and errors remain native fill behavior; this does
      * not promise per-character keyboard events or rich-editor formatting preservation.
      * Reading and filling are not atomic against application edits or DOM replacement.
+     * @param text Text to append after the current value, ignoring caret and selection.
+     * @param options Native fill options: force bypasses actionability checks,
+     * timeout applies independently to the preliminary read and native fill (not a
+     * shared total budget), signal cancels native fill, and deprecated noWaitAfter
+     * has no effect at the supported Playwright pin.
      * @since @pomeranian/lib-essential@Unreleased
      */
-    async appendText(...args: Parameters<Locator["fill"]>): Promise<void> {
-      const [text, options] = args;
+    async appendText(text: string, options?: Parameters<Locator["fill"]>[1]): Promise<void> {
+      if (typeof text !== "string") throw new TypeError("appendText requires string text");
       const locator = this.locator;
       const value = await locator.evaluate(
         (node) => {
