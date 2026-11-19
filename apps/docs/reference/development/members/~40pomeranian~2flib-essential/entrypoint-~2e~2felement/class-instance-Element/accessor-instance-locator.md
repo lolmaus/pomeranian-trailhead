@@ -6,7 +6,7 @@
 
 > **get** **locator**(): `Locator`
 
-Defined in: packages/core/dist/dom-page-object.d.ts:36
+Defined in: packages/core/dist/dom-page-object.d.ts:62
 
 A live native query, memoized only after successful validation.
 Access rejects while this object or an ancestor initializes. Factory, result,

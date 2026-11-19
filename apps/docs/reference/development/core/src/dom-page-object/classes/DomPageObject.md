@@ -2,7 +2,7 @@
 
 # Class: DomPageObject\<Root\>
 
-Defined in: [packages/core/src/dom-page-object.ts:10](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L10)
+Defined in: [packages/core/src/dom-page-object.ts:12](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L12)
 
 DOM-associated page object with a lazy native Locator.
 
@@ -37,6 +37,10 @@ Available since @pomeranian/core@Unreleased
 
 ## Methods
 
+- [filter](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-filter.md)
+- [first](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-first.md)
+- [last](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-last.md)
+- [nth](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-nth.md)
 - [create](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-static-create.md)
 - [with](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-static-with.md)
 
@@ -69,6 +73,26 @@ Available since @pomeranian/core@Unreleased
 ## root {#root-1}
 
 [root](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/accessor-instance-root.md)
+
+
+## filter {#filter}
+
+[filter](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-filter.md)
+
+
+## first {#first}
+
+[first](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-first.md)
+
+
+## last {#last}
+
+[last](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-last.md)
+
+
+## nth {#nth}
+
+[nth](../../../../members/~40pomeranian~2fcore/entrypoint-~2e~2fdom-page-object/class-instance-DomPageObject/method-instance-nth.md)
 
 
 ## create {#create}

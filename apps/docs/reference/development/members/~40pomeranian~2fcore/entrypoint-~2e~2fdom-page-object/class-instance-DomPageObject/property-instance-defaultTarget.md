@@ -4,7 +4,7 @@
 
 > `readonly` **defaultTarget**: [`Target`](../../../../core/src/target/type-aliases/Target.md) \| `undefined` = `undefined`
 
-Defined in: [packages/core/src/dom-page-object.ts:18](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L18)
+Defined in: [packages/core/src/dom-page-object.ts:20](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L20)
 
 Instance default used when no explicit target was supplied.
 

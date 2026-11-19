@@ -15,4 +15,4 @@ Public defining modules are `page-object`, `dom-page-object`, `root-fixture`, `a
 
 Read [construction and targets](../guides/construction.md), [library authoring](../guides/authoring.md), [standalone Playwright](../recipes/standalone.md) and [multiple Pages](../recipes/multiple-pages.md). Exact source-generated signatures appear in [the generated reference](../reference/development/index.md). The historical URL namespace also contains private test infrastructure; each page states its own package status.
 
-Public narrowing, selector setup/Page configuration and the optional authoring checker have separate implementation tickets. Element belongs to lib-essential; no placeholder is exported from core.
+Public first/last/nth/filter narrowing is delivered; see [DOM narrowing](../guides/narrowing.md). Selector setup/Page configuration and the optional authoring checker have separate implementation tickets. Element belongs to lib-essential; no placeholder is exported from core.

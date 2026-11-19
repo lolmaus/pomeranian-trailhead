@@ -43,8 +43,12 @@ Available since @pomeranian/lib-essential@Unreleased
 - [click](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-click.md)
 - [dblclick](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-dblclick.md)
 - [fill](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-fill.md)
+- [filter](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-filter.md)
+- [first](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-first.md)
 - [focus](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-focus.md)
 - [hover](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-hover.md)
+- [last](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-last.md)
+- [nth](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-nth.md)
 - [press](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-press.md)
 - [pressSequentially](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-pressSequentially.md)
 - [selectText](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-selectText.md)
@@ -113,6 +117,16 @@ Available since @pomeranian/lib-essential@Unreleased
 [fill](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-fill.md)
 
 
+## filter {#filter}
+
+[filter](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-filter.md)
+
+
+## first {#first}
+
+[first](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-first.md)
+
+
 ## focus {#focus}
 
 [focus](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-focus.md)
@@ -121,6 +135,16 @@ Available since @pomeranian/lib-essential@Unreleased
 ## hover {#hover}
 
 [hover](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-hover.md)
+
+
+## last {#last}
+
+[last](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-last.md)
+
+
+## nth {#nth}
+
+[nth](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2ftext-area/class-instance-TextArea/method-instance-nth.md)
 
 
 ## press {#press}

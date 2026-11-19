@@ -6,7 +6,7 @@
 
 > **new DomPageObject**\<`Root`\>(`context`, `target?`, `asRoot?`): [`DomPageObject`](../../../../core/src/dom-page-object/classes/DomPageObject.md)\<`Root`\>
 
-Defined in: [packages/core/src/dom-page-object.ts:28](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L28)
+Defined in: [packages/core/src/dom-page-object.ts:30](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L30)
 
 Technically public for capabilities; construct through named create/rootFixture.
 Inherit the constructor; defaults are captured after subclass fields complete.

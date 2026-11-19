@@ -13,6 +13,7 @@ test("builds site inputs and shared model from actual comments and checked guide
   try {
     const model = await prepare(output);
     expect(model.pages.some((page) => page.path === "getting-started.md")).toBe(true);
+    expect(model.pages.some((page) => page.path === "guides/narrowing.md")).toBe(true);
     expect(
       model.pages.some(
         (page) => page.path === "reference/development/config/variables/testConfig.md",
@@ -28,6 +29,10 @@ test("builds site inputs and shared model from actual comments and checked guide
     );
     expect(model.api?.symbols.map((symbol) => symbol.name)).toEqual(
       expect.arrayContaining([
+        "first",
+        "last",
+        "nth",
+        "filter",
         "Fillable",
         "EditableValue",
         "EditableText",

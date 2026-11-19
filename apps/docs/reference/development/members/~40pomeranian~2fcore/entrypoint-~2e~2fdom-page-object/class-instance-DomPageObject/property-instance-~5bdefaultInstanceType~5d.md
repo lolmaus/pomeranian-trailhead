@@ -4,7 +4,7 @@
 
 > `readonly` **\[defaultInstanceType\]**: `object`
 
-Defined in: [packages/core/src/dom-page-object.ts:14](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L14)
+Defined in: [packages/core/src/dom-page-object.ts:16](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L16)
 
 Generic factory metadata.
 

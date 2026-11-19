@@ -43,6 +43,7 @@ export default {
         text: "Guides and recipes",
         items: [
           { text: "Construction and targets", link: "/guides/construction" },
+          { text: "DOM narrowing", link: "/guides/narrowing" },
           { text: "Library authoring", link: "/guides/authoring" },
           { text: "Standalone Playwright", link: "/recipes/standalone" },
           { text: "Multiple Pages and frames", link: "/recipes/multiple-pages" },

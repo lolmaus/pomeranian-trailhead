@@ -41,8 +41,12 @@ Available since @pomeranian/lib-essential@Unreleased
 - [check](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-check.md)
 - [click](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-click.md)
 - [dblclick](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-dblclick.md)
+- [filter](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-filter.md)
+- [first](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-first.md)
 - [focus](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-focus.md)
 - [hover](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-hover.md)
+- [last](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-last.md)
+- [nth](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-nth.md)
 - [press](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-press.md)
 - [pressSequentially](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-pressSequentially.md)
 - [selectText](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-selectText.md)
@@ -101,6 +105,16 @@ Available since @pomeranian/lib-essential@Unreleased
 [dblclick](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-dblclick.md)
 
 
+## filter {#filter}
+
+[filter](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-filter.md)
+
+
+## first {#first}
+
+[first](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-first.md)
+
+
 ## focus {#focus}
 
 [focus](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-focus.md)
@@ -109,6 +123,16 @@ Available since @pomeranian/lib-essential@Unreleased
 ## hover {#hover}
 
 [hover](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-hover.md)
+
+
+## last {#last}
+
+[last](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-last.md)
+
+
+## nth {#nth}
+
+[nth](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fradio/class-instance-Radio/method-instance-nth.md)
 
 
 ## press {#press}

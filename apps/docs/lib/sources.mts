@@ -107,6 +107,7 @@ export async function registeredSources(repo: string): Promise<RegisteredSource[
         status: "production",
         guides: [
           "guides/construction.md",
+          "guides/narrowing.md",
           "guides/authoring.md",
           "recipes/standalone.md",
           "recipes/multiple-pages.md",

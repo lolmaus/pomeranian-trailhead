@@ -6,7 +6,7 @@
 
 > **get** **locator**(): `Locator`
 
-Defined in: [packages/core/src/dom-page-object.ts:58](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L58)
+Defined in: [packages/core/src/dom-page-object.ts:101](https://github.com/lolmaus/pomeranian-trailhead/blob/main/packages/core/src/dom-page-object.ts#L101)
 
 A live native query, memoized only after successful validation.
 Access rejects while this object or an ancestor initializes. Factory, result,

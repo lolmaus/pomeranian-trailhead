@@ -40,8 +40,12 @@ Available since @pomeranian/lib-essential@Unreleased
 - [blur](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-blur.md)
 - [click](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-click.md)
 - [dblclick](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-dblclick.md)
+- [filter](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-filter.md)
+- [first](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-first.md)
 - [focus](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-focus.md)
 - [hover](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-hover.md)
+- [last](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-last.md)
+- [nth](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-nth.md)
 - [press](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-press.md)
 - [pressSequentially](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-pressSequentially.md)
 - [selectOption](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-selectOption.md)
@@ -96,6 +100,16 @@ Available since @pomeranian/lib-essential@Unreleased
 [dblclick](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-dblclick.md)
 
 
+## filter {#filter}
+
+[filter](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-filter.md)
+
+
+## first {#first}
+
+[first](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-first.md)
+
+
 ## focus {#focus}
 
 [focus](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-focus.md)
@@ -104,6 +118,16 @@ Available since @pomeranian/lib-essential@Unreleased
 ## hover {#hover}
 
 [hover](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-hover.md)
+
+
+## last {#last}
+
+[last](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-last.md)
+
+
+## nth {#nth}
+
+[nth](../../../../members/~40pomeranian~2flib-essential/entrypoint-~2e~2fselect/class-instance-Select/method-instance-nth.md)
 
 
 ## press {#press}

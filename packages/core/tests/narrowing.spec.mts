@@ -43,9 +43,7 @@ test("filter captures inherited criteria and regex before resolving", async ({ p
     calls++;
     return page.locator("section");
   });
-  const filtered = (source as DomPageObject & { filter(options?: object): DomPageObject }).filter(
-    options,
-  );
+  const filtered = source.filter(options);
   expect(reads).toBe(1);
   expect(calls).toBe(0);
   regex.compile("Beta");

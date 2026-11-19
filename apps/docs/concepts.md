@@ -1,6 +1,6 @@
 # Concepts and implementation boundaries
 
-The following vocabulary was confirmed in [the foundation decision](https://github.com/lolmaus/pomeranian-trailhead/issues/4#issuecomment-6513794545). Core construction and DOM targeting are implemented. Actions/assertions, public narrowing, selector setup and reporting remain separate work.
+The following vocabulary was confirmed in [the foundation decision](https://github.com/lolmaus/pomeranian-trailhead/issues/4#issuecomment-6513794545). Core construction and DOM targeting are implemented. Public [DOM narrowing](guides/narrowing.md) is delivered. Assertion APIs, selector setup and reporting remain separate work; essential actions are documented in the essential guide.
 
 | Term                       | Meaning                                                                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,6 +44,6 @@ The [initial essential action specification](guides/essential-milestone.md) reco
 
 ## Production construction and historical evidence
 
-The [throwaway proof](guides/factory-proof.md) demonstrates nullable versus application-bound roots, inherited factories, ordinary child fields, instance defaults, and field-based state. It uses string targets only. The production core now implements CSS/Locator/factory targets and internal reconstruction seams, documented in [construction](guides/construction.md). Public narrowing, naming, and production actions/assertions remain separate work.
+The [throwaway proof](guides/factory-proof.md) demonstrates nullable versus application-bound roots, inherited factories, ordinary child fields, instance defaults, and field-based state. It uses string targets only. The production core now implements CSS/Locator/factory targets and internal reconstruction seams, documented in [construction](guides/construction.md). Public [DOM narrowing](guides/narrowing.md) is delivered. Naming and assertion APIs remain separate work.
 
 Prototype classes called `PageObject`, `DomPageObject`, and `Element` are useful evidence for that bounded contract. They are not exported production package APIs. [Package reference pages](api/index.md) link the implemented core signatures separately from those proofs.
