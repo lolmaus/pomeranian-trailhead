@@ -2,7 +2,7 @@ export default {
   title: "Pomeranian",
   description: "Readable, typed page objects for Playwright. Development documentation.",
   base: "/",
-  cleanUrls: false,
+  cleanUrls: true,
   // Markdown in public is downloaded verbatim, not a second set of website pages.
   srcExclude: ["public/**"],
   transformPageData(pageData) {

@@ -1,5 +1,28 @@
 import { test, expect } from "@playwright/test";
 
+test("extensionless links keep client navigation, direct loading and Markdown discovery", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/");
+  const link = page.getByRole("link", { name: "Getting started", exact: true }).first();
+  await expect(link).toHaveAttribute("href", "/getting-started");
+  await page.evaluate(() => Reflect.set(window, "__pomeranianNavigation", true));
+  await link.click();
+  await expect(page).toHaveURL(/\/getting-started$/);
+  await expect(page.getByRole("heading", { level: 1, name: /Getting started/i })).toBeVisible();
+  expect(await page.evaluate(() => Reflect.get(window, "__pomeranianNavigation"))).toBe(true);
+  await page.reload();
+  await expect(page.getByRole("heading", { level: 1, name: /Getting started/i })).toBeVisible();
+  await expect(page.locator('head link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
+    "href",
+    "/getting-started.md",
+  );
+  const markdown = await request.get("/getting-started.md");
+  expect(markdown.ok()).toBe(true);
+  expect(await markdown.text()).toContain("# Getting started");
+});
+
 test("built development site navigates to honest package status and generated reference", async ({
   page,
 }) => {
@@ -33,9 +56,10 @@ test("built development site navigates to honest package status and generated re
   await page.goto("/reference/development/lib-essential/src/text-input/classes/TextInput.html");
   await page.locator("main a").filter({ hasText: "appendText" }).first().click();
   await expect(page.locator("main h1")).toContainText("appendText");
+  await expect(page).not.toHaveURL(/\.html(?:#|$)/);
   await expect(page.locator('head link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
     "href",
-    new URL(page.url()).pathname.replace(/\.html$/, ".md"),
+    new URL(page.url()).pathname.replace(/\.html$/, "") + ".md",
   );
   expect(errors).toEqual([]);
 });
