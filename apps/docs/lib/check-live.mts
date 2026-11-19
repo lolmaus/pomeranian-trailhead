@@ -108,12 +108,15 @@ export async function checkLive(origin: string, artifact?: string): Promise<stri
   )
     throw new Error("Wrong production API content");
   const bundles = await retrieve("/indexes/bundles.md");
+  for (const kind of ["sections", "packages"])
+    requireLink(bundles, ({ href }) => href.startsWith(`/bundles/${kind}/`), `${kind} bundle`);
+  requireLink(bundles, ({ href }) => href === "/llms-full.txt", "full-corpus bundle");
   for (const bundle of links(bundles)) {
     const body = await retrieve(bundle.href);
     if (!body.includes("<!-- BEGIN DOCUMENT:") || !body.includes("<!-- END DOCUMENT:"))
       throw new Error(`Incomplete bundle: ${bundle.href}`);
   }
-  await retrieve("/llms-full.txt");
+  const full = await retrieve("/llms-full.txt");
   // Check outgoing links of the selected resources, without recursively crawling
   // the complete API corpus. Full artifact coverage belongs to docs:check.
   const selected = [...checked].filter(([, body]) =>
@@ -127,6 +130,16 @@ export async function checkLive(origin: string, artifact?: string): Promise<stri
       if (target.hash && !anchors(text).has(decodeURIComponent(target.hash.slice(1))))
         throw new Error(`Broken Markdown anchor in ${source}: ${link.href}`);
     }
+  }
+  for (const canonical of [guide, overview, member])
+    if (!full.includes(canonical.trim())) throw new Error("Incomplete full corpus");
+  for (const bundle of links(bundles)) {
+    const body = await retrieve(bundle.href);
+    const documents = [
+      ...body.matchAll(/<!-- BEGIN DOCUMENT: ([^\n]+) -->[\s\S]*?<!-- END DOCUMENT: \1 -->/g),
+    ];
+    if (!documents.length || documents.some(([document]) => !full.includes(document)))
+      throw new Error(`Bundle differs from full corpus: ${bundle.href}`);
   }
   return [...checked.keys()].map((url) => new URL(url).pathname);
 }

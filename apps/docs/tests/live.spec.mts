@@ -27,6 +27,15 @@ const resources: Record<string, string> = {
     "# Complete documentation\n\n<!-- BEGIN DOCUMENT: /reference/TextInput.md -->\nTextInput appendText\n<!-- END DOCUMENT: /reference/TextInput.md -->",
 };
 
+function document(href: string) {
+  return `<!-- BEGIN DOCUMENT: ${href} -->\n${resources[href]}\n<!-- END DOCUMENT: ${href} -->`;
+}
+resources["/bundles/packages/essential.md"] =
+  document("/reference/TextInput.md") + "\n" + document("/reference/appendText.md");
+resources["/bundles/sections/guides.md"] = document("/getting-started.md");
+resources["/llms-full.txt"] =
+  resources["/bundles/packages/essential.md"] + "\n" + resources["/bundles/sections/guides.md"];
+
 async function serve(
   overrides: Record<string, string | number>,
   run: (origin: string) => Promise<void>,
@@ -144,6 +153,38 @@ test("requires a visible homepage development label", async () => {
     { "/": '<h1>Pomeranian</h1><script>const route = "development";</script>' },
     async (origin) => {
       await expect(checkLive(origin)).rejects.toThrow("Missing homepage development labeling");
+    },
+  );
+});
+
+test("rejects a bundle index missing section, package or full-corpus discovery", async () => {
+  await serve({ "/indexes/bundles.md": "# Empty index" }, async (origin) => {
+    await expect(checkLive(origin)).rejects.toThrow(/Missing .*bundle.*link/);
+  });
+});
+
+test("rejects unrelated full-corpus content even with document markers", async () => {
+  await serve(
+    {
+      "/llms-full.txt":
+        "<!-- BEGIN DOCUMENT: /unrelated.md -->\nOther content\n<!-- END DOCUMENT: /unrelated.md -->",
+    },
+    async (origin) => {
+      await expect(checkLive(origin)).rejects.toThrow(/Incomplete full corpus/);
+    },
+  );
+});
+
+test("rejects bundle payloads that disagree with the full corpus", async () => {
+  await serve(
+    {
+      "/bundles/packages/essential.md": document("/reference/TextInput.md").replace(
+        "Available since",
+        "Wrong availability",
+      ),
+    },
+    async (origin) => {
+      await expect(checkLive(origin)).rejects.toThrow(/Bundle differs from full corpus/);
     },
   );
 });
