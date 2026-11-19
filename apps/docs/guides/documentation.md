@@ -53,7 +53,7 @@ Registration rejects unregistered production workspaces, undocumented export sub
 
 ## Shared model and diagnostics
 
-`docs:build` writes `.generated/content-model.json` and `.generated/api/api-model.json`. Schema version 1 retains resolved Markdown, structural tokens, headings, links, exact included examples, package status, stable symbol/member identities, parent/inheritance and visibility context, source provenance, rendered HTML routes, grouped signatures, package history, and a complete reflection-to-owner map. Declaration identities use the owning package, registered public export subpath, explicit namespace/declaration path, kind, and static/instance identity. TypeDoc's conditional entrypoint wrappers do not alter existing declaration keys when another package is registered; HTML routes remain separate mappings. Register distinct export subpaths for multiple entries in one package rather than relying on source filenames. The serialized TypeDoc reflection graph preserves generic types, overloads, getter/setter comments, examples, and symbol links for the next exporter. Reflection IDs are local references, not stable output identities.
+`docs:build` writes `.generated/content-model.json` and `.generated/api/api-model.json`. Schema version 1 retains resolved Markdown, structural tokens, headings, links, exact included examples, package status, stable symbol/member identities, parent/inheritance and visibility context, source provenance, rendered HTML routes, grouped signatures, package history, and a complete reflection-to-owner map. Declaration identities use the owning package, registered public export subpath, explicit namespace/declaration path, kind, and static/instance identity. TypeDoc's conditional entrypoint wrappers do not alter existing declaration keys when another package is registered; HTML routes remain separate mappings. Register distinct export subpaths for multiple entries in one package rather than relying on source filenames. The serialized TypeDoc reflection graph preserves generic types, overloads, getter/setter comments, examples, and symbol links for shared reference and text export. Reflection IDs are local references, not stable output identities.
 
 ## Canonical reference workflow
 
@@ -81,3 +81,31 @@ TypeDoc and its Markdown/VitePress integration are pinned to the accepted compat
 Conversion diagnostics, missing documentation, broken links, invalid history, unsupported content, invalid examples, and generation errors fail the checks. The original prototype's six non-exported-helper warnings remain visible in the compatibility regression evidence, not suppressed in the production generator. [The factory guide](factory-proof.md#accepted-typedoc-limitation) explains the accepted getter defect.
 
 For a live edit, `docs:dev` regenerates from relevant inputs. A failed generation is reported, removes the success marker, and can recover on the next valid edit. Restart after changing dependency installations. `docs:preview` serves the actual `.generated/site/.vitepress/dist` artifact and refuses to substitute a development server or rebuild it implicitly.
+
+## Publication and live diagnostics
+
+Run these commands from the repository root:
+
+```sh
+pnpm docs:dev
+pnpm docs:build
+pnpm docs:check
+pnpm docs:preview
+pnpm docs:check:live
+```
+
+`docs:check` runs the full compiler, API coverage, canonical-byte, HTML/text link and anchor, completeness/discovery, maintained-example and browser retrieval checks. `docs:preview` serves the existing artifact without rebuilding. `docs:check:live` defaults to https://pomeranian.lolma.us and retrieves the homepage's development label, discovery, getting-started guide, real TextInput overview and appendText member, linked indexes, full corpus and bundles. It rejects failed responses, HTML fallbacks, unexpected cross-origin redirects, wrong content and broken selected Markdown links/anchors. Complete link coverage is checked locally before publication.
+
+Pass an origin and optionally an absolute checked artifact directory to compare downloaded UTF-8 bytes with the artifact:
+
+```sh
+pnpm docs:check:live https://pomeranian.lolma.us /absolute/checkout/apps/docs/.generated/site/.vitepress/dist
+```
+
+Use an artifact built from the deployed revision; another revision can legitimately differ. The command also accepts a local preview origin for diagnosis. Canonical guide, type and member resources use `.md`; `.txt` is reserved for `/llms.txt` and `/llms-full.txt`. Follow discovery/index links for exact member paths.
+
+CI preserves workspace affected selection and its conservative fallback, then explicitly runs `docs:check` on every PR, main push and manual run. Only successful main push/manual runs upload and deploy the checked `.generated/site/.vitepress/dist` through GitHub Pages; there is no subsequent rebuild. Pull requests never deploy. Main workflow runs and deployments are serialized without cancelling active publication. The root base path serves one development documentation set while retaining package-qualified Released/Unreleased history. Npm publication remains manual and independent.
+
+To republish current main, dispatch CI on `main`. For historical recovery, open a previously successful main CI run containing the publication workflow and choose **Re-run all jobs**. Checkout uses the run's original commit and all installation/checks run again, producing a fresh checked artifact even when the previous one expired. Revisions before this workflow are unsupported. Deployment-only reruns need an unexpired artifact; historical rebuild failures prevent publication and preserve the existing site.
+
+Inspect validation logs first, then retained Playwright reports/traces. For publication failures, inspect the deploy job, Pages Actions source and custom hostname, and `github-pages` environment branch restrictions. Pages must have `pomeranian.lolma.us` registered before DNS points there. The Cloudflare record is a DNS-only CNAME named `pomeranian`, target `lolmaus.github.io`, TTL Auto. Check authoritative/public CNAME resolution and GitHub's domain health, wait for certificate provisioning, enable Enforce HTTPS, then verify trusted HTTPS and HTTP redirection. See GitHub's [custom workflow](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages) and [custom domain](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) instructions.

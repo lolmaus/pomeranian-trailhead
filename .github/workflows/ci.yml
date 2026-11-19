@@ -11,12 +11,13 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a main publication while Pages is deploying its artifact.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   check:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 45
     env:
       CI: "true"
       TURBO_TELEMETRY_DISABLED: "1"
@@ -39,6 +40,13 @@ jobs:
         run: pnpm run test:install --with-deps
       - name: Check root files and affected packages
         run: pnpm run ci
+      - name: Validate the complete documentation artifact
+        run: pnpm run docs:check
+      - name: Upload the checked documentation artifact
+        if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: apps/docs/.generated/site/.vitepress/dist
       - name: Retain browser reports and failure evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v7
@@ -51,3 +59,22 @@ jobs:
             apps/*/test-results/
           retention-days: 7
           if-no-files-found: warn
+
+  deploy:
+    needs: check
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the checked documentation artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

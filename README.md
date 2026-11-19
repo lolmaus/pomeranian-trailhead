@@ -184,22 +184,27 @@ features arrive; the documentation workflow below checks them alongside code.
 
 The VitePress app in `apps/docs` publishes development documentation with explicit
 production-package status and prototype boundaries. It uses the default theme;
-visual design, AI text export, and deployment remain separate work.
+the checked development artifact publishes automatically from `main` to
+https://pomeranian.lolma.us.
 
 ```sh
-pnpm run docs:dev      # Live guide/example/API regeneration
-pnpm run docs:build    # Static artifact and shared content/symbol model
-pnpm run docs:preview  # Serve the existing built artifact
-pnpm run docs:check    # Full compiler/content/API/link/example/browser validation
+pnpm run docs:dev        # Live guide/example/API regeneration
+pnpm run docs:build      # Static artifact and shared content/symbol model
+pnpm run docs:preview    # Serve the existing built artifact
+pnpm run docs:check      # Full compiler/content/API/link/example/browser validation
+pnpm run docs:check:live # Retrieve the published development documentation
 ```
 
 Author Markdown in `apps/docs` and API comments in their owning packages. The
 [authoring guide](apps/docs/guides/documentation.md) defines supported text-first
 content, checked excerpt inclusion, package-qualified availability/change history,
-and real workspace API registration. Generated reference, indexes, staging, and
-HTML stay ignored under `apps/docs/.generated`. The shared content/reflection
-model is the input for the next AI-output ticket; no parallel authored corpus is
-maintained. TypeDoc's supported TypeScript 6 dependency is local to docs tooling;
+and real workspace API registration. Canonical API Markdown under
+`apps/docs/reference` is generated and committed
+alongside source changes; run `pnpm docs:generate` to refresh it. Discovery,
+indexes, bundles, staging, and HTML stay ignored under `apps/docs/.generated`.
+`/llms.txt` links canonical `.md` guides, type overviews and member pages;
+`/llms-full.txt` and `/bundles/` provide complete aggregate downloads. TypeDoc's
+supported TypeScript 6 dependency is local to docs tooling;
 project and maintained-example checks remain on TypeScript 7.
 
 The existing non-workspace factory proof is an explicit global Turbo input, so its
@@ -228,6 +233,29 @@ head, and have an ancestor base. An absent/zero/invalid/unavailable base, mismat
 head, or unrelated history prints a reason and checks the full workspace. Manual
 runs have no comparison base and therefore run everything. Failed Git lookup
 never silently skips package checks.
+
+After workspace CI, every run explicitly checks the complete documentation
+pipeline. Successful pushes and manual runs on `main` upload exactly the checked
+`apps/docs/.generated/site/.vitepress/dist` and deploy that artifact to GitHub
+Pages. Pull requests validate without publishing. Publication has no rebuild
+between checking and uploading. Main runs and Pages deployments are serialized;
+a newer push does not cancel an active publication. Package releases remain manual
+and independent.
+
+To republish current `main`, run the CI workflow manually on `main`. To recover a
+previous revision, open a successful **main** CI run containing this publication
+workflow and choose **Re-run all jobs**. GitHub uses that run's original revision;
+installation and all validation run again before uploading a fresh artifact, so
+expired artifacts do not prevent recovery. Re-running only deployment cannot
+recover an expired artifact. Revisions predating this workflow are unsupported.
+A failed historical rebuild leaves the existing deployment in place.
+
+For failures, inspect the check job's compiler, content, link, example and retrieval
+diagnostics, then its retained Playwright reports/traces. A failed check prevents
+publication. For a deployment-only failure, inspect the deploy job and repository
+Pages settings, `github-pages` environment permissions, DNS and certificate state.
+The [documentation guide](apps/docs/guides/documentation.md#publication-and-live-diagnostics)
+provides live verification commands.
 
 Inspect actual task selection without running tasks:
 
