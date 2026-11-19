@@ -60,7 +60,7 @@ test("direct library use preserves its API and app scope without an app root dep
   expect(button.root).toBe(app);
   await expect(button.locator).toHaveText("App action");
   await button.click();
-  await expect(button.locator).toHaveAttribute("data-clicked", "yes");
+  await expect(page.locator("#app .library")).toHaveAttribute("data-clicked", "yes");
 });
 
 test("app-bound subclass can coordinate a global confirmation", async ({ page, app }) => {
@@ -69,7 +69,7 @@ test("app-bound subclass can coordinate a global confirmation", async ({ page, a
   const typedButton: AppButton = button;
   expect(typedButton.getRoot()).toBe(app);
   await typedButton.approve();
-  await expect(app.locator).toHaveAttribute("data-confirmed", "yes");
+  await expect(page.locator("#app")).toHaveAttribute("data-confirmed", "yes");
 });
 
 base("raw library object also supports rootless standalone use", async ({ page }) => {
@@ -85,11 +85,11 @@ test("nullable-root app class deliberately handles both modes", async ({ page, a
   const rootless = FlexibleButton.create(page, "#standalone-button");
   expect(rootless.root).toBeNull();
   await rootless.approveIfRooted();
-  await expect(app.locator).not.toHaveAttribute("data-confirmed", "yes");
+  await expect(page.locator("#app")).not.toHaveAttribute("data-confirmed", "yes");
   const rooted = FlexibleButton.create(app.Settings.Menu);
   expect(rooted.getRoot()).toBe(app);
   await rooted.approveIfRooted();
-  await expect(app.locator).toHaveAttribute("data-confirmed", "yes");
+  await expect(page.locator("#app")).toHaveAttribute("data-confirmed", "yes");
 });
 
 base("fixture html fallback and grouping root preserve early self-reference", async ({ page }) => {

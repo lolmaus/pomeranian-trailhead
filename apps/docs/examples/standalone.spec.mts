@@ -9,10 +9,14 @@ async function standaloneExample() {
     const context = await browser.newContext();
     try {
       const page = await context.newPage();
-      await page.setContent("<button>Continue</button>");
-      const button = Element.create(page, ({ page }) => page.getByRole("button"));
+      await page.setContent(
+        "<button id=continue onclick=\"this.textContent='Done'\">Continue</button><button id=decoy>Decoy</button>",
+      );
+      const button = Element.create(page, ({ page }) =>
+        page.getByRole("button", { name: "Continue", exact: true }),
+      );
       await button.click();
-      return await button.locator.textContent();
+      return await page.locator("#continue").textContent();
     } finally {
       await context.close();
     }
@@ -23,5 +27,5 @@ async function standaloneExample() {
 // #endregion standalone
 
 test("standalone native-only usage owns and cleans up its browser lifecycle", async () => {
-  expect(await standaloneExample()).toBe("Continue");
+  expect(await standaloneExample()).toBe("Done");
 });

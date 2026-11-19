@@ -12,10 +12,11 @@ class App extends DomPageObject<App> {
 const appTest = test.extend<{ app: App }>({ app: rootFixture(App) });
 appTest("essential actions use the application scope", async ({ page, app }) => {
   await page.setContent(
-    "<main><button onclick=\"this.textContent='Done'\">Continue</button></main>",
+    "<button id=decoy onclick=\"this.textContent='Done'\">Decoy</button><main><button id=continue onclick=\"this.textContent='Done'\">Continue</button></main>",
   );
   await app.Menu.Continue.click();
-  await expect(app.Menu.Continue.locator).toHaveText("Done");
+  await expect(page.locator("#continue")).toHaveText("Done");
+  await expect(page.locator("#decoy")).toHaveText("Decoy");
 });
 // #endregion essential
 
@@ -41,9 +42,9 @@ test("complete form actions need no raw reads", async ({ page }) => {
   await form.Agree.uncheck();
   await form.Agree.setChecked(true);
   await form.Choice.selectOption("b");
-  await expect(form.Name.locator).toHaveValue("Grace Hopper");
-  await expect(form.Agree.locator).toBeChecked();
-  await expect(form.Choice.locator).toHaveValue("b");
+  await expect(page.locator("form input[type=text]")).toHaveValue("Grace Hopper");
+  await expect(page.locator("form input[type=checkbox]")).toBeChecked();
+  await expect(page.locator("form select")).toHaveValue("b");
 });
 // #endregion forms
 
@@ -91,7 +92,7 @@ test("essential capabilities support custom bases and generic library authoring"
   expect(custom.componentName).toBe("Search");
   await custom.fill("custom");
   await custom.appendText(" text");
-  await expect(custom.locator).toHaveValue("custom text");
+  await expect(page.locator("main input")).toHaveValue("custom text");
   const plain = LibraryField.create(page);
   const value: string | undefined = plain.value();
   const extra: boolean | undefined = plain.extra();
@@ -105,7 +106,7 @@ test("essential capabilities support custom bases and generic library authoring"
     expect([value, extra]).toEqual([undefined, undefined]);
     await bound.clear();
     await bound.appendText("bound");
-    await expect(bound.locator).toHaveValue("bound");
+    await expect(page.locator("main input")).toHaveValue("bound");
   });
 });
 
@@ -117,12 +118,14 @@ test("standalone and app-bound controls append native text", async ({ page }) =>
   await page.setContent("<main><input type=search value=Hello><textarea>First</textarea></main>");
   const notes = TextArea.create(page, "textarea");
   await notes.appendText("\nSecond", { timeout: 1000 });
-  await expect(notes.locator).toHaveValue("First\nSecond");
+  await expect(page.locator("main textarea")).toHaveValue("First\nSecond");
+  await expect(page.locator("main input[type=search]")).toHaveValue("Hello");
   await rootFixture(App)({ page }, async (app) => {
     const search = Search.create(app);
     await search.selectText();
     await search.appendText(" world");
-    await expect(search.locator).toHaveValue("Hello world");
+    await expect(page.locator("main input[type=search]")).toHaveValue("Hello world");
+    await expect(page.locator("main textarea")).toHaveValue("First\nSecond");
     expect(search.root).toBe(app);
   });
 });
