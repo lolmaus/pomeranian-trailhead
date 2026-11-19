@@ -56,10 +56,10 @@ test("controls preserve intent surfaces and live native targets", async ({ page 
     .toBeGreaterThanOrEqual(3);
   await page.locator("#t").evaluate((n) => n.removeAttribute("disabled"));
   await fill;
-  await expect(text.locator).toHaveValue("ready");
+  await expect(page.locator("#t")).toHaveValue("ready");
   await page.locator("#t").evaluate((n) => (n.outerHTML = "<textarea id=t>replacement</textarea>"));
   await text.fill("live");
-  await expect(text.locator).toHaveValue("live");
+  await expect(page.locator("#t")).toHaveValue("live");
   await TextArea.create(page, "textarea:not(#t)").fill("area");
   await ContentEditable.create(page, "[contenteditable]").fill("editable");
   await Checkbox.create(page, "[type=checkbox]").check();
@@ -83,7 +83,7 @@ test("controls preserve intent surfaces and live native targets", async ({ page 
     .toBeGreaterThanOrEqual(3);
   await page.locator("body").evaluate((n) => n.insertAdjacentHTML("beforeend", "<input id=later>"));
   await pending;
-  await expect(missing.locator).toHaveValue("late");
+  await expect(page.locator("#later")).toHaveValue("late");
   await page.locator("#later").evaluate((n) => ((n as HTMLInputElement).type = "checkbox"));
   await expect(missing.fill("wrong", { timeout: 150 })).rejects.toThrow();
 });
@@ -103,9 +103,9 @@ test("control root fixtures initialize capability children and retain native lab
     expect(app.root).toBe(app);
     expect(app.Agree.root).toBe(app);
     await app.fill("root");
-    await expect(app.locator).toHaveValue("root");
+    await expect(page.locator("#text")).toHaveValue("root");
     await app.Agree.check();
-    await expect(app.Agree.locator).toBeChecked();
+    await expect(page.locator("#check")).toBeChecked();
   });
   const label = essential.TextInput.create(page, "label");
   const query = label.locator;

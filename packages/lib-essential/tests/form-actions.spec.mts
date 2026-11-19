@@ -17,7 +17,7 @@ test("fill preserves native form behavior", async ({ page }) => {
   const control = TextInput.create(page, "input, select");
   expect(typeof (control as unknown as Record<string, unknown>)["fill"]).toBe("function");
   await (control as unknown as { fill: Locator["fill"] }).fill("new");
-  await expect(control.locator).toHaveValue("new");
+  await expect(page.locator("input")).toHaveValue("new");
 });
 
 test("clear preserves native form behavior", async ({ page }) => {
@@ -25,7 +25,7 @@ test("clear preserves native form behavior", async ({ page }) => {
   const control = TextInput.create(page, "input, select");
   expect(typeof (control as unknown as Record<string, unknown>)["clear"]).toBe("function");
   await (control as unknown as { clear: Locator["clear"] }).clear();
-  await expect(control.locator).toHaveValue("");
+  await expect(page.locator("input")).toHaveValue("");
 });
 
 test("check preserves native form behavior", async ({ page }) => {
@@ -33,7 +33,7 @@ test("check preserves native form behavior", async ({ page }) => {
   const control = Checkbox.create(page, "input, select");
   expect(typeof (control as unknown as Record<string, unknown>)["check"]).toBe("function");
   await (control as unknown as { check: Locator["check"] }).check();
-  await expect(control.locator).toBeChecked();
+  await expect(page.locator("input")).toBeChecked();
 });
 
 test("uncheck preserves native form behavior", async ({ page }) => {
@@ -41,7 +41,7 @@ test("uncheck preserves native form behavior", async ({ page }) => {
   const control = Checkbox.create(page, "input, select");
   expect(typeof (control as unknown as Record<string, unknown>)["uncheck"]).toBe("function");
   await (control as unknown as { uncheck: Locator["uncheck"] }).uncheck();
-  await expect(control.locator).not.toBeChecked();
+  await expect(page.locator("input")).not.toBeChecked();
 });
 
 test("setChecked preserves native form behavior", async ({ page }) => {
@@ -49,7 +49,7 @@ test("setChecked preserves native form behavior", async ({ page }) => {
   const control = Checkbox.create(page, "input, select");
   expect(typeof (control as unknown as Record<string, unknown>)["setChecked"]).toBe("function");
   await (control as unknown as { setChecked: Locator["setChecked"] }).setChecked(true);
-  await expect(control.locator).toBeChecked();
+  await expect(page.locator("input")).toBeChecked();
 });
 
 test("selectOption preserves native form behavior", async ({ page }) => {
@@ -59,7 +59,7 @@ test("selectOption preserves native form behavior", async ({ page }) => {
   const control = Select.create(page, "input, select");
   expect(typeof (control as unknown as Record<string, unknown>)["selectOption"]).toBe("function");
   await (control as unknown as { selectOption: Locator["selectOption"] }).selectOption("b");
-  await expect(control.locator).toHaveValue("b");
+  await expect(page.locator("select")).toHaveValue("b");
 });
 
 test("selectText preserves native form behavior", async ({ page }) => {
@@ -68,7 +68,7 @@ test("selectText preserves native form behavior", async ({ page }) => {
   expect(typeof (control as unknown as Record<string, unknown>)["selectText"]).toBe("function");
   await (control as unknown as { selectText: Locator["selectText"] }).selectText();
   expect(
-    await control.locator.evaluate((node) => {
+    await page.locator("input").evaluate((node) => {
       const input = node as HTMLInputElement;
       return [input.selectionStart, input.selectionEnd];
     }),
@@ -88,11 +88,11 @@ test("fill and clear retain native editable applicability and events", async ({ 
           : TextInput;
     const field = Control.create(page, target);
     await field.fill("new");
-    if (target === "[contenteditable]") await expect(field.locator).toHaveText("new");
-    else await expect(field.locator).toHaveValue("new");
+    if (target === "[contenteditable]") await expect(page.locator(target)).toHaveText("new");
+    else await expect(page.locator(target)).toHaveValue("new");
     await field.clear();
-    if (target === "[contenteditable]") await expect(field.locator).toHaveText("");
-    else await expect(field.locator).toHaveValue("");
+    if (target === "[contenteditable]") await expect(page.locator(target)).toHaveText("");
+    else await expect(page.locator(target)).toHaveValue("");
   }
   await TextInput.create(page, "input[type=date]").fill("2026-11-13");
   await expect(page.locator("input[type=date]")).toHaveValue("2026-11-13");
@@ -107,15 +107,15 @@ test("checkable actions retain trial, idempotence, labels and radio errors", asy
   );
   const c = Checkbox.create(page, "#c");
   await c.check({ trial: true });
-  await expect(c.locator).not.toBeChecked();
+  await expect(page.locator("#c")).not.toBeChecked();
   await Checkbox.create(page, "label").check();
   await c.check();
   await c.setChecked(true);
-  await expect(c.locator).toBeChecked();
+  await expect(page.locator("#c")).toBeChecked();
   await c.uncheck();
   await c.uncheck();
   await c.setChecked(false);
-  await expect(c.locator).not.toBeChecked();
+  await expect(page.locator("#c")).not.toBeChecked();
   await Radio.create(page, "#a").check();
   await BroadCheckable.create(page, "#b").setChecked(true);
   await expect(page.locator("#a")).not.toBeChecked();
@@ -130,7 +130,7 @@ test("selection retains native choices, labels and selected results", async ({ p
   );
   const select = Select.create(page, "#s");
   expect(await select.selectOption(["a", "b"] as const)).toEqual(["a", "b"]);
-  await expect(select.locator).toHaveValues(["a", "b"]);
+  await expect(page.locator("#s")).toHaveValues(["a", "b"]);
   expect(await Select.create(page, "label").selectOption({ label: "B" })).toEqual(["b"]);
   expect(await select.selectOption({ index: 0 })).toEqual(["a"]);
   const handle = await page.locator("option[value=b]").elementHandle();
@@ -138,17 +138,25 @@ test("selection retains native choices, labels and selected results", async ({ p
   expect(await select.selectOption(null)).toEqual([]);
 });
 test("selectText selects complete input, textarea and element text", async ({ page }) => {
-  await page.setContent("<input value=Hello><textarea>World</textarea><p>Native text</p>");
-  for (const tag of ["input", "textarea"]) {
+  await page.setContent(
+    "<input id=input value=Hello><textarea id=area>World</textarea><input id=untouched value=Other><p>Native text</p>",
+  );
+  for (const tag of ["#input", "#area"]) {
     const field = Element.create(page, tag);
     await field.selectText();
     expect(
-      await field.locator.evaluate((node) => {
+      await page.locator(tag).evaluate((node) => {
         const input = node as HTMLInputElement;
         return [input.selectionStart, input.selectionEnd];
       }),
     ).toEqual([0, 5]);
   }
+  expect(
+    await page.locator("#untouched").evaluate((node) => {
+      const input = node as HTMLInputElement;
+      return [input.value, input.selectionStart, input.selectionEnd];
+    }),
+  ).toEqual(["Other", 0, 0]);
   await Element.create(page, "p").selectText();
   expect(await page.evaluate(() => getSelection()?.toString())).toBe("Native text");
 });

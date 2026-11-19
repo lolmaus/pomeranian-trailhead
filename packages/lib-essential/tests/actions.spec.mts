@@ -15,7 +15,7 @@ test("click preserves native effects", async ({ page }) => {
   await (button as unknown as { click: import("playwright-core").Locator["click"] }).click({
     button: "right",
   });
-  await expect(button.locator).toHaveText("clicked");
+  await expect(page.locator("button")).toHaveText("clicked");
 });
 test("dblclick preserves native effects", async ({ page }) => {
   await page.setContent("<button ondblclick=\"this.textContent='double'\">Ready</button>");
@@ -24,41 +24,41 @@ test("dblclick preserves native effects", async ({ page }) => {
   await (
     button as unknown as { dblclick: import("playwright-core").Locator["dblclick"] }
   ).dblclick();
-  await expect(button.locator).toHaveText("double");
+  await expect(page.locator("button")).toHaveText("double");
 });
 test("hover preserves native effects", async ({ page }) => {
   await page.setContent("<button onmouseenter=\"this.textContent='hovered'\">Ready</button>");
   const button = Element.create(page, "button, input, textarea");
   expect(typeof (button as unknown as { [key: string]: unknown })["hover"]).toBe("function");
   await (button as unknown as { hover: import("playwright-core").Locator["hover"] }).hover();
-  await expect(button.locator).toHaveText("hovered");
+  await expect(page.locator("button")).toHaveText("hovered");
 });
 test("focus preserves native effects", async ({ page }) => {
   await page.setContent("<input>");
   const button = Element.create(page, "button, input, textarea");
   expect(typeof (button as unknown as { [key: string]: unknown })["focus"]).toBe("function");
   await (button as unknown as { focus: import("playwright-core").Locator["focus"] }).focus();
-  await expect(button.locator).toBeFocused();
+  await expect(page.locator("input")).toBeFocused();
 });
 test("blur preserves native effects", async ({ page }) => {
   await page.setContent("<input>");
   const button = Element.create(page, "button, input, textarea");
   expect(typeof (button as unknown as { [key: string]: unknown })["blur"]).toBe("function");
-  await button.locator.focus();
+  await page.locator("input").focus();
   await (button as unknown as { blur: import("playwright-core").Locator["blur"] }).blur();
-  await expect(button.locator).not.toBeFocused();
+  await expect(page.locator("input")).not.toBeFocused();
 });
 test("press preserves native effects", async ({ page }) => {
   await page.setContent("<input value='ab'>");
   const button = Element.create(page, "button, input, textarea");
   expect(typeof (button as unknown as { [key: string]: unknown })["press"]).toBe("function");
-  await button.locator.focus();
+  await page.locator("input").focus();
   await (button as unknown as { press: import("playwright-core").Locator["press"] }).press("End");
   await (button as unknown as { press: import("playwright-core").Locator["press"] }).press(
     "ArrowLeft",
   );
   await (button as unknown as { press: import("playwright-core").Locator["press"] }).press("X");
-  await expect(button.locator).toHaveValue("aXb");
+  await expect(page.locator("input")).toHaveValue("aXb");
 });
 test("pressSequentially preserves native effects", async ({ page }) => {
   await page.setContent("<input>");
@@ -71,7 +71,7 @@ test("pressSequentially preserves native effects", async ({ page }) => {
       pressSequentially: import("playwright-core").Locator["pressSequentially"];
     }
   ).pressSequentially("Hello", { delay: 1 });
-  await expect(button.locator).toHaveValue("Hello");
+  await expect(page.locator("input")).toHaveValue("Hello");
 });
 test("type preserves native effects", async ({ page }) => {
   await page.setContent("<textarea></textarea>");
@@ -80,7 +80,7 @@ test("type preserves native effects", async ({ page }) => {
   await (button as unknown as { type: import("playwright-core").Locator["type"] }).type("legacy", {
     delay: 1,
   });
-  await expect(button.locator).toHaveValue("legacy");
+  await expect(page.locator("textarea")).toHaveValue("legacy");
 });
 
 test("native cardinality, applicability and timeout errors remain visible", async ({ page }) => {
@@ -129,7 +129,7 @@ test("subclasses preserve grouping, roots, private state and reconstruction", as
     Group = Group.create(this);
   }
   await page.setContent(
-    "<main><button>A</button><button onclick=\"this.textContent='Done'\">B</button></main>",
+    "<main><button id=untouched onclick=\"this.textContent='Done'\">A</button><button id=intended onclick=\"this.textContent='Done'\">B</button></main>",
   );
   await rootFixture(App)({ page }, async (app) => {
     const source = app.Group.Button;
@@ -138,7 +138,8 @@ test("subclasses preserve grouping, roots, private state and reconstruction", as
     expect(derived.root).toBe(app);
     expect(derived.value()).toBeUndefined();
     await derived.click();
-    await expect(derived.locator).toHaveText("Done");
+    await expect(page.locator("#intended")).toHaveText("Done");
+    await expect(page.locator("#untouched")).toHaveText("A");
     await expect(source.locator).toHaveCount(2);
   });
 });
