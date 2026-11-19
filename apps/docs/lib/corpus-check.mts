@@ -76,7 +76,7 @@ function checkSourcePayload(symbol: TextSymbol, markdown: string) {
 }
 
 // Mirrors VitePress's default slug rules, including duplicate-heading suffixes.
-function anchors(markdown: string): Set<string> {
+export function anchors(markdown: string): Set<string> {
   const result = new Set<string>();
   const tokens = parser.parse(markdown, {});
   for (const [index, token] of tokens.entries()) {
