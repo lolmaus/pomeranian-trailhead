@@ -134,3 +134,10 @@ export async function compositionContracts(page: Page, app: LibraryApp) {
   });
   return [proofs, wrong, concrete.concrete()];
 }
+
+export function narrowingContracts(bound: Bound) {
+ const narrowed = bound.first().last().nth(0).filter({hasText:/yes/}).visibleOnly();
+ const exact: Check<Equal<typeof narrowed, Bound>> = true;
+ const value: number | undefined = narrowed.value();
+ void [exact, value];
+}

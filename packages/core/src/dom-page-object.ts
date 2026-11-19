@@ -1,3 +1,5 @@
+import { captureFilter } from "./internal/narrowing.js";
+import { reconstruct } from "./internal/reconstruction.js";
 import { cssTarget } from "./internal/css-target.js";
 import type { Locator, Page } from "playwright-core";
 import { PageObject } from "./page-object.js";
@@ -47,6 +49,47 @@ export class DomPageObject<Root extends UnboundRoot = UnboundRoot> extends PageO
         throw new Error("A target must be a CSS string, Locator, or locator factory.");
       this.#target = typeof value === "string" ? cssTarget(value) : value;
     };
+  }
+
+  /** Return a fresh concrete instance selecting the first match, without resolving the query.
+   * Ordinary fields and children initialize again; accumulated state is not copied.
+   * @returns A fresh instance retaining the concrete API and root type.
+   * @since @pomeranian/core@Unreleased
+   */
+  first(): this {
+    return reconstruct(this, (locator) => locator.first(), { kind: "first" });
+  }
+
+  /** Return a fresh concrete instance selecting the last match.
+   * @returns A fresh instance with reinitialized fields and children.
+   * @since @pomeranian/core@Unreleased
+   */
+  last(): this {
+    return reconstruct(this, (locator) => locator.last(), { kind: "last" });
+  }
+  /** Return a fresh concrete instance selecting a native zero-based index.
+   * @param index Native index; -1 selects the last match.
+   * @returns A fresh instance; empty/out-of-range matches remain valid queries.
+   * @since @pomeranian/core@Unreleased
+   */
+  nth(index: number): this {
+    return reconstruct(this, (locator) => locator.nth(index), { kind: "nth", arguments: [index] });
+  }
+
+  /** Return a fresh instance using native Playwright filter semantics.
+   * Supported option values are captured once, including inherited getters and
+   * RegExp contents. Containment arguments are raw relative Locators, not page objects;
+   * native frame restrictions apply. Query evaluation remains lazy and live.
+   * @param options Native filter criteria; omission retains every source match.
+   * @returns A fresh instance preserving the concrete API, root and generic parameters.
+   * @since @pomeranian/core@Unreleased
+   */
+  filter(options?: Parameters<Locator["filter"]>[0]): this {
+    const captured = captureFilter(options);
+    return reconstruct(this, (locator) => locator.filter(captured.options), {
+      kind: "filter",
+      arguments: [captured.description],
+    });
   }
 
   /** A live native query, memoized only after successful validation.

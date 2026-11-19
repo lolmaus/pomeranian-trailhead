@@ -253,6 +253,7 @@ const loaded=Object.keys(require.cache);assert(!loaded.some(p=>/[\\/]node_module
 const browser=await chromium.launch();
 try {const context=await browser.newContext();try {const page=await context.newPage();await page.setContent('<button>Ready</button>');const button=LibraryButton.create(page);assert(button instanceof Direct);assert.equal(button.root,null);assert.equal(await button.locator.textContent(),'Ready');assert.equal(button.locator,button.locator);await page.setContent('<button>Live</button>');assert.equal(await button.locator.textContent(),'Live');
 await page.setContent('<section><button>Composed</button></section>');
+const selected=LibraryButton.create(page).filter({hasText:'Composed'}).first();assert.equal(await selected.locator.textContent(),'Composed');
 const composed=Concrete.create(page);assert(composed instanceof Composed);assert.equal(composed.concrete(),composed.Child);assert.equal(await composed.Child.locator.textContent(),'Composed');assert.equal(composed.increment(),1);assert.equal(composed.increment(),2);assert.equal(Concrete.create(page).increment(),1);assert.equal(composed.tag(),'tagged');assert.equal(composed.dependent(),6);
 const mixed=Mixed.create(page,'section');assert(mixed instanceof cjs.DomPageObject);assert.equal(mixed.dependent(),6);
 await esm.rootFixture(LibraryApp)({page},async app=>{assert.equal(app.root,app);assert.equal(app.SeenRoot,app);assert.equal(app.Child.root,app);assert.equal(await app.Child.locator.textContent(),'Composed');});}finally{await context.close();}}finally{await browser.close();}

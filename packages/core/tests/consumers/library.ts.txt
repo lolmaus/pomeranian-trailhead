@@ -5,6 +5,7 @@ export class LibraryButton<Root extends UnboundRoot = UnboundRoot, Value = strin
   override defaultTarget = 'button';
   #value: Value | undefined = undefined;
   value(): Value | undefined { return this.#value; }
+  visibleOnly(): this { return this.filter({ visible: true }); }
 }
 checkLibrary<LibraryButton>()(LibraryButton);
 
@@ -41,6 +42,7 @@ export class Composed<Root extends UnboundRoot = UnboundRoot, Value = string, Ot
   #value: Value | undefined = undefined;
   #other: Other | undefined = undefined;
   value(): Value | undefined { return this.#value; }
+  visibleOnly(): this { return this.filter({ visible: true }); }
   other(): Other | undefined { return this.#other; }
 }
 checkLibrary<Composed>()(Composed);

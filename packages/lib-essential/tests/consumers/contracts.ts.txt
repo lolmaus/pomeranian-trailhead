@@ -163,3 +163,9 @@ export function appendContracts(page:Page,app:App) {
  // @ts-expect-error native option contract
  field.appendText('x',{delay:2});
 }
+
+export function narrowedEssential(bound: Bound) {
+ const selected = bound.filter({visible:true}).first().last().nth(0);
+ const exact: Check<Equal<typeof selected, Bound>> = true;
+ void [exact, selected.fill];
+}

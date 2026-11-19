@@ -6,4 +6,4 @@ The verifier packs core and essential, installs both into isolated Playwright Te
 
 Runtime checks cover actual Chromium actions, root/direct ESM/CommonJS identity for all eleven capability/control modules plus Element, one core backend, private export rejection, declarations/maps/included sources and runner absence in standalone dependency graphs. Included fixture sources are `.ts.txt` because each isolated consumer compiles them with its own installed compiler. Nothing is published.
 
-Public narrowing is not yet delivered. The package Chromium suite tests existing internal reconstruction compatibility against core's compiled backend without exposing new public paths or changing core lifecycle visibility.
+Public first/last/nth/filter narrowing is inherited from core. The package Chromium suite tests existing internal reconstruction compatibility against core's compiled backend without exposing new public paths or changing core lifecycle visibility.
