@@ -122,6 +122,8 @@ Added in @pomeranian/lib-essential@Unreleased: `TextInput<Root>` and `TextArea<R
 
 The action reads the existing value internally, concatenates the supplied string at the end and updates through native `fill`, regardless of the caret or selection. It preserves existing text, not a sequence of keyboard events. Tests requiring per-character keyboard events can use inherited `pressSequentially`.
 
+An empty suffix (`appendText("")`) still performs the preliminary read and native `fill` with the unchanged value; it is not short-circuited as a no-op. Target validation and native waiting, timeout, cancellation and errors still apply.
+
 Supported append targets are native text-like inputs (`text`, `search`, `email`, `password`, `tel` and `url`, including implicit text inputs and invalid types resolving to text) and `<textarea>`. Number/date/time and other structured-value controls, plus `contenteditable`, are excluded from this additional operation. Native `fill` retains its own applicability independently of the narrower append contract.
 
 The `contenteditable` exclusion is deliberate. A bounded Chromium investigation found that fill-style appending could preserve words while changing formatting: `<b>Hello</b> <i>world</i>` became `<b>Hello world!</b>`. Rich-editor-preserving operations require their own contract.

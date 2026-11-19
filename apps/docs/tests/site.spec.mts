@@ -30,6 +30,13 @@ test("built development site navigates to honest package status and generated re
   ).toContainText("await page.setContent");
   await page.goto("/guides/factory-proof.html#accepted-typedoc-limitation");
   await expect(page.locator("main")).toContainText("accepted, unfixed limitation");
+  await page.goto("/reference/development/lib-essential/src/text-input/classes/TextInput.html");
+  await page.locator("main a").filter({ hasText: "appendText" }).first().click();
+  await expect(page.locator("main h1")).toContainText("appendText");
+  await expect(page.locator('head link[rel="alternate"][type="text/markdown"]')).toHaveAttribute(
+    "href",
+    new URL(page.url()).pathname.replace(/\.html$/, ".md"),
+  );
   expect(errors).toEqual([]);
 });
 

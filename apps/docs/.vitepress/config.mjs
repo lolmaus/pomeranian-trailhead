@@ -5,7 +5,7 @@ export default {
   cleanUrls: false,
   // Markdown in public is downloaded verbatim, not a second set of website pages.
   srcExclude: ["public/**"],
-  transformHead({ pageData }) {
+  transformPageData(pageData) {
     const links = [["link", { rel: "describedby", href: "/llms.txt" }]];
     if (pageData.relativePath && pageData.relativePath !== "404.md") {
       links.push([
@@ -17,7 +17,9 @@ export default {
         },
       ]);
     }
-    return links;
+    // Page data travels with client-side navigation. Build-only transformHead
+    // leaves the previous page's alternate link in place after a route change.
+    pageData.frontmatter.head = [...(pageData.frontmatter.head ?? []), ...links];
   },
   themeConfig: {
     nav: [
