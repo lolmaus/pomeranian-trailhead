@@ -18,7 +18,7 @@ pnpm run test:fresh
 
 The focused command uses the docs workspace's server-managed test configuration. The full test command uses Turbo dependency and affected-package conventions. `test:fresh` bypasses the task cache. Reports, traces, and screenshots remain local generated artifacts unless CI uploads them.
 
-Use normal Playwright assertions to verify outcomes independently of a page object's implementation. Avoid asserting the same private state that the operation just wrote. [The inline HTML recipe](../recipes/inline-html.md) gives a complete maintained example.
+Use normal Playwright assertions with queries built directly from the native `Page` to verify Pomeranian action outcomes. Do not obtain the assertion's query through a Pomeranian object's `.locator` or another Pomeranian helper: a targeting bug could redirect both the action and its assertion and produce a false positive. Use independent selectors that identify the intended target, and check untouched siblings when selection matters. Avoid asserting the same private state that the operation just wrote. Tests specifically exercising the Locator contract may inspect Pomeranian `.locator` values; those checks do not independently validate action outcomes. [The inline HTML recipe](../recipes/inline-html.md) gives a complete maintained example.
 
 ## Shared React Storybook
 
